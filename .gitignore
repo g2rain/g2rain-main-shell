@@ -3,6 +3,7 @@ dist
 Thumbs.db
 .DS_Store
 .vscode
+.idea
 .project
 .settings
 .history
