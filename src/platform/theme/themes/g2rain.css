@@ -1,0 +1,89 @@
+/**
+ * G2rain 品牌主题
+ */
+
+:root[data-theme='g2rain'] {
+  /* 主色调 - G2rain 品牌色 */
+  --color-primary: #165dff;
+  --color-primary-light: #4080ff;
+  --color-primary-dark: #0e42d2;
+  --color-primary-light-3: #6ba3ff;
+
+  /* 背景色 */
+  --bg-color: #ffffff;
+  --bg-color-page: #f5f7fa;
+  --bg-color-overlay: rgba(0, 0, 0, 0.5);
+
+  /* 文本色 */
+  --text-color-primary: #303133;
+  --text-color-regular: #606266;
+  --text-color-secondary: #909399;
+  --text-color-placeholder: #c0c4cc;
+
+  /* 边框色 */
+  --border-color-base: #dcdfe6;
+  --border-color-light: #e4e7ed;
+  --border-color-lighter: #ebeef5;
+  --border-color-extra-light: #f2f6fc;
+
+  /* 阴影 */
+  --shadow-base: 0 2px 8px rgba(22, 93, 255, 0.1);
+  --shadow-light: 0 2px 4px rgba(22, 93, 255, 0.08);
+  --shadow-dark: 0 4px 12px rgba(22, 93, 255, 0.15);
+
+  /* 状态色 */
+  --color-success: #67c23a;
+  --color-warning: #e6a23c;
+  --color-danger: #f56c6c;
+  --color-info: #909399;
+
+  /* Header */
+  --header-bg: #ffffff;
+  --header-border: #e5e7eb;
+  --header-text: #303133;
+  --header-logo: #165dff;
+
+  /* Footer */
+  --footer-bg: #ffffff;
+  --footer-border: #e4e7ed;
+  --footer-text: #606266;
+  --footer-text-secondary: #909399;
+  --footer-link: var(--color-primary);
+  --footer-link-hover: var(--color-primary-light-3);
+
+  /* Sidebar */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #eee;
+  --sidebar-menu-active: var(--color-primary);
+
+  /* Card */
+  --card-bg: #ffffff;
+  --card-border: #ebeef5;
+  --card-shadow: var(--shadow-base);
+
+  /* Loading */
+  --loading-spinner-border: #f3f3f3;
+  --loading-spinner-active: #165dff;
+
+  /* SSO Callback */
+  --sso-container-bg: #ffffff;
+  --sso-error-border: #e74c3c;
+  --sso-success-border: #2ecc71;
+  --sso-button-primary: #165dff;
+  --sso-button-secondary: #95a5a6;
+
+  /* Dropdown Menu */
+  --dropdown-bg: #ffffff;
+  --dropdown-border: var(--border-color-base);
+  --dropdown-text: var(--text-color-primary);
+  --dropdown-text-hover: var(--text-color-primary);
+  --dropdown-bg-hover: var(--bg-color-page);
+  --dropdown-shadow: var(--shadow-base);
+
+  /* Element Plus 组件变量 */
+  --el-card-bg-color: var(--card-bg);
+  --el-card-border-color: var(--card-border);
+  --el-fill-color-blank: var(--bg-color);
+  --el-fill-color: var(--bg-color-page);
+}
+

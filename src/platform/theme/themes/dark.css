@@ -1,0 +1,89 @@
+/**
+ * 暗色主题
+ */
+
+:root[data-theme='dark'] {
+  /* 主色调 */
+  --color-primary: #4080ff;
+  --color-primary-light: #6ba3ff;
+  --color-primary-dark: #165dff;
+  --color-primary-light-3: #8fc5ff;
+
+  /* 背景色 */
+  --bg-color: #1d1e1f;
+  --bg-color-page: #141414;
+  --bg-color-overlay: rgba(0, 0, 0, 0.7);
+
+  /* 文本色 */
+  --text-color-primary: #e5eaf3;
+  --text-color-regular: #cfd3dc;
+  --text-color-secondary: #a3a6ad;
+  --text-color-placeholder: #6c6e72;
+
+  /* 边框色 */
+  --border-color-base: #4c4d4f;
+  --border-color-light: #414243;
+  --border-color-lighter: #363637;
+  --border-color-extra-light: #2b2b2c;
+
+  /* 阴影 */
+  --shadow-base: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.5);
+
+  /* 状态色 */
+  --color-success: #85ce61;
+  --color-warning: #ebb563;
+  --color-danger: #f78989;
+  --color-info: #a3a6ad;
+
+  /* Header */
+  --header-bg: #1d1e1f;
+  --header-border: #2b2b2c;
+  --header-text: #e5eaf3;
+  --header-logo: #4080ff;
+
+  /* Footer */
+  --footer-bg: #1d1e1f;
+  --footer-border: #2b2b2c;
+  --footer-text: #cfd3dc;
+  --footer-text-secondary: #a3a6ad;
+  --footer-link: var(--color-primary);
+  --footer-link-hover: var(--color-primary-light-3);
+
+  /* Sidebar */
+  --sidebar-bg: #1d1e1f;
+  --sidebar-border: #2b2b2c;
+  --sidebar-menu-active: var(--color-primary);
+
+  /* Card */
+  --card-bg: #252525;
+  --card-border: #363637;
+  --card-shadow: var(--shadow-base);
+
+  /* Loading */
+  --loading-spinner-border: #363637;
+  --loading-spinner-active: #4080ff;
+
+  /* SSO Callback */
+  --sso-container-bg: #252525;
+  --sso-error-border: #f78989;
+  --sso-success-border: #85ce61;
+  --sso-button-primary: #4080ff;
+  --sso-button-secondary: #6c6e72;
+
+  /* Dropdown Menu */
+  --dropdown-bg: #252525;
+  --dropdown-border: var(--border-color-base);
+  --dropdown-text: var(--text-color-primary);
+  --dropdown-text-hover: var(--text-color-primary);
+  --dropdown-bg-hover: var(--bg-color-page);
+  --dropdown-shadow: var(--shadow-base);
+
+  /* Element Plus 组件变量 */
+  --el-card-bg-color: var(--card-bg);
+  --el-card-border-color: var(--card-border);
+  --el-fill-color-blank: var(--bg-color);
+  --el-fill-color: var(--bg-color-page);
+}
+

@@ -1,0 +1,7 @@
+/**
+ * 样式入口文件
+ * 统一导入所有样式
+ */
+
+@import './base.css';
+@import './variables.css';

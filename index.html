@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>谷雨开源SaaS平台</title> <!-- 页面标题 -->
+    
+    <!-- 加载环境配置（必须在应用脚本之前加载） -->
+    <script>
+      // 动态加载 env-config.js，失败时使用默认值
+      (function() {
+        // 初始化 window._env_ 为空对象，防止未定义
+        window._env_ = window._env_ || {};
+        
+        var script = document.createElement('script');
+        // 计算 env-config.js 的路径：相对于当前页面的 base 路径
+        // 例如：如果当前路径是 /main/index.html，则 env-config.js 在 /main/env-config.js
+        var basePath = window.location.pathname.replace(/\/[^/]*$/, '') || '/';
+        script.src = basePath + (basePath.endsWith('/') ? '' : '/') + 'env-config.js';
+        
+        script.onerror = function() {
+          // 本地开发时文件不存在，使用默认空对象（已在上面初始化）
+          console.log('[env-config] env-config.js 未找到，使用默认配置');
+        };
+        
+        script.onload = function() {
+          console.log('[env-config] env-config.js 已加载');
+        };
+        
+        document.head.appendChild(script);
+      })();
+    </script>
+</head>
+<body>
+<!-- Vue 应用的挂载点：必须与 main.ts 中 app.mount('#app') 对应 -->
+<div id="app"></div>
+<!-- 加载主应用入口脚本（Vite 会自动处理路径） -->
+<script type="module" src="src/main.ts"></script>
+</body>
+</html>
