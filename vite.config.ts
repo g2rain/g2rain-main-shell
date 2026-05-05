@@ -39,24 +39,29 @@ export default defineConfig(({ mode }) => {
         [`${base}keys/iam-public-key`]: {
           target: backendOrigin,
           changeOrigin: true,
+          secure: false,
         },
         [`${base}keys/iam-key-id`]: {
           target: backendOrigin,
           changeOrigin: true,
+          secure: false,
         },
         // 将 /sign_code 路径代理到后端服务器
         [`${base}lua/sign_code`]: {
           target: backendOrigin,
           changeOrigin: true,
+          secure: false,
         },
         [`${base}auth/`]: {
           target: backendOrigin,
           changeOrigin: true,
+          secure: false,
         },
         // 将 /api 路径代理到后端服务器
         [`${base}api/`]: {
           target: backendOrigin,
           changeOrigin: true,
+          secure: false,
         },
       }
     },
