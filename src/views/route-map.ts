@@ -24,7 +24,7 @@ export const routeComponentMap: Record<string, ComponentLoader> = {
 
   // 可以在这里添加更多路由映射
   // '/main/example/page': () => import('@/views/example/Page.vue'),
-  '/main/tenant-provision': () => import('@/views/tenant-provision/index.vue'),
+  '/main/tenant_provision': () => import('@/views/tenant_provision/index.vue'),
 };
 
 /**

@@ -39,10 +39,10 @@ class PageBoot {
           routePath: '/main/passport',
         },
         {
-          key: 'init-tenant-provision',
+          key: 'init-tenant_provision',
           title: '租户初始化',
           type: 'main',
-          routePath: '/main/tenant-provision',
+          routePath: '/main/tenant_provision',
         },
       ],
     };
