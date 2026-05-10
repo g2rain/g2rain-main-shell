@@ -1,3 +1,4 @@
+declare module '*.css';
 interface ImportMetaEnv {
   readonly MODE: string;
   readonly VITE_APPLICATION_CODE: string; // 应用编码

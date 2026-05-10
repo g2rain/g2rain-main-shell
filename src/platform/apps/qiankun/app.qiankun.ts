@@ -156,29 +156,25 @@ class QiankunAdapter implements RuntimeAdapter {
     }
 
     const microApp = this.microApps.get(instanceId);
-    if (!microApp) {
-      // MicroApp 可能已经被 qiankun 内部或其他逻辑卸载，这里不再使用 warn，避免正常流程下的噪音
-      if ((import.meta.env as any).DEV) {
-        console.debug?.(`[QiankunAdapter] ignore destroy, microApp not found: ${instanceId}`);
+    if (microApp) {
+      try {
+        await microApp.unmount();
+      } catch (error) {
+        console.warn(`[QiankunAdapter] destroy 时卸载失败: ${instanceId}`, error);
+      } finally {
+        this.microApps.delete(instanceId);
       }
-      // 即使没有 microApp 实例，也要清理容器
-      const containerElement = document.querySelector(`#${instance.containerId}`);
-      if (containerElement) {
-        containerElement.innerHTML = '';
-        // 清理 qiankun wrapper
-        const wrapper = containerElement.querySelector('[id^="__qiankun_microapp_wrapper_"]');
-        if (wrapper) {
-          wrapper.remove();
-        }
-      }
-      return;
+    } else if ((import.meta.env as any).DEV) {
+      console.debug?.(`[QiankunAdapter] destroy: microApp 已不存在，仅清理容器: ${instanceId}`);
     }
-
-    // 从内部缓存中移除，避免内存泄漏
-    this.microApps.delete(instanceId);
-
-    // 等待一小段时间，确保 qiankun 内部状态更新
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    const containerElement = document.querySelector(`#${instance.containerId}`);
+    if (containerElement) {
+      containerElement.innerHTML = '';
+      const wrapper = containerElement.querySelector('[id^="__qiankun_microapp_wrapper_"]');
+      if (wrapper) {
+        wrapper.remove();
+      }
+    }
 
     console.log(`[QiankunAdapter] 已销毁实例: ${instanceId}`);
   }
@@ -240,11 +236,11 @@ export class QiankunManager extends BaseAppManager {
     // 更新实例的 props
     instance.props = { ...instance.props, ...props };
 
-    // 调用 qiankun 的 update 方法
+    // 调用 qiankun 的 update 方法（必须传合并后的完整 props，子应用 update 依赖 appKey/activeRule 等）
     const qiankunAdapter = this.adapter as QiankunAdapter;
     const microApp = qiankunAdapter.getMicroApp(instanceId);
     if (microApp && microApp.update) {
-      microApp.update(props);
+      microApp.update(instance.props);
       console.log(`[QiankunManager] 已更新实例 props: ${instanceId}`);
     }
   }

@@ -7,22 +7,34 @@ import type {
   MicroAppMessage,
   MicroAppMessageHandler,
   MicroAppMessageUnion,
-  TokenRequestMessage,
-  TokenResponseMessage,
   TokenInvalidMessage,
   RouteChangeMessage,
   EventAdapter,
 } from '@/components/micro-app';
 import {
   MicroAppEventType,
-  isTokenRequestMessage,
-  isTokenResponseMessage,
   isTokenInvalidMessage,
   isRouteChangeMessage,
   MicroAppMessageFactory,
 } from '@/components/micro-app';
 import { MicroAppMessageProcessorImpl } from '@/components/micro-app/message-processor';
 import type { AuthHandler } from './auth-handler.type';
+import { useTabStore } from '@platform/stores/tab.store';
+import { useRuntimeStore } from '@platform/stores/runtime.store';
+import { toShellPath } from '@shared/sub-app-path';
+
+/** 将子应用上报的 fullPath 规范为主壳使用的路径（pathname[+search+hash]，不以 origin 写入 store） */
+function shellPathFromRouteFullPath(fullPath: string): string {
+  if (fullPath.startsWith('http')) {
+    try {
+      const u = new URL(fullPath);
+      return `${u.pathname}${u.search}${u.hash}`;
+    } catch {
+      return fullPath;
+    }
+  }
+  return fullPath.startsWith('/') ? fullPath : `/${fullPath}`;
+}
 
 /**
  * Token 失效消息处理器
@@ -121,12 +133,30 @@ export class RouteChangeHandler implements MicroAppMessageHandler {
     const fullPath = typedMessage.data.fullPath;
     if (!fullPath) return;
 
-    // 构造最终地址：如果是相对路径，则拼上 origin
+    const appKey = typedMessage.data.appKey ?? typedMessage.appKey;
+    if (!appKey) {
+      console.warn('[RouteChangeHandler] 路由消息缺少 appKey，忽略');
+      return;
+    }
+
+    const tabStore = useTabStore();
+    const active = tabStore.activeTab;
+    // 快速切 Tab 时，非当前激活实例迟到的 ROUTE_CHANGE 仍会带旧 appKey；写入 store 会污染该 Tab 的 lastActivePath，切回去时地址串台
+    if (active?.key !== appKey || !active.isSubTab()) {
+      return;
+    }
+
+    const pathnameOnly = shellPathFromRouteFullPath(fullPath);
+    const activeRule = typedMessage.data.activeRule;
+    const pathForStore = toShellPath(activeRule, pathnameOnly);
+
+    const runtimeStore = useRuntimeStore();
+    runtimeStore.setLastActivePath(appKey, pathForStore);
+
     const url = fullPath.startsWith('http')
       ? fullPath
-      : `${window.location.origin}${fullPath}`;
+      : `${window.location.origin}${pathForStore}`;
 
-    // 仅修改浏览器地址栏，不触发主应用 Router 导航
     window.history.replaceState(
       { ...(window.history.state || {}), microApp: true },
       '',

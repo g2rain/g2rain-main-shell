@@ -15,6 +15,24 @@ import type { AppDefinition, RuntimeInstance, TabClass } from '@platform/types';
 import { useTabStore } from '@platform/stores/tab.store';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 import { decodeProtectedHeader } from 'jose';
+import { toInternalPath } from '@shared/sub-app-path';
+
+/**
+ * 同一子应用实例（Tab key / instanceId）上的 mount、unmount、remount、destroy 必须串行执行，
+ * 否则在 qiankun mountPromise 未结束时的切换/关闭会与 DOM、适配器 Map 产生竞态，表现为白屏。
+ */
+const microInstanceOpTails = new Map<string, Promise<unknown>>();
+function enqueueMicroInstanceOp(instanceId: string, op: () => Promise<void>): Promise<void> {
+  const prev = microInstanceOpTails.get(instanceId) ?? Promise.resolve();
+  const next = prev.catch(() => { }).then(op);
+  microInstanceOpTails.set(instanceId, next);
+  void next.finally(() => {
+    if (microInstanceOpTails.get(instanceId) === next) {
+      microInstanceOpTails.delete(instanceId);
+    }
+  });
+  return next as Promise<void>;
+}
 
 export const useRuntimeStore = defineStore('runtime', {
   state: () => ({
@@ -130,16 +148,12 @@ export const useRuntimeStore = defineStore('runtime', {
 
       const containerId = `sub-app-container-${tab.key}`;
 
-      // 使用 runtime 实例中记录的 lastActivePath 作为优先恢复路径
+      // 菜单 linkPath 与 lastActivePath 均可能是「壳路径」或「内路径」，统一成 vue-router 内路径
+      const menuInternal = toInternalPath(app.activeRule, tab.initialPath || '/');
+      let initialRoute = menuInternal;
       const lastActivePath = this.getLastActivePath(instanceId);
-      let initialRoute = tab.initialPath || undefined;
-
-      if (lastActivePath && lastActivePath.startsWith(app.activeRule)) {
-        const subAppRoute = lastActivePath.substring(app.activeRule.length);
-        initialRoute = subAppRoute || '/';
-        console.log(
-          `[RuntimeStore] 从 lastActivePath 提取子应用路由: ${lastActivePath} -> ${initialRoute}`,
-        );
+      if (lastActivePath) {
+        initialRoute = toInternalPath(app.activeRule, lastActivePath);
       }
 
       const entryOrigin: string = app.entry;
@@ -234,7 +248,15 @@ export const useRuntimeStore = defineStore('runtime', {
     clear() {
       this.instances.clear();
       this.currentInstanceId = null;
+      microInstanceOpTails.clear();
       console.log('[RuntimeStore] 已清空所有运行时实例');
+    },
+
+    /**
+     * 等待指定实例上已排队的微前端异步操作全部完成（不改变业务状态，仅排空队列）
+     */
+    syncMicroInstanceOps(instanceId: string): Promise<void> {
+      return enqueueMicroInstanceOp(instanceId, async () => { });
     },
 
     /**
@@ -253,88 +275,91 @@ export const useRuntimeStore = defineStore('runtime', {
       apps.forEach((app) => this.registerApp(app));
     },
 
-    /**
-     * 挂载运行时实例
-     */
-    async mountApp(instance: RuntimeInstance) {
-      if (!instance.app.entry) {
-        console.error('[RuntimeStore] 子应用 entry 为空，拒绝挂载:', instance);
-        return;
-      }
-      try {
-        // 先添加到 store（addInstance 会更新 currentInstance）
-        this.addInstance(instance);
-        // 设置状态为 loading
-        this.updateInstanceStatus(instance.instanceId, 'loading');
-        // 挂载实例
-        const manager = this.getManager;
-        await manager.mountInstance(instance);
-        // 更新状态为 mounted
-        this.updateInstanceStatus(instance.instanceId, 'mounted');
-        console.log(`[RuntimeStore] 已挂载实例: ${instance.instanceId}`);
-      } catch (error) {
-        console.error(`[RuntimeStore] 挂载实例失败: ${instance.instanceId}`, error);
-        // 如果挂载失败，更新状态为 created（保持实例存在，但标记为未挂载）
-        this.updateInstanceStatus(instance.instanceId, 'created');
-        throw error; // 重新抛出错误，让调用者知道失败
-      }
+    mountApp(instance: RuntimeInstance): Promise<void> {
+      const id = instance.instanceId;
+      return enqueueMicroInstanceOp(id, async () => {
+        if (!instance.app.entry) {
+          console.error('[RuntimeStore] 子应用 entry 为空，拒绝挂载:', instance);
+          return;
+        }
+        const cur = this.getInstanceById(id);
+        if (cur?.status === 'mounted' || cur?.status === 'inactive') {
+          return;
+        }
+        try {
+          this.addInstance(instance);
+          this.updateInstanceStatus(id, 'loading');
+          const manager = this.getManager;
+          await manager.mountInstance(instance);
+          this.updateInstanceStatus(id, 'mounted');
+          console.log(`[RuntimeStore] 已挂载实例: ${id}`);
+        } catch (error) {
+          console.error(`[RuntimeStore] 挂载实例失败: ${id}`, error);
+          this.updateInstanceStatus(id, 'created');
+          throw error;
+        }
+      });
     },
 
     /**
      * 卸载运行时实例
      */
-    async unmountApp(instanceId: string) {
-      try {
-        const manager = this.getManager;
-        await manager.unmountInstance(instanceId);
-        // 更新状态为 unmounted
-        this.updateInstanceStatus(instanceId, 'unmounted');
-        console.log(`[RuntimeStore] 已卸载实例: ${instanceId}`);
-      } catch (error) {
-        console.error(`[RuntimeStore] 卸载实例失败: ${instanceId}`, error);
-        // 即使卸载失败，也尝试更新状态（避免状态不一致）
-        const instance = this.getInstanceById(instanceId);
-        if (instance) {
-          this.updateInstanceStatus(instanceId, 'unmounted');
+    unmountApp(instanceId: string): Promise<void> {
+      return enqueueMicroInstanceOp(instanceId, async () => {
+        if (!this.getInstanceById(instanceId)) {
+          return;
         }
-        throw error; // 重新抛出错误，让调用者知道失败
-      }
+        try {
+          const manager = this.getManager;
+          await manager.unmountInstance(instanceId);
+          this.updateInstanceStatus(instanceId, 'unmounted');
+          console.log(`[RuntimeStore] 已卸载实例: ${instanceId}`);
+        } catch (error) {
+          console.error(`[RuntimeStore] 卸载实例失败: ${instanceId}`, error);
+          const instance = this.getInstanceById(instanceId);
+          if (instance) {
+            this.updateInstanceStatus(instanceId, 'unmounted');
+          }
+          throw error;
+        }
+      });
     },
 
     /**
      * 重新挂载已存在的运行时实例（Tab 切回时使用，避免 destroy -> reload）
      */
-    async remountApp(instanceId: string) {
-      const instance = this.instances.get(instanceId);
-      if (!instance) {
-        console.warn(`[RuntimeStore] 运行时实例不存在，无法重新挂载: ${instanceId}`);
-        return;
-      }
+    remountApp(instanceId: string): Promise<void> {
+      return enqueueMicroInstanceOp(instanceId, async () => {
+        const instance = this.instances.get(instanceId);
+        if (!instance) {
+          console.warn(`[RuntimeStore] 运行时实例不存在，无法重新挂载: ${instanceId}`);
+          return;
+        }
 
-      try {
-        // 设置状态为 loading
-        this.updateInstanceStatus(instanceId, 'loading');
-        const manager = this.getManager;
-        await manager.mountInstance(instance);
-        this.updateInstanceStatus(instanceId, 'mounted');
-        console.log(`[RuntimeStore] 已重新挂载实例: ${instanceId}`);
-      } catch (error) {
-        console.error(`[RuntimeStore] 重新挂载实例失败: ${instanceId}`, error);
-        // 如果重新挂载失败，保持 unmounted 状态
-        this.updateInstanceStatus(instanceId, 'unmounted');
-        throw error; // 重新抛出错误，让调用者知道失败
-      }
+        try {
+          this.updateInstanceStatus(instanceId, 'loading');
+          const manager = this.getManager;
+          await manager.mountInstance(this.instances.get(instanceId)!);
+          this.updateInstanceStatus(instanceId, 'mounted');
+          console.log(`[RuntimeStore] 已重新挂载实例: ${instanceId}`);
+        } catch (error) {
+          console.error(`[RuntimeStore] 重新挂载实例失败: ${instanceId}`, error);
+          this.updateInstanceStatus(instanceId, 'unmounted');
+          throw error;
+        }
+      });
     },
 
     /**
-     * 销毁运行时实例
+     * 销毁运行时实例（与 mount 共用队列，确保「挂载中途关 Tab」时先完成或收敛挂载再 teardown）
      */
-    async destroyApp(instanceId: string) {
-      const manager = this.getManager;
-      await manager.destroyInstance(instanceId);
-      // 从 store 中移除
-      this.removeInstance(instanceId);
-      console.log(`[RuntimeStore] 已销毁实例: ${instanceId}`);
+    destroyApp(instanceId: string): Promise<void> {
+      return enqueueMicroInstanceOp(instanceId, async () => {
+        const manager = this.getManager;
+        await manager.destroyInstance(instanceId);
+        this.removeInstance(instanceId);
+        console.log(`[RuntimeStore] 已销毁实例: ${instanceId}`);
+      });
     },
 
     /**

@@ -107,20 +107,18 @@ export abstract class BaseAppManager implements AppManager {
       return;
     }
 
-    // 先卸载
-    if (instance.status === 'mounted') {
+    // 任一已进入 qiankun 生命周期或仍持有 DOM 的状态，都必须先走完整 unmount（仅 mounted 会漏掉 loading / inactive）
+    const needsQiankunUnmount =
+      instance.status === 'mounted' ||
+      instance.status === 'loading' ||
+      instance.status === 'inactive';
+    if (needsQiankunUnmount) {
       await this.unmountInstance(instanceId);
     }
 
-    // 调用适配器销毁
     await this.adapter.destroy(instanceId);
 
-    // 清空容器内容
-    const container = document.querySelector(`#${instance.containerId}`);
-    if (container) {
-      container.innerHTML = '';
-      console.log(`[BaseAppManager] 已清空容器: ${instance.containerId}`);
-    }
+    console.log(`[BaseAppManager] 已销毁实例: ${instanceId}`);
   }
 
   /**
