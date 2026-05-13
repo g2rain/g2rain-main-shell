@@ -1,6 +1,6 @@
 /**
  * API 响应类型定义
- * 
+ *
  * Result 类型已迁移到 @/components/http/types
  * 此处保留重新导出以保持向后兼容
  */
@@ -53,10 +53,10 @@ export interface BaseSelectListDto {
   ids?: number[];
 
   // 更新时间段 [开始时间, 结束时间]，格式：YYYY-MM-DD HH:mm:ss
-  updateTime?: string[];
+  updateTime?: [string, string];
 
   // 创建时间段 [开始时间, 结束时间]，格式：YYYY-MM-DD HH:mm:ss
-  createTime?: string[];
+  createTime?: [string, string];
 
   // 排序字段，格式：["column,direction"]，如 ["id,desc", "createTime,asc"]
   sorts?: string[];
