@@ -71,19 +71,27 @@ export const useTabStore = defineStore('tab', {
      */
     removeTab(key: string) {
       const index = this.tabs.findIndex((tab) => tab.key === key);
-      if (index !== -1) {
-        this.tabs.splice(index, 1);
-
-        // 如果关闭的是当前激活的 TabTypes，则自动激活另一个
-        if (this.activeTabKey === key) {
-          if (this.tabs.length > 0) {
-            this.setActiveTab(this.tabs[Math.max(0, index - 1)].key);
-          } else {
-            // 关闭的是最后一个 Tab，清空激活状态，避免残留 key 导致后续流程异常
-            this.activeTabKey = '';
-          }
-        }
+      if (index === -1) {
+        return;
       }
+
+      const wasActive = this.activeTabKey === key;
+      // 与 Chrome / VS Code 一致：关掉当前 Tab 时优先激活右侧；若是最右侧则激活左侧
+      const preferRight = index < this.tabs.length - 1;
+
+      this.tabs.splice(index, 1);
+
+      if (!wasActive) {
+        return;
+      }
+
+      if (this.tabs.length === 0) {
+        this.activeTabKey = '';
+        return;
+      }
+
+      const nextIndex = preferRight ? index : index - 1;
+      this.setActiveTab(this.tabs[nextIndex].key);
     },
 
     /**

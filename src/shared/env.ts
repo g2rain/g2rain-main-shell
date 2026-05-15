@@ -67,22 +67,21 @@ export const env: SharedEnv = new Proxy({} as SharedEnv, {
   },
 }) as SharedEnv;
 
+/**
+ *  将子路径与 contextPath 拼接成完整路径
+ * - 若 subPath 以 `/` 开头，则直接拼接（如 contextPath + subPath.slice(1)）
+ * - 否则在两者之间补一个 `/`（如 contextPath + '/' + subPath）
+ * - 若 subPath 为空，则返回 contextPath 本身
+ */
 export function getPathWithContextPath(subPath: string): string {
-  const contextPath = env.VITE_CONTEXT_PATH;
-
+  const base = getRouterHistoryBase();
   if (!subPath) {
-    return contextPath;
+    return base;
   }
 
-  if (contextPath.endsWith('/') && subPath.startsWith('/')) {
-    return contextPath + subPath.substring(1);
-  }
-
-  if (!contextPath.endsWith('/') && !subPath.startsWith('/')) {
-    return contextPath + '/' + subPath;
-  }
-
-  return contextPath + subPath;
+  // 若 subPath 以 / 开头, 直接拼接 subPath(此时 base 去掉尾斜杠)
+  // 否则直接字符串相加, 完全避免了 subPath.slice(1) 产生的新字符串内存分配
+  return (subPath.startsWith('/') ? base.slice(0, -1) : base) + subPath;
 }
 
 /**
@@ -90,10 +89,7 @@ export function getPathWithContextPath(subPath: string): string {
  * 值由 `VITE_CONTEXT_PATH`（含 window._env_ 运行时覆盖）推导，替代 import.meta.env.BASE_URL。
  */
 export function getRouterHistoryBase(): string {
-  const raw = getEnvVar('VITE_CONTEXT_PATH', '/');
-  if (!raw || raw === '/') {
-    return '/';
-  }
-  return raw.endsWith('/') ? raw : `${raw}/`;
+  const base = getEnvVar('VITE_CONTEXT_PATH', '/');
+  return `/${base}/`.replace(/\/+/g, '/');
 }
 

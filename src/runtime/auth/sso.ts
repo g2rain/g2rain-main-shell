@@ -5,7 +5,7 @@
 
 import { env, getPathWithContextPath } from '@shared/env';
 import { useAccessTokenStore } from '@platform/stores/token.store';
-import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 import { dpopSign, fetchIamKeyId, fetchIamPublicKey } from '@/components/http/sign';
 import { watch } from 'vue';
 import { Generator } from '@shared/utils/generator';
@@ -51,7 +51,7 @@ class SSOService implements AuthHandler {
       // 使用 getPathWithContextPath 函数处理路径拼接，避免双斜杠
       const fullRedirectPath = getPathWithContextPath(redirectUriPath);
       // 直接拼接 origin 和路径，确保路径以 / 开头
-      const redirectUri = currentOrigin + (fullRedirectPath.startsWith('/') ? fullRedirectPath : '/' + fullRedirectPath);
+      const redirectUri = currentOrigin + fullRedirectPath;
       // 构建SSO认证URL
       const ssoUrl = new URL(ssoBaseUrl + authEndpoint);
 
@@ -222,7 +222,7 @@ class SSOService implements AuthHandler {
    * 刷新 token 的“实际调用者”（发起 HTTP 请求到 token endpoint）
    * 刷新成功后会写入 tokenStore，并返回 token（以及内部所需的 keyId）
    */
-  public async requestRefreshToken( requestData: { grantType: string , userId?: string | number | null}): Promise<{ token: string; tokenKid: string }> {
+  public async requestRefreshToken(requestData: { grantType: string, userId?: string | number | null }): Promise<{ token: string; tokenKid: string }> {
     // 如果正在刷新，返回现有的 Promise
     if (this.isRefreshPending && this.refreshPromise) {
       return this.refreshPromise;

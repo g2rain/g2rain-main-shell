@@ -1,12 +1,7 @@
 import { watch } from 'vue';
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, RouteLocationNormalized, type RouteRecordRaw } from 'vue-router';
 import type { App } from 'vue';
 import { env, getRouterHistoryBase } from '@shared/env';
-import {
-  isPathUnderContextPath,
-  resolveMenuRoutePath,
-  toRouterRecordPath,
-} from '@shared/router-path.util';
 import { getShellRoutes } from '@/shell/route-map';
 import { authRoutes } from './auth';
 import { useMenuStore } from '@platform/stores/menu.store';
@@ -81,8 +76,7 @@ function menuItemToRoute(item: MenuItem): RouteRecordRaw | null {
   }
 
   // 根据 routePath 生成路由名称（将路径转换为驼峰命名）
-  const routeName =
-    item.routePath?.replace(/\/([a-zA-Z0-9])/g, (_, c) => c.toUpperCase()) || 'Home';
+  const routeName = item.routePath?.replace(/\/([a-zA-Z0-9])/g, (_, c) => c.toUpperCase()) || 'Home';
 
   // 从已注册的路由映射中查找组件
   const componentLoader = findRouteComponent(item.routePath);
@@ -95,7 +89,7 @@ function menuItemToRoute(item: MenuItem): RouteRecordRaw | null {
   }
 
   return {
-    path: toRouterRecordPath(item.routePath),
+    path: item.routePath,
     name: routeName,
     component: componentLoader,
     meta: {
@@ -176,29 +170,49 @@ function findMenuItemByRoutePath(menuItems: MenuItem[], routePath: string): Menu
   return null;
 }
 
+/**
+ * 是否为「同一次语义」的导航：fullPath 一致且最终命中的 route record 一致。
+ * 同 path 但从 MicroAppFallback 换成真实动态路由时，最后一项 name/path 会变 → false。
+ */
+function sameMeaningfulRoute(to: RouteLocationNormalized, from: RouteLocationNormalized): boolean {
+  if (to.fullPath !== from.fullPath) {
+    return false;
+  }
+
+  const n = to.matched.length;
+  if (n !== from.matched.length) {
+    return false;
+  }
+
+  if (n === 0) {
+    return true;
+  }
+
+  const a = to.matched[n - 1];
+  const b = from.matched[n - 1];
+  if (a === b) {
+    return true;
+  }
+
+  return a.name === b.name && a.path === b.path;
+}
+
 export const setupRouter = (app: App<Element>) => {
   app.use(router);
 
   const ctx = env.VITE_CONTEXT_PATH.replace(/\/$/, '') || '';
-  const defaultHomePath = '/home';
-  const shellReady = () =>
-    router.getRoutes().some((r) => r.path === defaultHomePath || r.path === '/');
 
   // 添加路由守卫，确保访问主应用路由时能正确显示页面
   router.beforeEach((to, from, next) => {
+    // 如果是同一次语义导航(如从 MicroAppFallback 切换到真实路由), 直接放行, 避免重复逻辑
+    if (sameMeaningfulRoute(to, from)) {
+      next();
+      return;
+    }
+
     // 先获取 store 实例
     const menuStore = useMenuStore();
     const tabStore = useTabStore();
-
-    // 处理 context 根路径：重定向到默认工作台
-    if (
-      to.path === '/' ||
-      to.path === env.VITE_CONTEXT_PATH ||
-      to.path === `${ctx}/` ||
-      to.path === ctx
-    ) {
-      return menuStore.initialized && shellReady() ? next({ path: defaultHomePath }) : next();
-    }
 
     // 微应用路由(通过 MicroAppFallback 匹配)直接放行
     if (to.meta.microApp) {
@@ -206,18 +220,16 @@ export const setupRouter = (app: App<Element>) => {
       return;
     }
 
-    // 非主应用 context 下的路径（如子应用独立前缀）直接放行
-    if (!isPathUnderContextPath(to.path)) {
-      next();
-      return;
-    }
-
-    // 对于其他主应用路由，如果菜单已初始化，自动创建对应的 TabTypes
+    // 对于直链/刷新/收藏夹之类的场景, 如果菜单已初始化，自动创建对应的 TabTypes
     if (menuStore.initialized && to.matched.length > 0) {
-      const menuItem = findMenuItemByRoutePath(
-        menuStore.menuItems,
-        resolveMenuRoutePath(to.path),
-      );
+      // 菜单点击后 TabBoot 会 router.push 同一路径：当前激活主 Tab 已与 to 对齐则跳过 O(n) 查找
+      const active = tabStore.activeTab;
+      if (to.path === active?.routePath) {
+        next();
+        return;
+      }
+
+      const menuItem = findMenuItemByRoutePath(menuStore.menuItems, to.path);
       if (menuItem && menuItem.type === 'main' && menuItem.routePath) {
         // 检查 TabTypes 是否已存在
         if (tabStore.tabs.some((t) => t.key === menuItem.key)) {
@@ -237,28 +249,20 @@ export const setupRouter = (app: App<Element>) => {
 
   watch(
     () => menuStore.initialized,
-    (initialized) => {
+    async (initialized) => {
       if (!initialized) {
         return;
       }
 
       initDynamicRoutes();
 
-      const { path } = router.currentRoute.value;
-      const atShellEntry =
-        path === '/' ||
-        path === env.VITE_CONTEXT_PATH ||
-        path === ctx ||
-        path === `${ctx}/`;
-      if (!atShellEntry) {
+      const { path, fullPath } = router.currentRoute.value;
+      if (!(path === '/' || path === ctx || path === `${ctx}/`)) {
+        router.replace({ path: fullPath, force: true });
         return;
       }
 
-      if (!shellReady()) {
-        return;
-      }
-
-      router.replace({ path: defaultHomePath, force: true });
+      router.replace({ path: '/home', force: true });
     },
     { immediate: true },
   );

@@ -24,8 +24,6 @@ class QiankunAdapter implements RuntimeAdapter {
    */
   async mount(instance: RuntimeInstance): Promise<void> {
     const { app, containerId, props } = instance;
-    const runtimeStore = useRuntimeStore();
-
     // 如果同一 instanceId 之前已有 MicroApp，先卸载并移除，避免重复 mount 导致 #31
     const existingSameInstance = this.microApps.get(instance.instanceId);
     if (existingSameInstance) {
@@ -244,7 +242,7 @@ export class QiankunManager extends BaseAppManager {
     const qiankunAdapter = this.adapter as QiankunAdapter;
     const microApp = qiankunAdapter.getMicroApp(instanceId);
     if (microApp && microApp.update) {
-      microApp.update(props);
+      microApp.update(instance.props);
       console.log(`[QiankunManager] 已更新实例 props: ${instanceId}`);
     }
   }
