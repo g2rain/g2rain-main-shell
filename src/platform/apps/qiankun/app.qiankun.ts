@@ -219,18 +219,18 @@ export class QiankunManager extends BaseAppManager {
      * 控制台报 minified message #31（bootstrap 或 mount 超时），与具体子应用业务代码无关。
      *
      * setBootstrapMaxTime(time, dieOnTimeout)
-     * - time: 15000 — 允许 bootstrap 阶段最多 15 秒（含 entry 下载、脚本执行、子应用 bootstrap 钩子）。
+     * - time: 10000 — 允许 bootstrap 阶段最多 10 秒（含 entry 下载、脚本执行、子应用 bootstrap 钩子）。
      * - dieOnTimeout: true — 超时仍按 single-spa 规则失败并 reject mountPromise，便于上层感知；
      *   仅拉长等待，不掩盖 entry 不可用或永久挂起。
      *
      * setMountMaxTime(time, dieOnTimeout)
-     * - time: 15000 — 允许 mount 阶段最多 15 秒（子应用内 render、initToken、拉资源路由、app.mount 等）。
+     * - time: 10000 — 允许 mount 阶段最多 10 秒（子应用内 render、initToken、拉资源路由、app.mount 等）。
      * - dieOnTimeout: true — 同上；避免 mount 过慢时过早 #31。
      *
      * 注意：调大超时是缓解首访慢，根本仍应保证 entry 可访问、首包够快；过慢应查 endpointUrl 与静态资源部署。
      */
-    setBootstrapMaxTime(15000, true);
-    setMountMaxTime(15000, true);
+    setBootstrapMaxTime(10000, true);
+    setMountMaxTime(10000, true);
 
     start({
       // 允许多个子应用同时处于活动状态（多活），与 Tab 多实例模型保持一致
