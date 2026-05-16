@@ -7,22 +7,15 @@ import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'a
 import { dpopSign } from '../sign';
 import { env } from '@shared/env';
 import { handleError, handleAuthFailure } from '../error-handler';
-import { pendingRequestManager } from '../pending-request-manager';
+import { pendingRequestManager } from '../refresh-barrier';
 import { loadingManager } from '@/components/loading';
 import { FrontendError, FrontendErrorCode } from '@/components/error';
-import {
-  setupBaseRequestInterceptor,
-  setupBaseResponseInterceptor,
-  type InterceptorOptions,
-} from './base';
+import { setupBaseRequestInterceptor, setupBaseResponseInterceptor, type InterceptorOptions } from './base';
 
 /**
  * 设置 Default 类型的请求拦截器
  */
-export function setupDefaultRequestInterceptor(
-  instance: AxiosInstance,
-  options?: InterceptorOptions,
-): void {
+export function setupDefaultRequestInterceptor(instance: AxiosInstance, options?: InterceptorOptions): void {
   // 先设置基础拦截器
   setupBaseRequestInterceptor(instance);
 
@@ -34,7 +27,7 @@ export function setupDefaultRequestInterceptor(
         return config;
       }
 
-      const authSession = options?.authSessionProvider?.();
+      let authSession = options?.authSessionProvider?.();
 
       if (!authSession) {
         throw new Error('NO_LOGIN');
@@ -47,25 +40,22 @@ export function setupDefaultRequestInterceptor(
         throw error;
       }
 
-      // 检查 token 是否需要刷新
+      // access 无效：统一走 runtime 注入的 ensureAccessToken（单飞，不依赖 watch）
       if (!authSession.isAccessTokenValid) {
-        // 如果正在刷新，将请求挂起
-        if (pendingRequestManager.isRefreshing()) {
-          return new Promise<InternalAxiosRequestConfig>((resolve, reject) => {
-            pendingRequestManager.addPendingRequest(config, resolve, reject);
-          });
+        if (!options?.ensureAccessToken) {
+          throw new Error('ensureAccessToken is not configured');
         }
 
-        // 设置 token 过期状态，触发 sso.ts 中的 watch 来刷新 token
-        if (!authSession.tokenExpired) {
-          authSession.setTokenExpired(true);
-        }
-
-        // 等待刷新完成
         try {
-          await pendingRequestManager.waitForRefresh();
-        } catch (error) {
-          console.log(error);
+          await options.ensureAccessToken();
+        } catch {
+          const refreshError = new Error('TOKEN_REFRESH_FAILED');
+          await options?.authErrorHandler?.('TOKEN_REFRESH_FAILED', refreshError);
+          throw refreshError;
+        }
+
+        authSession = options?.authSessionProvider?.()!;
+        if (!authSession.isAccessTokenValid || !authSession.tokenString) {
           const refreshError = new Error('TOKEN_REFRESH_FAILED');
           await options?.authErrorHandler?.('TOKEN_REFRESH_FAILED', refreshError);
           throw refreshError;
@@ -80,7 +70,7 @@ export function setupDefaultRequestInterceptor(
       const jti = crypto.randomUUID();
       const url = config.url ?? '';
       const method = (config.method ?? 'GET').toUpperCase();
-      
+
       // 使用 axios 配置中的 paramsSerializer（来自 client.ts 默认设置），生成规范化查询字符串，仅用于 DPoP 签名
       let params: unknown = '';
       if (config.params != null) {
@@ -102,7 +92,7 @@ export function setupDefaultRequestInterceptor(
           params = config.params;
         }
       }
-      
+
       const data = config.data ?? null;
 
       config.headers.DPoP = await dpopSign(
@@ -124,10 +114,7 @@ export function setupDefaultRequestInterceptor(
 /**
  * 设置 Default 类型的响应拦截器
  */
-export function setupDefaultResponseInterceptor(
-  instance: AxiosInstance,
-  options?: InterceptorOptions,
-): void {
+export function setupDefaultResponseInterceptor(instance: AxiosInstance, options?: InterceptorOptions): void {
   // 先设置基础拦截器
   setupBaseResponseInterceptor(instance);
 
@@ -149,32 +136,36 @@ export function setupDefaultResponseInterceptor(
         return Promise.reject(error);
       }
 
-      // 如果正在刷新，等待刷新完成；否则触发刷新后等待完成
-      if (pendingRequestManager.isRefreshing()) {
-        await pendingRequestManager.waitForRefresh();
-      } else {
-        if (!authSession.tokenExpired) {
-          authSession.setTokenExpired(true);
-        }
-        await pendingRequestManager.waitForRefresh();
+      const ensure = options?.ensureAccessToken;
+      if (!ensure) {
+        loadingManager.hide();
+        return Promise.reject(new Error('ensureAccessToken is not configured'));
+      }
+
+      await ensure({ force: true });
+
+      const session = options?.authSessionProvider?.();
+      if (!session?.isAccessTokenValid || !session.tokenString) {
+        loadingManager.hide();
+        handleAuthFailure(session ?? authSession);
+        return Promise.reject(error);
       }
 
       // 刷新成功后重试
-      if (authSession.isAccessTokenValid && authSession.tokenString) {
-        originalRequest.headers = originalRequest.headers || {};
-        originalRequest.headers.Authorization = `Bearer ${authSession.tokenString}`;
-        return instance(originalRequest);
-      }
-
-      // 刷新完成但 token 仍不可用，视为认证失败
-      loadingManager.hide();
-      handleAuthFailure(authSession);
-      return Promise.reject(error);
+      originalRequest.headers = originalRequest.headers || {};
+      originalRequest.headers.Authorization = `Bearer ${session.tokenString}`;
+      return instance(originalRequest).then(
+        (r) => r,
+        (retryErr) => {
+          throw retryErr;
+        },
+      );
     } catch (refreshError) {
+      const session = options?.authSessionProvider?.();
       pendingRequestManager.clearPendingRequests();
       loadingManager.hide();
       await options?.authErrorHandler?.('TOKEN_REFRESH_FAILED', refreshError);
-      handleAuthFailure(authSession);
+      handleAuthFailure(session ?? authSession);
       return Promise.reject(refreshError);
     }
   };
@@ -245,10 +236,7 @@ export function setupDefaultResponseInterceptor(
 /**
  * 设置 Default 类型的所有拦截器
  */
-export function setupDefaultInterceptors(
-  instance: AxiosInstance,
-  options?: InterceptorOptions,
-): void {
+export function setupDefaultInterceptors(instance: AxiosInstance, options?: InterceptorOptions): void {
   setupDefaultRequestInterceptor(instance, options);
   setupDefaultResponseInterceptor(instance, options);
 }

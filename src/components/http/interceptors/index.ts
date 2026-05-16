@@ -13,11 +13,7 @@ import type { InterceptorOptions } from './base';
  * 设置拦截器
  * 根据 HttpClientType 选择对应的拦截器实现
  */
-export function setupInterceptors(
-  instance: AxiosInstance,
-  type: HttpClientType,
-  options?: InterceptorOptions,
-): void {
+export function setupInterceptors(instance: AxiosInstance, type: HttpClientType, options?: InterceptorOptions): void {
   switch (type) {
     case 'default':
       setupDefaultInterceptors(instance, options);

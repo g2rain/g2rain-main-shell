@@ -216,5 +216,4 @@ export class TabClass {
   getAppName(): string | undefined {
     return this.isSubTab() ? this.app?.name : undefined;
   }
-
 }

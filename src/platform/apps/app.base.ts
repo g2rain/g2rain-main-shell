@@ -43,7 +43,6 @@ export abstract class BaseAppManager implements AppManager {
     // no-op
   }
 
-
   /**
    * 取消注册微应用定义
    */

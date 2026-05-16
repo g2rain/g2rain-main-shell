@@ -9,9 +9,7 @@ export type MockData = any;
  * Mock 数据函数类型
  * 可以根据请求参数动态生成 mock 数据
  */
-export type MockDataFunction = (
-  config: AxiosRequestConfig
-) => MockData | Promise<MockData>;
+export type MockDataFunction = (config: AxiosRequestConfig) => MockData | Promise<MockData>;
 
 /**
  * Mock 数据映射类型

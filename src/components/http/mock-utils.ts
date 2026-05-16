@@ -7,14 +7,10 @@ import { env } from '@shared/env';
  * @param config 请求配置
  * @returns Mock 响应数据
  */
-export async function getMockResponse(
-  config: InternalAxiosRequestConfig,
-): Promise<AxiosResponse> {
+export async function getMockResponse(config: InternalAxiosRequestConfig): Promise<AxiosResponse> {
   const url = config.url || '';
   const headers = config.headers || {};
-  const headerMockEnabled =
-    headers['x-g2rain-mock'] === 'true' || headers['X-G2rain-Mock'] === 'true';
-
+  const headerMockEnabled = headers['x-g2rain-mock'] === 'true' || headers['X-G2rain-Mock'] === 'true';
   const mockData = await mockManager.getMockData(url, config);
 
   if (mockData) {
@@ -71,8 +67,7 @@ export function shouldUseMock(config: InternalAxiosRequestConfig): boolean {
   const headers = config.headers || {};
 
   // 检查 header 中的 x-g2rain-mock
-  const headerMockEnabled =
-    headers['x-g2rain-mock'] === 'true' || headers['X-G2rain-Mock'] === 'true';
+  const headerMockEnabled = headers['x-g2rain-mock'] === 'true' || headers['X-G2rain-Mock'] === 'true';
 
   // 检查环境变量中的 mock 开关
   const envMockEnabled = env.VITE_MOCK_ENABLED;

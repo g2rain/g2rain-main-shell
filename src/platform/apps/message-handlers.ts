@@ -2,21 +2,8 @@
  * 微前端消息处理器实现
  * 每个消息类型都有对应的处理器，继承自 MicroAppMessageHandler
  */
-
-import type {
-  MicroAppMessage,
-  MicroAppMessageHandler,
-  MicroAppMessageUnion,
-  TokenInvalidMessage,
-  RouteChangeMessage,
-  EventAdapter,
-} from '@/components/micro-app';
-import {
-  MicroAppEventType,
-  isTokenInvalidMessage,
-  isRouteChangeMessage,
-  MicroAppMessageFactory,
-} from '@/components/micro-app';
+import type { MicroAppMessage, MicroAppMessageHandler, MicroAppMessageUnion, TokenInvalidMessage, RouteChangeMessage, EventAdapter } from '@/components/micro-app';
+import { MicroAppEventType, isTokenInvalidMessage, isRouteChangeMessage, MicroAppMessageFactory } from '@/components/micro-app';
 import { MicroAppMessageProcessorImpl } from '@/components/micro-app/message-processor';
 import type { AuthHandler } from './auth-handler.type';
 import { useTabStore } from '@platform/stores/tab.store';
@@ -159,10 +146,7 @@ export class RouteChangeHandler implements MicroAppMessageHandler {
  * - 注册子应用 token 失效事件，用于刷新 token 并发送给子应用
  * - 注入 EventAdapter 到 TokenInvalidHandler，用于发送 TokenResponse 消息
  */
-export function initMicroAppMessageHandlers(
-  processor: MicroAppMessageProcessorImpl,
-  eventAdapter: EventAdapter,
-): void {
+export function initMicroAppMessageHandlers(processor: MicroAppMessageProcessorImpl, eventAdapter: EventAdapter): void {
   // 为 TokenInvalidHandler 注入 EventAdapter
   TokenInvalidHandler.setEventAdapter(eventAdapter);
 
@@ -170,8 +154,6 @@ export function initMicroAppMessageHandlers(
   processor.registerHandler(MicroAppEventType.ROUTE_CHANGE, new RouteChangeHandler());
   processor.registerHandler(MicroAppEventType.TOKEN_INVALID, new TokenInvalidHandler());
 
-  console.log(
-    '[MicroAppMessageHandlers] 子应用路由变化和 token 失效事件处理已初始化',
-  );
+  console.log('[MicroAppMessageHandlers] 子应用路由变化和 token 失效事件处理已初始化');
 }
 

@@ -20,9 +20,7 @@ export type BodyFormSerializer = (config: AxiosRequestConfig) => Promise<void>;
  *
  * 必须 await，保证在 axios 拦截器（含 DPoP 签名）执行前 data / headers 已就绪。
  */
-export async function applyFormSerializer(
-  config: AxiosRequestConfig,
-): Promise<AxiosRequestConfig> {
+export async function applyFormSerializer(config: AxiosRequestConfig): Promise<AxiosRequestConfig> {
   const finalConfig: AxiosRequestConfig = { ...config };
   finalConfig.headers = {
     ...(typeof finalConfig.headers === 'object' && finalConfig.headers
@@ -54,9 +52,7 @@ export async function applyFormSerializer(
  * - 再转换为 URLSearchParams 字符串，供签名和适配器复用
  * - 就地修改 config.data / config.headers
  */
-export async function urlEncodedFormSerializer(
-  config: AxiosRequestConfig,
-): Promise<void> {
+export async function urlEncodedFormSerializer(config: AxiosRequestConfig): Promise<void> {
   const headers = (config.headers || {}) as Record<string, any>;
   const rawContentType =
     (headers['Content-Type'] as string | undefined) ??
@@ -107,9 +103,7 @@ export async function urlEncodedFormSerializer(
  * - 始终使用统一编码器 buildMultipartFormDataBytes
  * - 就地修改 config.data（Blob）与 config.headers（Content-Type 含 boundary）
  */
-export async function formDataFormSerializer(
-  config: AxiosRequestConfig,
-): Promise<void> {
+export async function formDataFormSerializer(config: AxiosRequestConfig): Promise<void> {
   if (config.data == null) {
     return;
   }

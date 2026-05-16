@@ -32,6 +32,7 @@ class QiankunAdapter implements RuntimeAdapter {
       } catch (error) {
         console.warn(`[QiankunAdapter] 旧实例卸载失败: ${instance.instanceId}`, error);
       }
+
       this.microApps.delete(instance.instanceId);
       const sameContainer = document.querySelector(`#${containerId}`);
       if (sameContainer) {
