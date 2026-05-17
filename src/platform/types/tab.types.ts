@@ -81,12 +81,7 @@ export class TabClass {
   /**
    * 创建子应用 TabTypes
    */
-  static createSubTab(
-    key: string,
-    title: string,
-    app: AppDefinition,
-    initialPath?: string,
-  ): TabClass {
+  static createSubTab(key: string, title: string, app: AppDefinition, initialPath?: string): TabClass {
     return new TabClass({
       key,
       title,
@@ -221,5 +216,4 @@ export class TabClass {
   getAppName(): string | undefined {
     return this.isSubTab() ? this.app?.name : undefined;
   }
-
 }

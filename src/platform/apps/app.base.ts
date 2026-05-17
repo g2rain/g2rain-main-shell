@@ -43,7 +43,6 @@ export abstract class BaseAppManager implements AppManager {
     // no-op
   }
 
-
   /**
    * 取消注册微应用定义
    */
@@ -107,8 +106,12 @@ export abstract class BaseAppManager implements AppManager {
       return;
     }
 
-    // 先卸载
-    if (instance.status === 'mounted') {
+    // 任一已进入 qiankun 生命周期或仍持有 DOM 的状态，都必须先走完整 unmount（仅 mounted 会漏掉 loading / inactive）
+    const needsQiankunUnmount =
+      instance.status === 'mounted' ||
+      instance.status === 'loading' ||
+      instance.status === 'inactive';
+    if (needsQiankunUnmount) {
       await this.unmountInstance(instanceId);
     }
 

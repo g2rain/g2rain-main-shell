@@ -1,5 +1,3 @@
-import { getPathWithContextPath } from '@shared/env';
-import { toRouterRecordPath } from '@shared/router-path.util';
 import type { IRouteMap, ComponentLoader } from '@/runtime/router/route-map.interface';
 
 /**
@@ -23,8 +21,8 @@ import type { IRouteMap, ComponentLoader } from '@/runtime/router/route-map.inte
  */
 export const shellRouteComponentMap: Record<string, ComponentLoader> = {
   // 首页：根据 contextPath 生成 / 和 /home 对应的完整路径
-  [getPathWithContextPath('/')]: () => import('@/shell/pages/Workspace.vue'),
-  [getPathWithContextPath('/home')]: () => import('@/shell/pages/Workspace.vue'),
+  ['/']: () => import('@/shell/pages/Workspace.vue'),
+  ['/home']: () => import('@/shell/pages/Workspace.vue'),
 
   // 可以在这里添加更多 shell 路由映射
   // '/main/example': () => import('@/shell/pages/Example.vue'),
@@ -61,18 +59,13 @@ export function getAllShellRoutePaths(): string[] {
  * @returns 路由配置数组
  */
 export function getShellRoutes(): import('vue-router').RouteRecordRaw[] {
-  const routes = Object.entries(shellRouteComponentMap).map(([fullPath, component]) => {
-    const path = toRouterRecordPath(fullPath);
+  const routes = Object.entries(shellRouteComponentMap).map(([path, component]) => {
     return {
       path,
       name: path?.replace(/\/([a-zA-Z0-9])/g, (_, c) => c.toUpperCase()) || 'Home',
       component,
       meta: {
-        title:
-          fullPath === getPathWithContextPath('/') ||
-          fullPath === getPathWithContextPath('/home')
-            ? '首页'
-            : '',
+        title: path === '/' || path === '/home' ? '首页' : '',
         requiresAuth: true,
       },
     };

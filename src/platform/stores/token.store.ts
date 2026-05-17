@@ -59,7 +59,7 @@ export const useAccessTokenStore = defineStore('token', {
       this.client = null;
       this.tokenExpired = false;
       this.logged = false;
-      this.status = 'NORMAL';
+      this.status = 'LOGOUT';
     }
   }
 });

@@ -2,27 +2,13 @@
  * 微前端消息处理器实现
  * 每个消息类型都有对应的处理器，继承自 MicroAppMessageHandler
  */
-
-import type {
-  MicroAppMessage,
-  MicroAppMessageHandler,
-  MicroAppMessageUnion,
-  TokenRequestMessage,
-  TokenResponseMessage,
-  TokenInvalidMessage,
-  RouteChangeMessage,
-  EventAdapter,
-} from '@/components/micro-app';
-import {
-  MicroAppEventType,
-  isTokenRequestMessage,
-  isTokenResponseMessage,
-  isTokenInvalidMessage,
-  isRouteChangeMessage,
-  MicroAppMessageFactory,
-} from '@/components/micro-app';
+import type { MicroAppMessage, MicroAppMessageHandler, MicroAppMessageUnion, TokenInvalidMessage, RouteChangeMessage, EventAdapter } from '@/components/micro-app';
+import { MicroAppEventType, isTokenInvalidMessage, isRouteChangeMessage, MicroAppMessageFactory } from '@/components/micro-app';
 import { MicroAppMessageProcessorImpl } from '@/components/micro-app/message-processor';
 import type { AuthHandler } from './auth-handler.type';
+import { useTabStore } from '@platform/stores/tab.store';
+import { useRuntimeStore } from '@platform/stores/runtime.store';
+import { stripActiveRule } from '@/shared/url.util';
 
 /**
  * Token 失效消息处理器
@@ -121,16 +107,35 @@ export class RouteChangeHandler implements MicroAppMessageHandler {
     const fullPath = typedMessage.data.fullPath;
     if (!fullPath) return;
 
-    // 构造最终地址：如果是相对路径，则拼上 origin
-    const url = fullPath.startsWith('http')
-      ? fullPath
-      : `${window.location.origin}${fullPath}`;
+    const appKey = typedMessage.data.appKey
+    if (!appKey) {
+      console.warn('[RouteChangeHandler] 路由消息缺少 appKey，忽略');
+      return;
+    }
+
+    const tabStore = useTabStore();
+    const active = tabStore.activeTab;
+    // 快速切 Tab 时，非当前激活实例迟到的 ROUTE_CHANGE 仍会带旧 appKey；写入 store 会污染该 Tab 的 lastActivePath，切回去时地址串台
+    if (active?.key !== appKey || !active.isSubTab()) {
+      return;
+    }
+
+    const runtimeStore = useRuntimeStore();
+    const internalPath = stripActiveRule(typedMessage.data.activeRule, fullPath);
+    runtimeStore.setLastActivePath(appKey, internalPath);
+
+    console.log('[RouteChangeHandler] 收到子应用路由变化消息，已更新 lastActivePath:', {
+      appKey,
+      activeRule: typedMessage.data.activeRule,
+      fullPath,
+      internalPath,
+    });
 
     // 仅修改浏览器地址栏，不触发主应用 Router 导航
     window.history.replaceState(
       { ...(window.history.state || {}), microApp: true },
       '',
-      url,
+      `${window.location.origin}${fullPath}`,
     );
   }
 }
@@ -141,10 +146,7 @@ export class RouteChangeHandler implements MicroAppMessageHandler {
  * - 注册子应用 token 失效事件，用于刷新 token 并发送给子应用
  * - 注入 EventAdapter 到 TokenInvalidHandler，用于发送 TokenResponse 消息
  */
-export function initMicroAppMessageHandlers(
-  processor: MicroAppMessageProcessorImpl,
-  eventAdapter: EventAdapter,
-): void {
+export function initMicroAppMessageHandlers(processor: MicroAppMessageProcessorImpl, eventAdapter: EventAdapter): void {
   // 为 TokenInvalidHandler 注入 EventAdapter
   TokenInvalidHandler.setEventAdapter(eventAdapter);
 
@@ -152,8 +154,6 @@ export function initMicroAppMessageHandlers(
   processor.registerHandler(MicroAppEventType.ROUTE_CHANGE, new RouteChangeHandler());
   processor.registerHandler(MicroAppEventType.TOKEN_INVALID, new TokenInvalidHandler());
 
-  console.log(
-    '[MicroAppMessageHandlers] 子应用路由变化和 token 失效事件处理已初始化',
-  );
+  console.log('[MicroAppMessageHandlers] 子应用路由变化和 token 失效事件处理已初始化');
 }
 

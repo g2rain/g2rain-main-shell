@@ -6,15 +6,7 @@
  * - 具体的初始化与实例工厂逻辑在 `client.ts` 中实现
  */
 
-import type {
-  HttpClient,
-  HttpClientInstance,
-  HttpClientOptions,
-  HttpClientType,
-  ResponseTypeMap,
-  Result,
-  HttpAuthSession,
-} from './types';
+import type { HttpClient, HttpClientInstance, HttpClientOptions, HttpClientType, ResponseTypeMap, Result, HttpAuthSession, EnsureAccessTokenOptions } from './types';
 import { createHttpClient } from './client';
 import { env } from '@shared/env';
 
@@ -47,9 +39,7 @@ const clientInstanceMap = new Map<HttpClientType, HttpClientInstance<any>>();
  * 获取指定类型的 HttpClient 实例（单例）
  * @template T HttpClientType
  */
-export function getHttpClient<T extends HttpClientType = 'default'>(
-  type: T = 'default' as T,
-): HttpClient<ResponseTypeMap[T]> {
+export function getHttpClient<T extends HttpClientType = 'default'>(type: T = 'default' as T): HttpClient<ResponseTypeMap[T]> {
   if (!clientInstanceMap.has(type)) {
     const options = httpClientOptionsMap[type] || {};
     clientInstanceMap.set(type, createHttpClient<ResponseTypeMap[T]>(options, type));
@@ -62,10 +52,7 @@ export function getHttpClient<T extends HttpClientType = 'default'>(
  * 覆盖指定类型的 HttpClientOptions，并重置对应单例
  * @template T HttpClientType
  */
-export function setHttpClientOptions<T extends HttpClientType>(
-  type: T,
-  options: HttpClientOptions<ResponseTypeMap[T]>,
-): void {
+export function setHttpClientOptions<T extends HttpClientType>(type: T, options: HttpClientOptions<ResponseTypeMap[T]>): void {
   httpClientOptionsMap[type] = options;
   clientInstanceMap.delete(type);
 }
@@ -74,10 +61,7 @@ export function setHttpClientOptions<T extends HttpClientType>(
  * 合并更新指定类型的 HttpClientOptions，并重置对应单例
  * @template T HttpClientType
  */
-export function updateHttpClientOptions<T extends HttpClientType>(
-  type: T,
-  patch: Partial<HttpClientOptions<ResponseTypeMap[T]>>,
-): void {
+export function updateHttpClientOptions<T extends HttpClientType>(type: T, patch: Partial<HttpClientOptions<ResponseTypeMap[T]>>): void {
   httpClientOptionsMap[type] = {
     ...(httpClientOptionsMap[type] || {}),
     ...patch,
@@ -91,10 +75,7 @@ export function updateHttpClientOptions<T extends HttpClientType>(
  * @param type HttpClient 类型
  * @param baseURL 新的 baseURL
  */
-export function updateHttpBaseURL<T extends HttpClientType>(
-  type: T,
-  baseURL: string,
-): void {
+export function updateHttpBaseURL<T extends HttpClientType>(type: T, baseURL: string): void {
   updateHttpClientOptions(type, { baseURL });
   // 如果实例已存在，立即重新创建
   if (clientInstanceMap.has(type)) {
@@ -110,6 +91,7 @@ export type {
   HttpClientType,
   Result,
   HttpAuthSession,
+  EnsureAccessTokenOptions,
 };
 
 // 导出 DPoP 签名相关功能

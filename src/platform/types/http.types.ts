@@ -47,11 +47,7 @@ export interface IHttpClient {
   get<T = any>(url: string, params?: any, config?: Partial<AxiosRequestConfig>): Promise<Result<T>>;
   post<T = any>(url: string, data?: any, config?: Partial<AxiosRequestConfig>): Promise<Result<T>>;
   put<T = any>(url: string, data?: any, config?: Partial<AxiosRequestConfig>): Promise<Result<T>>;
-  delete<T = any>(
-    url: string,
-    params?: any,
-    config?: Partial<AxiosRequestConfig>,
-  ): Promise<Result<T>>;
+  delete<T = any>(url: string, params?: any, config?: Partial<AxiosRequestConfig>): Promise<Result<T>>;
   patch<T = any>(url: string, data?: any, config?: Partial<AxiosRequestConfig>): Promise<Result<T>>;
 }
 

@@ -52,7 +52,7 @@ export const useMicroAppStore = defineStore('microApp', {
     initializeFromMenu(menuItems: MenuItem[]) {
       // 如果已初始化，跳过
       if (this.initialized) {
-        console.log('[MicroAppStore] 微应用列表已初始化，跳过');
+        console.log('[MicroAppStore] 微应用列表已初始化, 跳过');
         return;
       }
 
@@ -64,7 +64,7 @@ export const useMicroAppStore = defineStore('microApp', {
             // 检查是否已存在（去重）
             if (!apps.some((app) => app.appKey === item.key)) {
               if (!item.entry) {
-                console.warn('[MicroAppStore] 子应用菜单缺少 entry，跳过:', item);
+                console.warn('[MicroAppStore] 子应用菜单缺少 entry, 跳过:', item);
                 return;
               }
               apps.push({

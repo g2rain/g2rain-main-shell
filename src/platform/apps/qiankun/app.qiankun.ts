@@ -6,6 +6,7 @@
 import { BaseAppManager } from '../app.base';
 import type { RuntimeInstance, RuntimeAdapter } from '@platform/types';
 import { loadMicroApp, start, type MicroApp } from 'qiankun';
+import { setBootstrapMaxTime, setMountMaxTime } from 'single-spa';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
 import { WindowEventAdapter } from '@/components/micro-app/event-windows-adapter';
 
@@ -24,8 +25,6 @@ class QiankunAdapter implements RuntimeAdapter {
    */
   async mount(instance: RuntimeInstance): Promise<void> {
     const { app, containerId, props } = instance;
-    const runtimeStore = useRuntimeStore();
-
     // 如果同一 instanceId 之前已有 MicroApp，先卸载并移除，避免重复 mount 导致 #31
     const existingSameInstance = this.microApps.get(instance.instanceId);
     if (existingSameInstance) {
@@ -34,6 +33,7 @@ class QiankunAdapter implements RuntimeAdapter {
       } catch (error) {
         console.warn(`[QiankunAdapter] 旧实例卸载失败: ${instance.instanceId}`, error);
       }
+
       this.microApps.delete(instance.instanceId);
       const sameContainer = document.querySelector(`#${containerId}`);
       if (sameContainer) {
@@ -211,6 +211,27 @@ export class QiankunManager extends BaseAppManager {
       return;
     }
 
+    /**
+     * single-spa 生命周期超时（须在 start() / loadMicroApp 之前设置；API 来自 single-spa，非 qiankun 导出）。
+     *
+     * 默认 bootstrap / mount 各 4000ms。loadMicroApp 会先拉菜单里的 entry（HTML + JS），再执行子应用
+     * bootstrap → mount；首次点菜单多为冷加载（无缓存、连接未热、包体解析），容易超过 4s，
+     * 控制台报 minified message #31（bootstrap 或 mount 超时），与具体子应用业务代码无关。
+     *
+     * setBootstrapMaxTime(time, dieOnTimeout)
+     * - time: 10000 — 允许 bootstrap 阶段最多 10 秒（含 entry 下载、脚本执行、子应用 bootstrap 钩子）。
+     * - dieOnTimeout: true — 超时仍按 single-spa 规则失败并 reject mountPromise，便于上层感知；
+     *   仅拉长等待，不掩盖 entry 不可用或永久挂起。
+     *
+     * setMountMaxTime(time, dieOnTimeout)
+     * - time: 10000 — 允许 mount 阶段最多 10 秒（子应用内 render、initToken、拉资源路由、app.mount 等）。
+     * - dieOnTimeout: true — 同上；避免 mount 过慢时过早 #31。
+     *
+     * 注意：调大超时是缓解首访慢，根本仍应保证 entry 可访问、首包够快；过慢应查 endpointUrl 与静态资源部署。
+     */
+    setBootstrapMaxTime(10000, true);
+    setMountMaxTime(10000, true);
+
     start({
       // 允许多个子应用同时处于活动状态（多活），与 Tab 多实例模型保持一致
       singular: false,
@@ -244,7 +265,7 @@ export class QiankunManager extends BaseAppManager {
     const qiankunAdapter = this.adapter as QiankunAdapter;
     const microApp = qiankunAdapter.getMicroApp(instanceId);
     if (microApp && microApp.update) {
-      microApp.update(props);
+      microApp.update(instance.props);
       console.log(`[QiankunManager] 已更新实例 props: ${instanceId}`);
     }
   }

@@ -7,7 +7,6 @@ import { watch, type WatchStopHandle } from 'vue';
 import type { Router } from 'vue-router';
 import { useTabStore } from '@platform/stores';
 import { storeToRefs } from 'pinia';
-import { resolveMenuRoutePath, toRouterRecordPath } from '@shared/router-path.util';
 
 class TabBoot {
   private stopWatch: WatchStopHandle | null = null;
@@ -40,9 +39,10 @@ class TabBoot {
 
         // 主应用路由
         if (currentTab.type === 'main' && currentTab.routePath) {
-          const currentFull = resolveMenuRoutePath(router.currentRoute.value.path);
-          if (currentFull !== currentTab.routePath) {
-            router.push({ path: toRouterRecordPath(currentTab.routePath) });
+          const currentPath = router.currentRoute.value.path;
+          const tabRoutePath = currentTab.routePath;
+          if (currentPath !== tabRoutePath) {
+            router.push({ path: tabRoutePath });
           }
         }
       },

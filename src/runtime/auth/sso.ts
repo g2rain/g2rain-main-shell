@@ -5,13 +5,13 @@
 
 import { env, getPathWithContextPath } from '@shared/env';
 import { useAccessTokenStore } from '@platform/stores/token.store';
-import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 import { dpopSign, fetchIamKeyId, fetchIamPublicKey } from '@/components/http/sign';
 import { watch } from 'vue';
 import { Generator } from '@shared/utils/generator';
 import { generateClient } from '@shared/utils/jwt.util';
-import { getHttpClient, HttpClient, type Result } from '@/components/http';
-import { pendingRequestManager } from '@/components/http/pending-request-manager';
+import { getHttpClient, HttpClient, type Result, type EnsureAccessTokenOptions } from '@/components/http';
+import { pendingRequestManager } from '@/components/http/refresh-barrier';
 import type { AuthHandler, TokenRefreshResult } from '@/platform/apps/auth-handler.type';
 import type { Client } from '@/components/http';
 
@@ -20,6 +20,8 @@ class SSOService implements AuthHandler {
   private isRefreshPending: boolean = false;
   private pendingSubscribers: ((token: string) => void)[] = [];
   private refreshPromise: Promise<{ token: string; tokenKid: string }> | null = null;
+  /** HTTP 层「保证 access 可用」单飞 Promise，与 requestRefreshToken 内单飞配合 */
+  private ensureAccessTokenPromise: Promise<void> | null = null;
   private stopWatchTokenExpired: (() => void) | null = null;
   private stopWatchLogged: (() => void) | null = null;
 
@@ -51,7 +53,7 @@ class SSOService implements AuthHandler {
       // 使用 getPathWithContextPath 函数处理路径拼接，避免双斜杠
       const fullRedirectPath = getPathWithContextPath(redirectUriPath);
       // 直接拼接 origin 和路径，确保路径以 / 开头
-      const redirectUri = currentOrigin + (fullRedirectPath.startsWith('/') ? fullRedirectPath : '/' + fullRedirectPath);
+      const redirectUri = currentOrigin + fullRedirectPath;
       // 构建SSO认证URL
       const ssoUrl = new URL(ssoBaseUrl + authEndpoint);
 
@@ -164,13 +166,50 @@ class SSOService implements AuthHandler {
       });
   }
 
+  /**
+   * 在发业务请求或重试之前调用，保证当前 Pinia 里的 access token 仍然可用；若已过期则发起一次刷新。
+   *
+   * 并发时大家会撞上同一段刷新逻辑，因此用 `ensureAccessTokenPromise` 做单飞：后来的调用不再新开刷新，
+   * 而是附在同一条 Promise 上，等前一次跑完即可——效果上等价于「多人共用一个闸机」。
+   *
+   * 「屏障」指的是：刷新链路在 `requestRefreshToken` 里是分几步走的异步过程，单靠「函数返回」
+   * 并不能可靠地告诉外层的 `await`「整段流程已经收尾」。于是在真正刷新前先向 `pendingRequestManager`
+   * 登记一条待完成的 Promise，刷新成功或失败时由同一套代码路径去 resolve / reject 它。
+   * 这样 `await barrier` 等到的就是「token 已落库、可以安心继续」或「刷新已失败、应走错误处理」，
+   * 而不是某一步中间态；若编排有疏漏，还有超时兜底，避免永远挂死在这条等待上。
+   *
+   * `force: true`：网关已明确判过期（如业务码 `gateway.40002`、HTTP 401）时使用，
+   * 跳过「本地 JWT 仍显示未过期」的早退，避免重试仍带旧 access。
+   */
+  public async ensureAccessToken(opts?: EnsureAccessTokenOptions): Promise<void> {
+    const store = this.getAccessTokenStore();
+    if (!opts?.force && store.isAccessTokenValid) {
+      return;
+    }
+
+    if (!store.isLogin) {
+      throw new Error('NO_LOGIN');
+    }
+
+    if (this.ensureAccessTokenPromise) {
+      return this.ensureAccessTokenPromise;
+    }
+
+    const run = (async () => {
+      const barrier = pendingRequestManager.waitForRefresh();
+      await this.requestRefreshToken({ grantType: 'refresh_token' });
+      await barrier;
+    })();
+
+    this.ensureAccessTokenPromise = run.finally(() => {
+      this.ensureAccessTokenPromise = null;
+    });
+
+    return this.ensureAccessTokenPromise;
+  }
+
   // 获取应用的签名
-  public async callSignApi(
-    httpClient: HttpClient,
-    data: any,
-    headerDPoP: string,
-    jti: string,
-  ): Promise<string> {
+  public async callSignApi(httpClient: HttpClient, data: any, headerDPoP: string, jti: string): Promise<string> {
     try {
       const response = await httpClient.post<{ token: string }>('/lua/sign_code?jti=' + jti, data, {
         headers: {
@@ -189,31 +228,18 @@ class SSOService implements AuthHandler {
   }
 
   /**
-   * 刷新 token（实现 AuthHandler 接口）
-   * @returns 返回刷新后的 token 信息，包含 client
+   * 刷新 token（实现 AuthHandler 接口；供微前端 `TOKEN_INVALID` 等「外部已判失效」场景）
+   * 始终强制走刷新编排，避免本地 JWT 仍显示未过期时把旧 token 回传给子应用。
    */
   public async refreshToken(): Promise<TokenRefreshResult> {
-    const tokenStore = this.getAccessTokenStore();
-
-    // 1. 先检查当前 access token 是否仍然有效，如果未过期则直接返回当前 token
-    if (tokenStore.isAccessTokenValid && tokenStore.tokenString) {
-      const httpClient = getHttpClient('auth');
-      const iamKeyId = await fetchIamKeyId(httpClient);
-
-      return {
-        token: tokenStore.tokenString,
-        tokenKid: iamKeyId,
-        client: tokenStore.client as Client | undefined,
-      };
-    }
-
-    // 2. 如果 token 已过期，则调用刷新逻辑获取新的 token
-    const result = await this.requestRefreshToken({ grantType: 'refresh_token' });
+    await this.ensureAccessToken({ force: true });
     const latestStore = this.getAccessTokenStore();
+    const httpClient = getHttpClient('auth');
+    const iamKeyId = await fetchIamKeyId(httpClient);
 
     return {
-      token: result.token,
-      tokenKid: result.tokenKid,
+      token: latestStore.tokenString!,
+      tokenKid: iamKeyId,
       client: latestStore.client as Client | undefined,
     };
   }
@@ -222,7 +248,7 @@ class SSOService implements AuthHandler {
    * 刷新 token 的“实际调用者”（发起 HTTP 请求到 token endpoint）
    * 刷新成功后会写入 tokenStore，并返回 token（以及内部所需的 keyId）
    */
-  public async requestRefreshToken( requestData: { grantType: string , userId?: string | number | null}): Promise<{ token: string; tokenKid: string }> {
+  public async requestRefreshToken(requestData: { grantType: string, userId?: string | number | null }): Promise<{ token: string; tokenKid: string }> {
     // 如果正在刷新，返回现有的 Promise
     if (this.isRefreshPending && this.refreshPromise) {
       return this.refreshPromise;
@@ -286,22 +312,14 @@ class SSOService implements AuthHandler {
 
         const tokenResult = { token, tokenKid: keyId };
 
-        // 刷新成功，通知所有挂起的请求继续执行
-        const latestTokenStore = this.getAccessTokenStore();
-        pendingRequestManager.resolveRefresh({
-          tokenString: latestTokenStore.tokenString,
-          isAccessTokenValid: latestTokenStore.isAccessTokenValid,
-          tokenExpired: latestTokenStore.tokenExpired,
-          isLogin: latestTokenStore.isLogin,
-          client: latestTokenStore.client,
-          setTokenExpired: (expired: boolean) => latestTokenStore.setTokenExpired(expired),
-        });
+        // 刷新成功：解除 pending 屏障（与 ensureAccessToken 内 waitForRefresh 对齐）
+        pendingRequestManager.resolveRefresh();
 
         return tokenResult;
       } catch (error) {
         console.error('刷新 token 失败:', error);
 
-        // 刷新失败，通知所有挂起的请求失败
+        // 刷新失败：拒绝屏障，使 ensureAccessToken 内 await barrier 失败
         const refreshError = error instanceof Error ? error : new Error('TOKEN_REFRESH_FAILED');
         pendingRequestManager.rejectRefresh(refreshError);
 
@@ -356,16 +374,15 @@ class SSOService implements AuthHandler {
       });
     }
 
-    // 监听 tokenExpired 状态，自动刷新 token
+    // 监听 tokenExpired 状态（UI / 兼容）：统一走 ensureAccessToken，不依赖 false→true 才触发
     this.stopWatchTokenExpired = watch(
       () => tokenStore.tokenExpired,
       async (tokenExpired) => {
-        if (tokenExpired && tokenStore.isLogin && !this.isRefreshPending) {
+        if (tokenExpired && tokenStore.isLogin) {
           try {
-            await this.requestRefreshToken({ grantType: 'refresh_token' });
+            await this.ensureAccessToken();
           } catch (error) {
             console.error('[SSOService] 自动刷新 token 失败:', error);
-            // 刷新失败，可能需要重新登录
             if (tokenStore.status === 'NORMAL') {
               await this.redirectToSSO();
             }

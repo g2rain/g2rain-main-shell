@@ -23,7 +23,7 @@ class PageBoot {
       key: 'main',
       title: '首页',
       type: 'main',
-      routePath: '/main/',
+      routePath: '/',
     };
 
     // 创建初始化菜单项（包含子菜单）
@@ -36,13 +36,13 @@ class PageBoot {
           key: 'init-passport',
           title: '账号管理',
           type: 'main',
-          routePath: '/main/passport',
+          routePath: '/passport',
         },
         {
           key: 'init-tenant_provision',
           title: '租户初始化',
           type: 'main',
-          routePath: '/main/tenant_provision',
+          routePath: '/tenant_provision',
         },
       ],
     };

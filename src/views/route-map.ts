@@ -20,11 +20,11 @@ import type { IRouteMap, ComponentLoader } from '@/runtime/router/route-map.inte
  */
 export const routeComponentMap: Record<string, ComponentLoader> = {
   // 系统设置
-  '/main/passport': () => import('@/views/passport/index.vue'),
+  '/passport': () => import('@/views/passport/index.vue'),
 
   // 可以在这里添加更多路由映射
   // '/main/example/page': () => import('@/views/example/Page.vue'),
-  '/main/tenant_provision': () => import('@/views/tenant_provision/index.vue'),
+  '/tenant_provision': () => import('@/views/tenant_provision/index.vue'),
 };
 
 /**
