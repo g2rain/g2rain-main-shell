@@ -23,7 +23,7 @@ class PageBoot {
       key: 'main',
       title: '首页',
       type: 'main',
-      routePath: '/',
+      routePath: '/home',
     };
 
     // 创建初始化菜单项（包含子菜单）
