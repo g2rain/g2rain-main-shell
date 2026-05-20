@@ -54,11 +54,8 @@ const processCallback = () => {
   sso
     .generateToken(code)
     .then(() => {
-      // 跳转到首页或之前访问的页面
-      const returnUrl = localStorage.getItem('return_url') || '/';
-      localStorage.removeItem('return_url');
-      console.log(`returnUrl:${returnUrl}`);
-      return g2rainRouter.push(returnUrl);
+      // 先进壳稳定入口，由 tab.boot / page.boot 在菜单就绪后 restoreAfterAuth 打开 return_url
+      return g2rainRouter.replace('/home');
     })
     .catch((err) => {
       error.value = err instanceof Error ? err.message : '认证处理失败';

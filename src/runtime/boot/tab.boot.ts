@@ -6,10 +6,15 @@
 import { watch, type WatchStopHandle } from 'vue';
 import type { Router } from 'vue-router';
 import { useTabStore } from '@platform/stores';
+import { useMenuStore } from '@platform/stores/menu.store';
+import { useMicroAppStore } from '@platform/stores/app.store';
+import { useAccessTokenStore } from '@platform/stores/token.store';
 import { storeToRefs } from 'pinia';
+import { restoreAfterAuth } from '@runtime/navigation/sub-app-redirect';
 
 class TabBoot {
   private stopWatch: WatchStopHandle | null = null;
+  private stopRestoreWatch: WatchStopHandle | null = null;
 
   /**
    * 启动 Tab 路由同步
@@ -22,8 +27,14 @@ class TabBoot {
     if (this.stopWatch) {
       this.stopWatch();
     }
+    if (this.stopRestoreWatch) {
+      this.stopRestoreWatch();
+    }
 
     const tabStore = useTabStore();
+    const menuStore = useMenuStore();
+    const microAppStore = useMicroAppStore();
+    const tokenStore = useAccessTokenStore();
 
     const { tabList: tabs, activeTabKey } = storeToRefs(tabStore);
 
@@ -49,6 +60,19 @@ class TabBoot {
       { immediate: true },
     );
 
+    this.stopRestoreWatch = watch(
+      () =>
+        [
+          tokenStore.isLogin,
+          menuStore.initialized,
+          microAppStore.initialized,
+        ] as const,
+      () => {
+        restoreAfterAuth(router);
+      },
+      { immediate: true },
+    );
+
     console.log('[TabBoot] 已启动 Tab 路由同步');
   }
 
@@ -59,6 +83,10 @@ class TabBoot {
     if (this.stopWatch) {
       this.stopWatch();
       this.stopWatch = null;
+    }
+    if (this.stopRestoreWatch) {
+      this.stopRestoreWatch();
+      this.stopRestoreWatch = null;
     }
     console.log('[TabBoot] 已停止 Tab 路由同步');
   }
