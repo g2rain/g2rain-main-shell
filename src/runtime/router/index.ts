@@ -8,10 +8,23 @@ import { useMenuStore } from '@platform/stores/menu.store';
 import { useTabStore } from '@platform/stores';
 import type { MenuItem } from '@platform/types';
 import type { IRouteMap } from './route-map.interface';
+import {
+  isRedirectGatewayPath,
+  restoreAfterAuth,
+  saveReturnUrl,
+} from '@runtime/navigation/sub-app-redirect';
+import { useAccessTokenStore } from '@platform/stores/token.store';
+import { useMicroAppStore } from '@platform/stores/app.store';
 
 const routes: RouteRecordRaw[] = [
   ...authRoutes,
   ...getShellRoutes(),
+  {
+    path: '/redirect/:pathMatch(.*)*',
+    name: 'SubAppRedirectGateway',
+    component: () => import('@/views/redirect/SubAppRedirectGateway.vue'),
+    meta: { title: '子应用跳转', requiresAuth: false },
+  },
   // 静默的兜底路由，只用于匹配，避免 Vue Router 警告
   {
     path: '/:pathMatch(.*)*',
@@ -214,8 +227,27 @@ export const setupRouter = (app: App<Element>) => {
     const menuStore = useMenuStore();
     const tabStore = useTabStore();
 
+    // 子应用网关（登录态由页面处理；未登录时记录 return_url）
+    if (isRedirectGatewayPath(to.fullPath)) {
+      const tokenStore = useAccessTokenStore();
+      if (!tokenStore.isLogin) {
+        saveReturnUrl(to.fullPath);
+      }
+      next();
+      return;
+    }
+
     // 微应用路由(通过 MicroAppFallback 匹配)直接放行
     if (to.meta.microApp) {
+      const tokenStore = useAccessTokenStore();
+      if (!tokenStore.isLogin) {
+        saveReturnUrl(to.fullPath);
+      } else if (menuStore.initialized) {
+        const microAppStore = useMicroAppStore();
+        if (microAppStore.initialized && !tabStore.activeTabKey) {
+          restoreAfterAuth(router);
+        }
+      }
       next();
       return;
     }
@@ -256,7 +288,12 @@ export const setupRouter = (app: App<Element>) => {
 
       initDynamicRoutes();
 
+      restoreAfterAuth(router);
+
       const { path, fullPath } = router.currentRoute.value;
+      if (isRedirectGatewayPath(fullPath)) {
+        return;
+      }
       if (!(path === '/' || path === ctx || path === `${ctx}/`)) {
         router.replace({ path: fullPath, force: true });
         return;

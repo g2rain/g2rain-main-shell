@@ -17,6 +17,7 @@ import { useTabStore } from '@platform/stores';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
 import { TokenInvalidHandler } from '@platform/apps';
 import { initHttp } from '@runtime/http';
+import { clearReturnUrl, resetNavigationRestoreState } from '@runtime/navigation/sub-app-redirect';
 
 /**
  * 启动所有服务
@@ -129,6 +130,9 @@ export function logout(router?: Router): void {
   const tabStore = useTabStore();
   tabStore.tabs = [];
   tabStore.activeTabKey = '';
+
+  clearReturnUrl();
+  resetNavigationRestoreState();
 
   // 6. 跳转到退出页面（如果提供了 router）
   if (router) {
