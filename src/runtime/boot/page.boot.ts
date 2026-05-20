@@ -9,6 +9,8 @@ import { useMicroAppStore } from '@platform/stores/app.store';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 import { getMenuList } from '@/runtime/api/menu.api';
 import type { MenuItem } from '@platform/types';
+import router from '@runtime/router/index';
+import { restoreAfterAuth } from '@runtime/navigation/sub-app-redirect';
 
 class PageBoot {
   private stopWatch: (() => void) | null = null; // watch 停止函数
@@ -94,6 +96,8 @@ class PageBoot {
       }
 
       console.log('[PageBoot] 菜单和微应用列表初始化完成');
+
+      restoreAfterAuth(router);
     } catch (error) {
       console.error('[PageBoot] 初始化菜单失败:', error);
       throw error;

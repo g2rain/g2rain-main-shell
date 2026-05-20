@@ -14,6 +14,7 @@ import { getHttpClient, HttpClient, type Result, type EnsureAccessTokenOptions }
 import { pendingRequestManager } from '@/components/http/refresh-barrier';
 import type { AuthHandler, TokenRefreshResult } from '@/platform/apps/auth-handler.type';
 import type { Client } from '@/components/http';
+import { saveReturnUrl } from '@runtime/navigation/sub-app-redirect';
 
 class SSOService implements AuthHandler {
   private isAuthenticationPending: boolean = false;
@@ -65,6 +66,8 @@ class SSOService implements AuthHandler {
       });
 
       ssoUrl.search = params.toString();
+
+      saveReturnUrl();
 
       // 跳转到SSO页面
       window.location.href = ssoUrl.toString();
