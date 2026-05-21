@@ -46,8 +46,8 @@ export const useTabStore = defineStore('tab', {
     /**
      * 从菜单项添加 TabTypes
      */
-    addTabFromMenuItem(menuItem: MenuItem) {
-      const tabClass = TabClass.fromMenuItem(menuItem);
+    addTabFromMenuItem(menuItem: MenuItem, initialPathOverride?: string) {
+      const tabClass = TabClass.fromMenuItem(menuItem, initialPathOverride);
       if (tabClass) {
         this.addTab(tabClass);
       }

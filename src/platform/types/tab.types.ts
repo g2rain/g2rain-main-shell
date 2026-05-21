@@ -94,7 +94,7 @@ export class TabClass {
   /**
    * 从 MenuItem 创建 TabTypes
    */
-  static fromMenuItem(menuItem: MenuItem): TabClass | null {
+  static fromMenuItem(menuItem: MenuItem, initialPathOverride?: string): TabClass | null {
     // 只处理 'main' 和 'sub' 类型的菜单项，忽略 'group' 类型
     if (menuItem.type === 'main') {
       if (!menuItem.routePath) {
@@ -121,8 +121,11 @@ export class TabClass {
         return null;
       }
 
-      // 使用 store 中的 AppDefinition，initialPath 仍然来自菜单的 routePath（子应用内部初始路由）
-      return TabClass.createSubTab(menuItem.key, menuItem.title, appFromStore, menuItem.routePath);
+      const initialPath =
+        initialPathOverride !== undefined && initialPathOverride !== ''
+          ? initialPathOverride
+          : menuItem.routePath;
+      return TabClass.createSubTab(menuItem.key, menuItem.title, appFromStore, initialPath);
     }
     return null;
   }

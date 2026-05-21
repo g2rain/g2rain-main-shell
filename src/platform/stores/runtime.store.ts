@@ -44,6 +44,8 @@ export const useRuntimeStore = defineStore('runtime', {
      * 注意：首次激活子应用 tab 时，实例可能尚未创建，因此需要用 id 表达“期望激活的实例”
      */
     currentInstanceId: null as string | null,
+    /** 实例尚未创建时暂存的子应用内部路径（刷新/网关恢复） */
+    pendingLastActivePaths: {} as Record<string, string>,
   }),
 
   getters: {
@@ -232,15 +234,22 @@ export const useRuntimeStore = defineStore('runtime', {
      */
     setLastActivePath(instanceId: string, path: string) {
       const instance = this.instances.get(instanceId);
-      if (!instance) return;
-      this.instances.set(instanceId, { ...instance, lastActivePath: path });
+      if (instance) {
+        this.instances.set(instanceId, { ...instance, lastActivePath: path });
+        delete this.pendingLastActivePaths[instanceId];
+        return;
+      }
+      this.pendingLastActivePaths[instanceId] = path;
     },
 
     /**
      * 获取子应用 Tab 的最后激活路径
      */
     getLastActivePath(instanceId: string): string | undefined {
-      return this.instances.get(instanceId)?.lastActivePath;
+      return (
+        this.instances.get(instanceId)?.lastActivePath ??
+        this.pendingLastActivePaths[instanceId]
+      );
     },
 
     /**
@@ -248,6 +257,7 @@ export const useRuntimeStore = defineStore('runtime', {
      */
     clear() {
       this.instances.clear();
+      this.pendingLastActivePaths = {};
       this.currentInstanceId = null;
       microInstanceOpTails.clear();
       console.log('[RuntimeStore] 已清空所有运行时实例');

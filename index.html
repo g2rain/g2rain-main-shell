@@ -13,10 +13,10 @@
         window._env_ = window._env_ || {};
         
         var script = document.createElement('script');
-        // 计算 env-config.js 的路径：相对于当前页面的 base 路径
-        // 例如：如果当前路径是 /main/index.html，则 env-config.js 在 /main/env-config.js
-        var basePath = window.location.pathname.replace(/\/[^/]*$/, '') || '/';
-        script.src = basePath + (basePath.endsWith('/') ? '' : '/') + 'env-config.js';
+        // 构建时由 vite-plugin-env-config 注入 VITE_CONTEXT_PATH（如 /main），与静态资源 base 一致
+        // 勿用 location.pathname 截断：/main/redirect/manager/... 会误请求 .../manager/env-config.js
+        var basePath = '__G2RAIN_APP_CONTEXT_PATH__';
+        script.src = basePath + '/env-config.js';
         
         script.onerror = function() {
           // 本地开发时文件不存在，使用默认空对象（已在上面初始化）

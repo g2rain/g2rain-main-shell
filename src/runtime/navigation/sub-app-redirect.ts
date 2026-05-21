@@ -205,6 +205,38 @@ function findMainMenuItemByRoutePath(menuItems: MenuItem[], routePath: string): 
   return null;
 }
 
+function normalizeInternalRoute(path: string): string {
+  const p = normalizePathname(path);
+  return p || '/';
+}
+
+/** 菜单 routePath 与 URL 剥离后的内部路径是否一致（用于刷新深链选中正确菜单项） */
+function menuItemMatchesInternalPath(menuItem: MenuItem, internalPath: string): boolean {
+  const menuRoute = normalizeInternalRoute(menuItem.routePath || '/');
+  if (menuRoute === '/') {
+    return true;
+  }
+
+  return internalPath === menuRoute || internalPath.startsWith(`${menuRoute}/`);
+}
+
+function scoreSubMenuItemForInternalPath(menuItem: MenuItem, rule: string, internalPath: string): number {
+  const menuRoute = normalizeInternalRoute(menuItem.routePath || '/');
+  if (menuRoute === '/') {
+    return rule.length;
+  }
+
+  if (internalPath === menuRoute) {
+    return rule.length * 10000 + menuRoute.length * 100 + 1000;
+  }
+
+  if (internalPath.startsWith(`${menuRoute}/`)) {
+    return rule.length * 10000 + menuRoute.length * 100;
+  }
+
+  return -1;
+}
+
 function findSubMenuItemByTargetPath(menuItems: MenuItem[], targetFullPath: string): {
   menuItem: MenuItem;
   internalPath: string;
@@ -212,30 +244,49 @@ function findSubMenuItemByTargetPath(menuItems: MenuItem[], targetFullPath: stri
   const { pathname } = splitPathAndSuffix(targetFullPath);
   const normalizedTarget = normalizePathname(pathname);
 
-  let best: { menuItem: MenuItem; rule: string } | null = null;
+  const candidates: { menuItem: MenuItem; rule: string }[] = [];
 
   for (const item of collectMenuItems(menuItems)) {
     if (item.type !== 'sub' || !item.activeRule) {
       continue;
     }
+
     const rule = normalizeActiveRule(item.activeRule);
     if (rule === '/') {
       continue;
     }
+
     if (normalizedTarget === rule || normalizedTarget.startsWith(`${rule}/`)) {
-      if (!best || rule.length > best.rule.length) {
-        best = { menuItem: item, rule };
-      }
+      candidates.push({ menuItem: item, rule });
     }
   }
 
-  if (!best) {
+  if (candidates.length === 0) {
     return null;
   }
 
+  const longestRule = candidates.reduce((a, b) => (a.rule.length >= b.rule.length ? a : b)).rule;
+  const internalPath = stripActiveRule(longestRule, normalizedTarget);
+
+  const matching = candidates.filter((c) =>
+    menuItemMatchesInternalPath(c.menuItem, internalPath),
+  );
+  const pool = matching.length > 0 ? matching : candidates;
+
+  let bestItem = pool[0].menuItem;
+  let bestScore = scoreSubMenuItemForInternalPath(bestItem, pool[0].rule, internalPath);
+
+  for (let i = 1, j = pool.length; i < j; i++) {
+    const score = scoreSubMenuItemForInternalPath(pool[i].menuItem, pool[i].rule, internalPath);
+    if (score > bestScore) {
+      bestScore = score;
+      bestItem = pool[i].menuItem;
+    }
+  }
+
   return {
-    menuItem: best.menuItem,
-    internalPath: stripActiveRule(best.rule, normalizedTarget),
+    menuItem: bestItem,
+    internalPath,
   };
 }
 
@@ -289,7 +340,7 @@ function openSubTarget(targetFullPath: string, internalPath?: string): boolean {
   if (tabStore.tabs.some((t) => t.key === resolved.menuItem.key)) {
     tabStore.setActiveTab(resolved.menuItem.key);
   } else {
-    tabStore.addTabFromMenuItem(resolved.menuItem);
+    tabStore.addTabFromMenuItem(resolved.menuItem, pathToRemember);
   }
 
   if (pathToRemember) {
