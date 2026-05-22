@@ -51,7 +51,11 @@ echo "Image:   $IMAGE"
 echo "Tag:     $TAG"
 echo "Mode:    $BUILD_MODE"
 
-docker build --build-arg "VITE_BUILD_MODE=$BUILD_MODE" -t "$IMAGE:$TAG" .
+export DOCKER_BUILDKIT=1
+docker build \
+  --build-arg "VITE_BUILD_MODE=$BUILD_MODE" \
+  -t "$IMAGE:$TAG" \
+  .
 
 echo "=== Build completed: $IMAGE:$TAG ==="
 
