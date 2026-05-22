@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import App from './App.vue';
+import { i18n } from '@platform/i18n';
 
 // runtime store 和 router
 import { setupStore } from '@runtime/store';
@@ -25,6 +26,8 @@ async function bootstrap() {
   // 1. 初始化状态管理
   // -------------------------
   setupStore(app);
+
+  app.use(i18n);
 
   // -------------------------
   // 2. 安装 ElementPlus UI

@@ -7,6 +7,7 @@ import type { Router } from 'vue-router';
 import router from '@runtime/router/index';
 import { sso } from '@runtime/auth';
 import { pageBoot } from '@/runtime/boot/page.boot';
+import { localeBoot } from '@/runtime/boot/locale.boot';
 import { tabBoot } from '@/runtime/boot/tab.boot';
 import { microAppBoot } from '@/runtime/boot/micro-app.boot';
 import { mockBoot } from '@/runtime/boot/mock.boot';
@@ -15,6 +16,8 @@ import { useMenuStore } from '@platform/stores/menu.store';
 import { useMicroAppStore } from '@platform/stores';
 import { useTabStore } from '@platform/stores';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
+import { useLocaleStore } from '@platform/stores/locale.store';
+import { resetI18nLoader } from '@platform/i18n';
 import { TokenInvalidHandler } from '@platform/apps';
 import { initHttp } from '@runtime/http';
 import { clearReturnUrl, resetNavigationRestoreState } from '@runtime/navigation/sub-app-redirect';
@@ -47,6 +50,10 @@ export function start(): void {
   // 2. 加载资源服务（依赖 token，监听登录状态加载菜单）
   pageBoot.start();
   console.log('[Boot] ✅ Resource Service 已加载');
+
+  // 2.1 加载地域语言（依赖 token，登录后拉取语言列表）
+  localeBoot.start();
+  console.log('[Boot] ✅ Locale Service 已加载');
 
   // 3. 加载微应用监控（依赖菜单，监听菜单初始化状态）
   microAppBoot.startMicroApp();
@@ -90,6 +97,7 @@ export function unloadServices(): void {
 
   // 2. 停止资源服务
   pageBoot.stop();
+  localeBoot.stop();
   console.log('[Boot] ✅ Resource Service 已卸载');
 
   // 1. 停止 SSO 服务
@@ -121,6 +129,11 @@ export function logout(router?: Router): void {
   // 3. 清理菜单 store
   const menuStore = useMenuStore();
   menuStore.reset();
+
+  // 3.1 清理语言 store（保留 localStorage 中的用户偏好）
+  const localeStore = useLocaleStore();
+  localeStore.reset();
+  resetI18nLoader();
 
   // 4. 清理微应用 store
   const microAppStore = useMicroAppStore();

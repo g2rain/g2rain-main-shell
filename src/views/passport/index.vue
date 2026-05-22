@@ -2,7 +2,7 @@
   <div class="passport-page">
     <!-- 页面标题 -->
     <div class="passport-page__header">
-      <h2>账号管理</h2>
+      <h2>{{ $t('PASSPORT_MANAGER', '账号管理') }}</h2>
     </div>
 
     <!-- 用户信息展示 -->
@@ -161,6 +161,7 @@ import { ref, reactive, onMounted } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage } from 'element-plus';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import { t } from '@platform/i18n';
 import { PassportApi } from './api';
 import { getAuthorityUser } from '@/runtime/api/user.api';
 import type { UserVo, PassportVo } from '@/runtime/api/user.api';
@@ -331,7 +332,7 @@ const submitEditPassport = async () => {
       id: passportInfo.value?.id,
       ...editPassportForm,
     });
-    ElMessage.success('Passport信息更新成功');
+    ElMessage.success(t('PASSPORT_SAVE_SUCCESS', '保存成功'));
     editPassportDialogVisible.value = false;
     // 重新加载用户信息
     await loadUserInfo();

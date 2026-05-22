@@ -2,9 +2,20 @@
   <header class="main-header">
     <div class="logo">谷雨开源SaaS平台</div>
     <div class="header-right">
-      <!-- 国际化语言选择（仅选择，暂不处理切换逻辑） -->
-      <el-select v-model="selectedLocaleCode" placeholder="选择语言" filterable class="locale-select">
-        <el-option v-for="item in localeOptions" :key="item.code" :label="item.name" :value="item.code"/>
+      <el-select
+        v-model="selectedLocaleCode"
+        placeholder="选择语言"
+        filterable
+        class="locale-select"
+        :disabled="!localeStore.initialized || localeStore.options.length === 0"
+        :loading="!localeStore.initialized"
+      >
+        <el-option
+          v-for="item in localeStore.options"
+          :key="item.code"
+          :label="item.name"
+          :value="item.code"
+        />
       </el-select>
 
       <!-- 主题切换 -->
@@ -53,29 +64,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { Setting, Check, ArrowDown, SwitchButton } from '@element-plus/icons-vue';
-import { useThemeStore } from '@platform/stores';
+import { useThemeStore, useLocaleStore } from '@platform/stores';
 import { logout } from '@/runtime/boot';
 import type { ThemeMode } from '@platform/theme/types';
-import { getLocaleCodeNameList, type LocaleCodeName } from '@/runtime/api/locale.api';
 
 const router = useRouter();
 const themeStore = useThemeStore();
+const localeStore = useLocaleStore();
 
-const selectedLocaleCode = ref('');
-const localeOptions = ref<LocaleCodeName[]>([]);
-onMounted(async () => {
-  try {
-    const list = await getLocaleCodeNameList();
-    localeOptions.value = list;
-    if (list.length > 0) {
-      selectedLocaleCode.value = list[0].code;
-    }
-  } catch (error) {
-    console.warn('[Header] 加载语言列表失败:', error);
-  }
+const selectedLocaleCode = computed({
+  get: () => localeStore.currentCode,
+  set: (code: string) => {
+    void localeStore.setCurrentCode(code);
+  },
 });
 
 // 当前主题模式
