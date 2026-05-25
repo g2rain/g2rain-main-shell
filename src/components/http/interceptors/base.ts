@@ -7,6 +7,7 @@ import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'a
 import { loadingManager, shouldShowLoading } from '@/components/loading';
 import { shouldUseMock } from '../mock-utils';
 import type { HttpAuthSession, EnsureAccessTokenOptions } from '../types';
+import { applyAcceptLanguageHeader } from '@platform/locale';
 
 /**
  * 拦截器配置选项
@@ -51,10 +52,12 @@ export function setupBaseRequestInterceptor(instance: AxiosInstance): void {
         // 标记为使用 mock，将在 adapter 中处理
         (config as any).__useMock = true;
         console.log('[HTTP Request] 已标记为使用 Mock，跳过认证和签名步骤');
+        applyAcceptLanguageHeader(config);
         // Mock 请求不显示 loading，直接返回 config，跳过后续的认证和签名步骤
         return config;
       }
 
+      applyAcceptLanguageHeader(config);
       return config;
     },
     (error) => {

@@ -14,6 +14,8 @@ import type { MicroAppMessageUnion } from '@/components/micro-app';
 import type { AppDefinition, RuntimeInstance, TabClass } from '@platform/types';
 import { useTabStore } from '@platform/stores/tab.store';
 import { useAccessTokenStore } from '@platform/stores/token.store';
+import { useLocaleStore } from '@platform/stores/locale.store';
+import { buildSubAppLocaleProps } from '@platform/locale';
 import { decodeProtectedHeader } from 'jose';
 
 /**
@@ -161,6 +163,9 @@ export const useRuntimeStore = defineStore('runtime', {
 
       const entryOrigin: string = app.entry;
 
+      const localeStore = useLocaleStore();
+      const localeProps = buildSubAppLocaleProps(localeStore.locale) ?? {};
+
       return {
         instanceId,
         tabKey: tab.key,
@@ -173,9 +178,36 @@ export const useRuntimeStore = defineStore('runtime', {
           activeRule: app.activeRule,
           entryOrigin, // 添加 entryOrigin，用于子应用的后端请求
           ...tokenProps,
+          ...localeProps,
           initialRoute,
         },
       };
+    },
+
+    /** 主应用切换语言后，同步到已挂载/待激活的子应用实例 */
+    pushLocaleToSubApps() {
+      const localeStore = useLocaleStore();
+      const localeProps = buildSubAppLocaleProps(localeStore.locale);
+      if (!localeProps) {
+        return;
+      }
+
+      const manager = this.getManager as QiankunManager;
+      manager.setGlobalProps(localeProps);
+
+      for (const instance of this.allInstances) {
+        if (!instance.app?.appKey) {
+          continue;
+        }
+        instance.props = { ...instance.props, ...localeProps };
+        if (
+          instance.status === 'mounted' ||
+          instance.status === 'inactive' ||
+          instance.status === 'loading'
+        ) {
+          void manager.updateInstanceProps(instance.instanceId, localeProps);
+        }
+      }
     },
     /**
      * 添加运行时实例

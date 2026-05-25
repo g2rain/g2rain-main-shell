@@ -31,6 +31,8 @@ export interface Token {
   applicationScopes: ApplicationScope[]; // 可用应用列表
   expireAt: number; // 过期时间
   refreshExpireAt: number; // token刷新过期时间
+  adminCompany: boolean; // 平台管理组织标记
+  organId?: number; // 当前用户所属组织
 }
 
 export interface ApplicationScope {
