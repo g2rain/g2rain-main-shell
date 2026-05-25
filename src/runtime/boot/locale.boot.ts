@@ -60,7 +60,7 @@ class LocaleBoot {
     );
 
     this.stopLocaleWatch = watch(
-      () => localeStore.currentCode,
+      () => localeStore.locale,
       () => {
         if (localeStore.initialized) {
           this.pushLocaleToSubApps();

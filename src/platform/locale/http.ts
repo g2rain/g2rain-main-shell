@@ -12,8 +12,8 @@ export const ACCEPT_LANGUAGE_HEADER = 'Accept-Language';
  */
 export function applyAcceptLanguageHeader(config: InternalAxiosRequestConfig): void {
   const localeStore = useLocaleStore();
-  const acceptLanguage = localeStore.acceptLanguage;
-  if (!acceptLanguage) {
+  const value = localeStore.locale;
+  if (!value) {
     return;
   }
 
@@ -23,5 +23,5 @@ export function applyAcceptLanguageHeader(config: InternalAxiosRequestConfig): v
     return;
   }
 
-  headers[ACCEPT_LANGUAGE_HEADER] = acceptLanguage;
+  headers[ACCEPT_LANGUAGE_HEADER] = value;
 }

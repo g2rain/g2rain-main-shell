@@ -164,7 +164,7 @@ export const useRuntimeStore = defineStore('runtime', {
       const entryOrigin: string = app.entry;
 
       const localeStore = useLocaleStore();
-      const localeProps = buildSubAppLocaleProps(localeStore.currentCode) ?? {};
+      const localeProps = buildSubAppLocaleProps(localeStore.locale) ?? {};
 
       return {
         instanceId,
@@ -187,7 +187,7 @@ export const useRuntimeStore = defineStore('runtime', {
     /** 主应用切换语言后，同步到已挂载/待激活的子应用实例 */
     pushLocaleToSubApps() {
       const localeStore = useLocaleStore();
-      const localeProps = buildSubAppLocaleProps(localeStore.currentCode);
+      const localeProps = buildSubAppLocaleProps(localeStore.locale);
       if (!localeProps) {
         return;
       }

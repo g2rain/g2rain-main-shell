@@ -23,4 +23,4 @@
 
 ## 子应用（qiankun props）
 
-主应用仅传入 `localeCode`（如 `zh-CN`）；子应用自行 parse 后拉包、设 Accept-Language。切换语言会自动 `update` 已挂载子应用。
+主应用仅传入 `locale`（如 `zh-CN`）；子应用据此拉包并设 `Accept-Language`。切换语言会自动 `update` 已挂载子应用。

@@ -1,7 +1,9 @@
-/** 传给子应用的 locale props（仅 localeCode，子应用自行 parse / 设 Accept-Language） */
-export function buildSubAppLocaleProps(localeCode: string): { localeCode: string } | null {
-  if (!localeCode?.trim()) {
+import type { SubAppLocaleProps } from './types';
+
+/** 传给子应用的 locale props */
+export function buildSubAppLocaleProps(locale: string): SubAppLocaleProps | null {
+  if (!locale?.trim()) {
     return null;
   }
-  return { localeCode: localeCode.trim() };
+  return { locale: locale.trim() };
 }

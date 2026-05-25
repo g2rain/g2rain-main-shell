@@ -3,7 +3,7 @@
     <div class="logo">谷雨开源SaaS平台</div>
     <div class="header-right">
       <el-select
-        v-model="selectedLocaleCode"
+        v-model="selectedLocale"
         placeholder="选择语言"
         filterable
         class="locale-select"
@@ -75,10 +75,10 @@ const router = useRouter();
 const themeStore = useThemeStore();
 const localeStore = useLocaleStore();
 
-const selectedLocaleCode = computed({
-  get: () => localeStore.currentCode,
+const selectedLocale = computed({
+  get: () => localeStore.locale,
   set: (code: string) => {
-    void localeStore.setCurrentCode(code);
+    void localeStore.setLocale(code);
   },
 });
 
