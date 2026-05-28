@@ -44,6 +44,7 @@ export type SharedEnv = {
   VITE_AUTH_END_POINT: string;
   VITE_REDIRECT_URI: string;
   VITE_MOCK_ENABLED: boolean;
+  VITE_DINGTALK_BIND_MODE: string;
 };
 
 /**
@@ -60,6 +61,7 @@ export const env: SharedEnv = new Proxy({} as SharedEnv, {
     if (prop === 'VITE_AUTH_END_POINT') return getEnvVar('VITE_AUTH_END_POINT', '/auth/authorize');
     if (prop === 'VITE_REDIRECT_URI') return getEnvVar('VITE_REDIRECT_URI', '');
     if (prop === 'VITE_MOCK_ENABLED') return getEnvBoolean('VITE_MOCK_ENABLED', false);
+    if (prop === 'VITE_DINGTALK_BIND_MODE') return getEnvVar('VITE_DINGTALK_BIND_MODE', 'INTERNAL');
 
     // 保持对象行为一致（如 JSON.stringify / util.inspect 等）
     if (prop === Symbol.toStringTag) return 'SharedEnv';

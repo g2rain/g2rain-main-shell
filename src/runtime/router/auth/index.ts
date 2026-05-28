@@ -18,5 +18,11 @@ export const authRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/auth/Logout.vue'), // 退出页面
     meta: { title: '退出登录', requiresAuth: false }, // 明确标记不需要认证
   },
+  {
+    path: '/passport/bind-result',
+    name: 'PassportBindResult',
+    component: () => import('@/views/passport/BindResult.vue'),
+    meta: { title: '钉钉绑定结果', requiresAuth: false },
+  },
 ];
 

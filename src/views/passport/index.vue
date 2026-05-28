@@ -51,7 +51,28 @@
     <div class="passport-page__actions">
       <el-button type="primary" @click="handleEditPassport">更新账号信息</el-button>
       <el-button type="warning" @click="handleChangePassword">修改密码</el-button>
+      <el-button type="success" :loading="dingTalkBindLoading" @click="openDingTalkBind">
+        绑定钉钉
+      </el-button>
     </div>
+
+    <el-dialog
+      v-model="dingTalkBindVisible"
+      title="绑定钉钉"
+      width="420px"
+      destroy-on-close
+      @open="onDingTalkBindOpen"
+      @closed="onDingTalkBindClosed"
+    >
+      <div class="dingtalk-bind-dialog">
+        <div
+          :id="dingTalkBindQrId"
+          class="dingtalk-bind-dialog__qr"
+          v-loading="dingTalkBindLoading"
+        />
+        <p class="dingtalk-bind-dialog__status">{{ dingTalkBindStatus }}</p>
+      </div>
+    </el-dialog>
 
     <!-- 更新Passport信息弹窗 -->
     <el-dialog
@@ -162,9 +183,33 @@ import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage } from 'element-plus';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { t } from '@platform/i18n';
+import { env } from '@shared/env';
 import { PassportApi } from './api';
+import { useDingTalkPassportBind } from './useDingTalkPassportBind';
 import { getAuthorityUser } from '@/runtime/api/user.api';
 import type { UserVo, PassportVo } from '@/runtime/api/user.api';
+
+const dingTalkBindMode = env.VITE_DINGTALK_BIND_MODE || 'INTERNAL';
+const {
+  statusText: dingTalkBindStatus,
+  loading: dingTalkBindLoading,
+  qrContainerId: dingTalkBindQrId,
+  initQr: initDingTalkBindQr,
+  teardown: teardownDingTalkBind,
+} = useDingTalkPassportBind(dingTalkBindMode);
+const dingTalkBindVisible = ref(false);
+
+const openDingTalkBind = () => {
+  dingTalkBindVisible.value = true;
+};
+
+const onDingTalkBindOpen = () => {
+  initDingTalkBindQr();
+};
+
+const onDingTalkBindClosed = () => {
+  teardownDingTalkBind();
+};
 
 const loading = ref(false);
 const submitting = ref(false);
@@ -439,5 +484,21 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.dingtalk-bind-dialog__qr {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.dingtalk-bind-dialog__status {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
 }
 </style>

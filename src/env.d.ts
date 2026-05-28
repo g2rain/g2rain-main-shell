@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_REDIRECT_URI: string; // sso回调页面
   readonly VITE_MOCK_ENABLED?: string; // 是否启用 mock（'true' 或 'false'）
   readonly VITE_SERVER_PORT?: string; // 开发服务器端口号
+  readonly VITE_DINGTALK_BIND_MODE?: string; // 钉钉绑定接入形态，默认 INTERNAL
 }
 
 interface ImportMeta {
