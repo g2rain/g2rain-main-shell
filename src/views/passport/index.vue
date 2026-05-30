@@ -238,12 +238,11 @@ import { ElMessage } from 'element-plus';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { t } from '@platform/i18n';
 import { env } from '@shared/env';
-import { PassportApi } from './api';
-import { PassportIdpBindingApi } from './idp-binding.api';
+import { PassportApi, PassportIdpBindingApi } from './api';
 import { useDingTalkPassportBind } from './useDingTalkPassportBind';
 import { getAuthorityUser } from '@/runtime/api/user.api';
 import type { UserVo, PassportVo } from '@/runtime/api/user.api';
-import type { PassportIdpBinding } from './idp-binding.type';
+import type { PassportIdpBinding } from './type';
 
 const dingTalkBindMode = env.VITE_DINGTALK_BIND_MODE || 'INTERNAL';
 const {

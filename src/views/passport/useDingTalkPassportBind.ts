@@ -1,6 +1,6 @@
 import { ref, shallowRef } from 'vue';
 import { ElMessage } from 'element-plus';
-import { buildBindReturnUrl, IdpBindApi, parseIamResult } from './idp-bind.api';
+import { buildBindReturnUrl, IdpBindApi, parseIamResult } from './api';
 
 const DD_LOGIN_SRC = 'https://g.alicdn.com/dingding/dinglogin/0.0.5/ddLogin.js';
 const QR_CONTAINER_ID = 'dingtalk-passport-bind-qr';
