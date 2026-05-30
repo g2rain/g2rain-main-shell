@@ -65,9 +65,9 @@ export const IdpBindApi = {
 
 export function buildBindReturnUrl(): string {
   if (typeof window === 'undefined') {
-    return getPathWithContextPath('/passport/bind-result');
+    return getPathWithContextPath('/passport/bind_result');
   }
-  return window.location.origin + getPathWithContextPath('/passport/bind-result');
+  return window.location.origin + getPathWithContextPath('/passport/bind_result');
 }
 
 export function parseIamResult<T>(result: Result<T>): T {

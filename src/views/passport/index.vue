@@ -239,7 +239,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { t } from '@platform/i18n';
 import { env } from '@shared/env';
 import { PassportApi, PassportIdpBindingApi } from './api';
-import { useDingTalkPassportBind } from './useDingTalkPassportBind';
+import { useDingTalkPassportBind } from './dingTalk';
 import { getAuthorityUser } from '@/runtime/api/user.api';
 import type { UserVo, PassportVo } from '@/runtime/api/user.api';
 import type { PassportIdpBinding } from './type';
