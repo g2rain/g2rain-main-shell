@@ -21,6 +21,7 @@ import type { IRouteMap, ComponentLoader } from '@/runtime/router/route-map.inte
 export const routeComponentMap: Record<string, ComponentLoader> = {
   // 系统设置
   '/passport': () => import('@/views/passport/index.vue'),
+  '/passport/bind_result': () => import('@/views/passport/bindResult.vue'),
 
   // 可以在这里添加更多路由映射
   // '/main/example/page': () => import('@/views/example/Page.vue'),

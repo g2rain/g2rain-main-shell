@@ -47,11 +47,86 @@
       </el-descriptions>
     </el-card>
 
+    <!-- 三方身份源绑定 -->
+    <el-card class="passport-page__info-card" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span>三方应用绑定</span>
+          <el-button type="primary" link :loading="idpBindingLoading" @click="loadIdpBindings">
+            刷新
+          </el-button>
+        </div>
+      </template>
+      <el-table
+        v-loading="idpBindingLoading"
+        :data="idpBindingList"
+        border
+        stripe
+        empty-text="暂未绑定任何三方应用"
+        style="width: 100%"
+      >
+        <el-table-column prop="idpType" label="身份源" width="120">
+          <template #default="{ row }">
+            <el-tag effect="light" type="info">{{ formatIdpType(row?.idpType) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="bindMode" label="接入形态" width="130">
+          <template #default="{ row }">
+            {{ formatBindMode(row?.bindMode) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="corpId" label="企业 ID" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="idpSubject" label="主体标识 (unionId)" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="idpUserId" label="用户 ID" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="idpApplicationCode" label="应用标识" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="createTime" label="绑定时间" width="170" />
+        <el-table-column label="操作" width="90" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" link size="small" @click="openIdpBindingDetail(row)">详情</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
     <!-- 功能按钮区域 -->
     <div class="passport-page__actions">
       <el-button type="primary" @click="handleEditPassport">更新账号信息</el-button>
       <el-button type="warning" @click="handleChangePassword">修改密码</el-button>
+      <el-button type="success" :loading="dingTalkBindLoading" @click="openDingTalkBind">
+        绑定钉钉
+      </el-button>
     </div>
+
+    <el-dialog
+      v-model="dingTalkBindVisible"
+      title="绑定钉钉"
+      width="420px"
+      destroy-on-close
+      @open="onDingTalkBindOpen"
+      @closed="onDingTalkBindClosed"
+    >
+      <div class="dingtalk-bind-dialog">
+        <div
+          :id="dingTalkBindQrId"
+          class="dingtalk-bind-dialog__qr"
+          v-loading="dingTalkBindLoading"
+        />
+        <p class="dingtalk-bind-dialog__status">{{ dingTalkBindStatus }}</p>
+      </div>
+    </el-dialog>
+
+    <el-dialog v-model="idpBindingDetailVisible" title="绑定详情" width="560px" destroy-on-close>
+      <el-descriptions v-if="idpBindingDetail" :column="1" border>
+        <el-descriptions-item label="身份源">{{ formatIdpType(idpBindingDetail.idpType) }}</el-descriptions-item>
+        <el-descriptions-item label="接入形态">{{ formatBindMode(idpBindingDetail.bindMode) }}</el-descriptions-item>
+        <el-descriptions-item label="企业 ID">{{ idpBindingDetail.corpId || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="主体标识">{{ idpBindingDetail.idpSubject || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="用户 ID">{{ idpBindingDetail.idpUserId || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="应用标识">{{ idpBindingDetail.idpApplicationCode || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="绑定时间">{{ idpBindingDetail.createTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="更新时间">{{ idpBindingDetail.updateTime || '-' }}</el-descriptions-item>
+      </el-descriptions>
+    </el-dialog>
 
     <!-- 更新Passport信息弹窗 -->
     <el-dialog
@@ -162,9 +237,84 @@ import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage } from 'element-plus';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { t } from '@platform/i18n';
-import { PassportApi } from './api';
+import { env } from '@shared/env';
+import { PassportApi, PassportIdpBindingApi } from './api';
+import { useDingTalkPassportBind } from './dingTalk';
 import { getAuthorityUser } from '@/runtime/api/user.api';
 import type { UserVo, PassportVo } from '@/runtime/api/user.api';
+import type { PassportIdpBinding } from './type';
+
+const dingTalkBindMode = env.VITE_DINGTALK_BIND_MODE || 'INTERNAL';
+const {
+  statusText: dingTalkBindStatus,
+  loading: dingTalkBindLoading,
+  qrContainerId: dingTalkBindQrId,
+  initQr: initDingTalkBindQr,
+  teardown: teardownDingTalkBind,
+} = useDingTalkPassportBind(dingTalkBindMode);
+const dingTalkBindVisible = ref(false);
+
+const openDingTalkBind = () => {
+  dingTalkBindVisible.value = true;
+};
+
+const onDingTalkBindOpen = () => {
+  initDingTalkBindQr();
+};
+
+const onDingTalkBindClosed = () => {
+  teardownDingTalkBind();
+  loadIdpBindings();
+};
+
+const idpBindingLoading = ref(false);
+const idpBindingList = ref<PassportIdpBinding[]>([]);
+const idpBindingDetailVisible = ref(false);
+const idpBindingDetail = ref<PassportIdpBinding | null>(null);
+
+const IDP_TYPE_LABELS: Record<string, string> = {
+  DINGTALK: '钉钉',
+  FEISHU: '飞书',
+  WECHAT_WORK: '企业微信',
+};
+
+const BIND_MODE_LABELS: Record<string, string> = {
+  INTERNAL: '企业内部应用',
+  THIRD_PARTY: '第三方企业应用',
+};
+
+function formatIdpType(value?: string) {
+  if (!value) return '-';
+  return IDP_TYPE_LABELS[value] ?? value;
+}
+
+function formatBindMode(value?: string) {
+  if (!value) return '-';
+  return BIND_MODE_LABELS[value] ?? value;
+}
+
+function openIdpBindingDetail(row: PassportIdpBinding) {
+  idpBindingDetail.value = row;
+  idpBindingDetailVisible.value = true;
+}
+
+async function loadIdpBindings() {
+  const passportId = passportInfo.value?.id;
+  if (passportId == null) {
+    idpBindingList.value = [];
+    return;
+  }
+  idpBindingLoading.value = true;
+  try {
+    idpBindingList.value = await PassportIdpBindingApi.listByPassport(Number(passportId));
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : '加载三方绑定信息失败';
+    ElMessage.error(msg);
+    idpBindingList.value = [];
+  } finally {
+    idpBindingLoading.value = false;
+  }
+}
 
 const loading = ref(false);
 const submitting = ref(false);
@@ -282,6 +432,7 @@ const loadUserInfo = async () => {
     const authorityUser = await getAuthorityUser();
     userInfo.value = authorityUser;
     passportInfo.value = authorityUser.passport;
+    await loadIdpBindings();
   } catch (error: any) {
     ElMessage.error(error?.message || '加载Passport信息失败');
   } finally {
@@ -439,5 +590,21 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.dingtalk-bind-dialog__qr {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.dingtalk-bind-dialog__status {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
 }
 </style>

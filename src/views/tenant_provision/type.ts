@@ -12,3 +12,10 @@ export interface TenantProvisionPayload {
   email: string;
   mobile: string;
 }
+
+/**
+ * 通过邀请码加入机构
+ */
+export interface TenantJoinOrganPayload {
+  inviteCode: string;
+}

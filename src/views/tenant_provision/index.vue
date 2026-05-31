@@ -52,6 +52,7 @@
                 size="large"
                 class="submit-btn"
                 :disabled="!canProvision"
+                :loading="joinSubmitting"
                 @click="submitJoin"
               >
                 加入机构
@@ -151,6 +152,7 @@
 
   // 是否允许加入/创建租户：当当前用户所属机构 organ.admin 为 true 时，不允许
   const canProvision = ref(true);
+  const joinSubmitting = ref(false);
 
   // 定义字典引用
   const typeOptions = ref<Array<{ label: string; value: string }>>([]);
@@ -216,11 +218,18 @@
     const valid = await joinFormRef.value.validate();
     if (!valid) return;
 
+    joinSubmitting.value = true;
     try {
-      // 这里仅做前端提示，具体加入机构接口根据后端约定再对接
-      ElMessage.success('加入机构申请已提交');
+      const user = await TenantProvisionApi.joinOrgan({
+        inviteCode: joinForm.inviteCode.trim(),
+      });
+      await sso.switchToken(user.id);
+      ElMessage.success('加入机构成功');
+      setTimeout(() => window.location.reload(), 300);
     } catch (error: any) {
       ElMessage.error(error.message || '加入机构失败');
+    } finally {
+      joinSubmitting.value = false;
     }
   };
 

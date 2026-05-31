@@ -48,3 +48,29 @@ export interface PassportQuery extends BaseSelectListDto {
   mobile?: string;
   email?: string;
 }
+
+/** 账号与外部身份源绑定 */
+export interface PassportIdpBinding extends BaseVo {
+  passportId?: number;
+  idpType?: string;
+  idpSubject?: string;
+  corpId?: string;
+  idpUserId?: string;
+  idpApplicationCode?: string;
+  bindMode?: string;
+  rawProfile?: string;
+}
+
+export interface PassportIdpBindingQuery {
+  passportId?: number;
+  idpType?: string;
+}
+
+export interface DingTalkBindStartRequest {
+  bindMode?: string;
+  returnUrl?: string;
+}
+
+export interface DingTalkBindStartResponse {
+  gotoUrl: string;
+}
