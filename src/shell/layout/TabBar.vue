@@ -1,6 +1,6 @@
 <template>
   <el-tabs v-model="activeTabKeyModel" type="card" closable @tab-remove="handleTabRemove">
-    <el-tab-pane v-for="tab in tabs" :key="tab.key" :label="tab.title" :name="tab.key">
+    <el-tab-pane v-for="tab in tabs" :key="tab.key" :label="resolveMenuTitle(tab)" :name="tab.key">
       <!-- 主应用页面 -->
       <template v-if="tab.type === 'main'">
         <router-view v-slot="{ Component }">
@@ -30,6 +30,7 @@ import { useRuntimeStore } from '@platform/stores/runtime.store';
 import MicroAppPage from '@/shell/layout/MicroAppPage.vue';
 import { QiankunManager } from '@/platform/apps';
 import { wrapActiveRule } from '@/shared/url.util';
+import { resolveMenuTitle } from '@platform/i18n';
 
 const router = useRouter();
 const tabStore = useTabStore();

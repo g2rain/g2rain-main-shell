@@ -314,7 +314,7 @@ function openMainTarget(router: Router, menuItem: MenuItem, targetFullPath: stri
   if (tabStore.tabs.some((t) => t.key === menuItem.key)) {
     tabStore.setActiveTab(menuItem.key);
   } else {
-    tabStore.addMainTab(menuItem.key, menuItem.title, menuItem.routePath!);
+    tabStore.addMainTab(menuItem.key, menuItem.title, menuItem.routePath!, menuItem.menuCode);
   }
 
   if (router.currentRoute.value.path !== pathname) {

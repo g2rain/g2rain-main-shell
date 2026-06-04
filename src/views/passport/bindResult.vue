@@ -9,9 +9,13 @@
       </div>
       <h2 class="bind-result-page__title">{{ title }}</h2>
       <p v-if="detail" class="bind-result-page__detail">{{ detail }}</p>
-      <p v-if="errorCode" class="bind-result-page__code">错误码：{{ errorCode }}</p>
+      <p v-if="errorCode" class="bind-result-page__code">
+        {{ $t('G2_LBL_ERR_CODE', '错误码') }}：{{ errorCode }}
+      </p>
       <div class="bind-result-page__actions">
-        <el-button type="primary" @click="goPassport">返回账号安全</el-button>
+        <el-button type="primary" @click="goPassport">
+          {{ $t('MS_PP_BACK', '返回账号安全') }}
+        </el-button>
       </div>
     </el-card>
   </div>
@@ -22,6 +26,7 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { CircleCheck, CircleClose } from '@element-plus/icons-vue';
 import { getPathWithContextPath } from '@shared/env';
+import { t } from '@platform/i18n';
 
 const route = useRoute();
 const router = useRouter();
@@ -40,10 +45,14 @@ const detail = computed(() => {
       return msg;
     }
   }
-  return success.value ? '' : '绑定未完成，请返回账号页重新发起。';
+  return success.value ? '' : t('MS_PP_BIND_FAIL_HINT', '绑定未完成，请返回账号页重新发起。');
 });
 
-const title = computed(() => (success.value ? '钉钉绑定成功' : '钉钉绑定失败'));
+const title = computed(() =>
+  success.value
+    ? t('MS_PP_BIND_OK', '钉钉绑定成功')
+    : t('MS_PP_BIND_FAIL', '钉钉绑定失败'),
+);
 
 function goPassport() {
   router.push(getPathWithContextPath('/passport'));

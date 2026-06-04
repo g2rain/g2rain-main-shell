@@ -50,6 +50,7 @@ function convertMenuToMenuItem(serverMenu: AuthorityMenuVo): MenuItem {
 
   const menuItem: MenuItem = {
     key: String(serverMenu.id),
+    menuCode: serverMenu.menuCode,
     title: serverMenu.menuName,
     type,
   };

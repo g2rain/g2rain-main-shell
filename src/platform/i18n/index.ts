@@ -67,3 +67,6 @@ export function resetI18nLoader(): void {
   lastLoadedLocale = '';
   loading = null;
 }
+
+export { resolveMenuTitle } from './menu-title';
+export type { MenuTitleSource } from './menu-title';

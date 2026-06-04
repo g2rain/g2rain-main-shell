@@ -15,6 +15,7 @@ import { sso } from '@runtime/auth';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 import { useMenuStore } from '@platform/stores/menu.store';
 import { useMicroAppStore } from '@platform/stores/app.store';
+import { t } from '@platform/i18n';
 import {
   saveReturnUrl,
   handleRedirectGatewayWhenAuthed,
@@ -24,13 +25,12 @@ const route = useRoute();
 const router = useRouter();
 const menuStore = useMenuStore();
 const microAppStore = useMicroAppStore();
-const message = ref('正在跳转...');
+const message = ref(t('MS_RD_JUMP', '正在跳转...'));
 
 const tryOpenTarget = async () => {
   if (!menuStore.initialized || !microAppStore.initialized) {
     return false;
   }
-
   return handleRedirectGatewayWhenAuthed(router, route.fullPath);
 };
 
@@ -38,18 +38,18 @@ onMounted(async () => {
   const tokenStore = useAccessTokenStore();
 
   if (!tokenStore.isLogin) {
-    message.value = '正在跳转登录...';
+    message.value = t('MS_RD_JUMP_LOGIN', '正在跳转登录...');
     saveReturnUrl(route.fullPath);
     try {
       await sso.redirectToSSO();
     } catch (e) {
       console.error('[SubAppRedirectGateway] SSO 跳转失败:', e);
-      message.value = '跳转登录失败';
+      message.value = t('MS_RD_JUMP_FAIL', '跳转登录失败');
     }
     return;
   }
 
-  message.value = '正在打开应用...';
+  message.value = t('MS_RD_OPEN_APP', '正在打开应用...');
   if (await tryOpenTarget()) {
     return;
   }

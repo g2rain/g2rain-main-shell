@@ -268,7 +268,7 @@ export const setupRouter = (app: App<Element>) => {
           // TabTypes 已存在，激活它
           tabStore.setActiveTab(menuItem.key);
         } else {
-          tabStore.addMainTab(menuItem.key, menuItem.title, menuItem.routePath);
+          tabStore.addMainTab(menuItem.key, menuItem.title, menuItem.routePath, menuItem.menuCode);
         }
       }
     }
