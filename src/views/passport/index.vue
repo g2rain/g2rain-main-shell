@@ -215,8 +215,7 @@
       width="600px"
       @close="handleEditPassportClose"
     >
-      <el-config-provider :locale="zhCn">
-        <el-form
+      <el-form
           ref="editPassportFormRef"
           :model="editPassportForm"
           :rules="editPassportRules"
@@ -282,7 +281,6 @@
             />
           </el-form-item>
         </el-form>
-      </el-config-provider>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="editPassportDialogVisible = false">
@@ -350,7 +348,6 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage } from 'element-plus';
-import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { t } from '@platform/i18n';
 import { env } from '@shared/env';
 import { PassportApi, PassportIdpBindingApi } from './api';

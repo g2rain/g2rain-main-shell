@@ -8,7 +8,7 @@
     <el-tab-pane
       v-for="tab in tabs"
       :key="tab.key"
-      :label="tabLabels[tab.key] ?? resolveMenuTitle(tab)"
+      :label="tabLabels[tab.key]"
       :name="tab.key"
     >
       <!-- 主应用页面 -->
