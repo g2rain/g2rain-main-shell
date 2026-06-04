@@ -64,7 +64,12 @@ export const env: SharedEnv = new Proxy({} as SharedEnv, {
     if (prop === 'VITE_REDIRECT_URI') return getEnvVar('VITE_REDIRECT_URI', '');
     if (prop === 'VITE_MOCK_ENABLED') return getEnvBoolean('VITE_MOCK_ENABLED', false);
     if (prop === 'VITE_DINGTALK_BIND_MODE') return getEnvVar('VITE_DINGTALK_BIND_MODE', 'INTERNAL');
-    if (prop === 'VITE_I18N_TAGS') return getEnvVar('VITE_I18N_TAGS', 'G2RAIN_SHARED');
+    if (prop === 'VITE_I18N_TAGS') {
+      return getEnvVar(
+        'VITE_I18N_TAGS',
+        'G2RAIN_SHARED,MAIN_SHELL',
+      );
+    }
 
     // 保持对象行为一致（如 JSON.stringify / util.inspect 等）
     if (prop === Symbol.toStringTag) return 'SharedEnv';

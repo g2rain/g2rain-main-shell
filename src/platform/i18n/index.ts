@@ -16,8 +16,14 @@ export const i18n = createI18n({
   missing: (_locale, key) => key,
 });
 
+function currentI18nLocale(): string {
+  const loc = i18n.global.locale;
+  return typeof loc === 'string' ? loc : loc.value;
+}
+
 /** 在 script 中取文案；第二参数为页面填写的默认文案，后台未配置时使用 */
 export function t(code: string, defaultText?: string): string {
+  void currentI18nLocale();
   if (defaultText !== undefined) {
     return i18n.global.t(code, defaultText);
   }
