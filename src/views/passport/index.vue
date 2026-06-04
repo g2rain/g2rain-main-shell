@@ -567,7 +567,7 @@ const loadUserInfo = async () => {
   }
 };
 
- * 处理更新Passport信息
+/** 处理更新Passport信息 */
 const handleEditPassport = () => {
   if (!passportInfo.value) {
     ElMessage.warning(t('MS_PP_NOT_LOADED', 'Passport信息未加载，请稍后再试'));
@@ -586,12 +586,12 @@ const handleEditPassport = () => {
   editPassportDialogVisible.value = true;
 };
 
- * 关闭更新Passport信息弹窗
+/** 关闭更新Passport信息弹窗 */
 const handleEditPassportClose = () => {
   editPassportFormRef.value?.resetFields();
 };
 
- * 提交更新Passport信息
+/** 提交更新Passport信息 */
 const submitEditPassport = async () => {
   if (!editPassportFormRef.value) return;
   const valid = await editPassportFormRef.value.validate();
@@ -616,12 +616,12 @@ const submitEditPassport = async () => {
   }
 };
 
- * 处理修改密码
+/** 处理修改密码 */
 const handleChangePassword = () => {
   changePasswordDialogVisible.value = true;
 };
 
- * 关闭修改密码弹窗
+/** 关闭修改密码弹窗 */
 const handleChangePasswordClose = () => {
   changePasswordFormRef.value?.resetFields();
   changePasswordForm.oldPassword = '';
@@ -629,7 +629,7 @@ const handleChangePasswordClose = () => {
   changePasswordForm.confirmPassword = '';
 };
 
- * 提交修改密码
+/** 提交修改密码 */
 const submitChangePassword = async () => {
   if (!changePasswordFormRef.value) return;
   const valid = await changePasswordFormRef.value.validate();

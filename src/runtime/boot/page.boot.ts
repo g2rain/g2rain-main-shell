@@ -23,6 +23,7 @@ class PageBoot {
     // 创建首页菜单项
     const homeMenu: MenuItem = {
       key: 'main',
+      menuCode: 'main',
       title: '首页',
       type: 'main',
       routePath: '/home',
@@ -31,17 +32,20 @@ class PageBoot {
     // 创建初始化菜单项（包含子菜单）
     const initMenu: MenuItem = {
       key: 'init',
+      menuCode: 'init',
       title: '初始化',
       type: 'group',
       children: [
         {
           key: 'init-passport',
+          menuCode: 'init-passport',
           title: '账号管理',
           type: 'main',
           routePath: '/passport',
         },
         {
           key: 'init-tenant_provision',
+          menuCode: 'init-tenant_provision',
           title: '租户初始化',
           type: 'main',
           routePath: '/tenant_provision',
