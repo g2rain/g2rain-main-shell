@@ -4,21 +4,25 @@
  */
 
 import type { RouteRecordRaw } from 'vue-router';
-import { toRouterRecordPath } from '@shared/router-path.util';
-import { getPathWithContextPath } from '@shared/env';
 
 export const authRoutes: RouteRecordRaw[] = [
   {
-    path: toRouterRecordPath(getPathWithContextPath('/sso_callback')),
+    path: '/sso_callback',
     name: 'SsoCallback',
     component: () => import('@/views/auth/SsoCallback.vue'), // SSO回调组件
     meta: { title: 'SSO回调', requiresAuth: false }, // 明确标记不需要认证
   },
   {
-    path: toRouterRecordPath(getPathWithContextPath('/logout')),
+    path: '/logout',
     name: 'Logout',
     component: () => import('@/views/auth/Logout.vue'), // 退出页面
     meta: { title: '退出登录', requiresAuth: false }, // 明确标记不需要认证
+  },
+  {
+    path: '/passport/bind_result',
+    name: 'PassportBindResult',
+    component: () => import('@/views/passport/bindResult.vue'),
+    meta: { title: '钉钉绑定结果', requiresAuth: false },
   },
 ];
 

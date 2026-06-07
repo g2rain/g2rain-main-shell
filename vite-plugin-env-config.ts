@@ -3,41 +3,52 @@ import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { loadEnv } from 'vite';
 
+const APP_CONTEXT_PATH_PLACEHOLDER = '__G2RAIN_APP_CONTEXT_PATH__';
+
 /**
- * Vite 插件：生成运行时环境配置文件
- * 在构建时生成 env-config.js，只对需要运行时替换的变量使用占位符
- * 其他变量从构建时的环境变量中读取
+ * 用于 env-config.js 等 URL 拼接：取自 VITE_CONTEXT_PATH，去掉尾部斜杠
+ * @example '/main/' -> '/main'，'/' -> '/'
+ */
+function normalizeContextPathForUrl(raw: string | undefined): string {
+  const trimmed = (raw ?? '').trim();
+  if (!trimmed || trimmed === '/') {
+    return '/';
+  }
+  let p = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  p = p.replace(/\/+$/, '');
+  return p || '/';
+}
+
+/**
+ * Vite 插件：生成运行时环境配置文件，并向 index.html 注入应用静态根路径（来自 VITE_CONTEXT_PATH）
  */
 export function envConfigPlugin(): Plugin {
   let env: Record<string, string> = {};
-  
+
+  const getContextPathForUrl = () => normalizeContextPathForUrl(env.VITE_CONTEXT_PATH);
+
   return {
     name: 'vite-plugin-env-config',
     configResolved(config) {
-      // 在配置解析时读取所有环境变量
       env = loadEnv(config.mode, config.envDir || process.cwd(), '');
+    },
+    transformIndexHtml(html) {
+      return html.split(APP_CONTEXT_PATH_PLACEHOLDER).join(getContextPathForUrl());
     },
     closeBundle() {
       const outDir = resolve(process.cwd(), 'dist');
-      
-      // 处理 VITE_CONTEXT_PATH：确保以 / 结尾（除非是根路径）
-      let contextPath = env.VITE_CONTEXT_PATH || '/';
-      if (contextPath !== '/' && !contextPath.endsWith('/')) {
-        contextPath = contextPath + '/';
-      }
-      
-      // 生成 env-config.js
-      // 只对需要运行时替换的变量使用占位符，其他变量使用构建时的值
+      const contextPathForUrl = getContextPathForUrl();
+
       const configContent = `// env-config.js
 // 这个文件会在容器启动时被 docker-entrypoint.sh 替换为实际的配置
-// 优先使用 window._env_ 中的配置，如果没有则使用 import.meta.env
 window._env_ = {
   VITE_SSO_BASE_URL: '__SSO_BASE_URL__',
 };
 `;
       writeFileSync(resolve(outDir, 'env-config.js'), configContent, 'utf-8');
-      console.log(`✅ env-config.js 已生成 (VITE_CONTEXT_PATH: ${contextPath})`);
+      console.log(
+        `✅ env-config.js 已生成；应用静态根路径: ${contextPathForUrl}（来自 VITE_CONTEXT_PATH）`,
+      );
     },
   };
 }
-

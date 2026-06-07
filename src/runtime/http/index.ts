@@ -7,12 +7,7 @@
 
 import { loadingManager } from '@/components/loading';
 import { sso } from '@runtime/auth';
-import {
-  updateHttpClientOptions,
-  type HttpAuthSession,
-  type HttpClientOptions,
-  type Client,
-} from '@/components/http';
+import { updateHttpClientOptions, type HttpAuthSession, type HttpClientOptions, type Client } from '@/components/http';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 
 /**
@@ -36,10 +31,7 @@ function createHttpAuthSession(): HttpAuthSession {
  * - 统一处理 NO_LOGIN / TOKEN_REFRESH_FAILED 等认证相关错误
  * - 当前实现：关闭 loading 并跳转到 SSO
  */
-async function defaultAuthErrorHandler(
-  reason: 'NO_LOGIN' | 'TOKEN_REFRESH_FAILED',
-  error: unknown,
-): Promise<void> {
+async function defaultAuthErrorHandler(reason: 'NO_LOGIN' | 'TOKEN_REFRESH_FAILED', error: unknown): Promise<void> {
   console.warn('[Runtime HTTP] Auth error:', reason, error);
 
   // 确保关闭 loading
@@ -65,6 +57,7 @@ export function initHttp(): void {
   const defaultOptions: Partial<HttpClientOptions> = {
     authSessionProvider,
     authErrorHandler: defaultAuthErrorHandler,
+    ensureAccessToken: (opts) => sso.ensureAccessToken(opts),
   };
 
   // 为 default 客户端「增量」注入认证相关配置（保持 components/http 中的默认 baseURL 等配置不变）

@@ -81,71 +81,41 @@ export interface RouteChangeData {
 /**
  * 具体的事件消息类型定义
  */
-export type TokenRequestMessage = MicroAppMessage<
-  MicroAppEventType.REQUEST_TOKEN,
-  TokenRequestData
->;
-
-export type TokenResponseMessage = MicroAppMessage<
-  MicroAppEventType.TOKEN_RESPONSE,
-  TokenResponseData
->;
-
-export type TokenInvalidMessage = MicroAppMessage<
-  MicroAppEventType.TOKEN_INVALID,
-  TokenInvalidData
->;
-
-export type RouteChangeMessage = MicroAppMessage<
-  MicroAppEventType.ROUTE_CHANGE,
-  RouteChangeData
->;
+export type TokenRequestMessage = MicroAppMessage<MicroAppEventType.REQUEST_TOKEN, TokenRequestData>;
+export type TokenResponseMessage = MicroAppMessage<MicroAppEventType.TOKEN_RESPONSE, TokenResponseData>;
+export type TokenInvalidMessage = MicroAppMessage<MicroAppEventType.TOKEN_INVALID, TokenInvalidData>;
+export type RouteChangeMessage = MicroAppMessage<MicroAppEventType.ROUTE_CHANGE, RouteChangeData>;
 
 /**
  * 所有微前端消息的联合类型
  */
-export type MicroAppMessageUnion =
-  | TokenRequestMessage
-  | TokenResponseMessage
-  | TokenInvalidMessage
-  | RouteChangeMessage;
+export type MicroAppMessageUnion = | TokenRequestMessage | TokenResponseMessage | TokenInvalidMessage | RouteChangeMessage;
 
 /**
  * 类型守卫函数：判断是否为 Token 请求消息
  */
-export function isTokenRequestMessage(
-  message: MicroAppMessageUnion
-): message is TokenRequestMessage {
+export function isTokenRequestMessage(message: MicroAppMessageUnion): message is TokenRequestMessage {
   return message.type === MicroAppEventType.REQUEST_TOKEN;
 }
 
 /**
  * 类型守卫函数：判断是否为 Token 响应成功消息
  */
-export function isTokenResponseMessage(
-  message: MicroAppMessageUnion
-): message is TokenResponseMessage {
-  return (
-    message.type === MicroAppEventType.TOKEN_RESPONSE &&
-    'token' in message.data
-  );
+export function isTokenResponseMessage(message: MicroAppMessageUnion): message is TokenResponseMessage {
+  return (message.type === MicroAppEventType.TOKEN_RESPONSE && 'token' in message.data);
 }
 
 /**
  * 类型守卫函数：判断是否为 Token 失效消息
  */
-export function isTokenInvalidMessage(
-  message: MicroAppMessageUnion
-): message is TokenInvalidMessage {
+export function isTokenInvalidMessage(message: MicroAppMessageUnion): message is TokenInvalidMessage {
   return message.type === MicroAppEventType.TOKEN_INVALID;
 }
 
 /**
  * 类型守卫函数：判断是否为路由变化消息
  */
-export function isRouteChangeMessage(
-  message: MicroAppMessageUnion
-): message is RouteChangeMessage {
+export function isRouteChangeMessage(message: MicroAppMessageUnion): message is RouteChangeMessage {
   return message.type === MicroAppEventType.ROUTE_CHANGE;
 }
 
@@ -168,10 +138,7 @@ export const MicroAppMessageFactory = {
   /**
    * 创建 Token 响应成功消息
    */
-  createTokenResponse(
-    data: TokenResponseData,
-    requestId?: string
-  ): TokenResponseMessage {
+  createTokenResponse(data: TokenResponseData, requestId?: string): TokenResponseMessage {
     return {
       type: MicroAppEventType.TOKEN_RESPONSE,
       data,

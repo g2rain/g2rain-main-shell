@@ -50,6 +50,7 @@ function convertMenuToMenuItem(serverMenu: AuthorityMenuVo): MenuItem {
 
   const menuItem: MenuItem = {
     key: String(serverMenu.id),
+    menuCode: serverMenu.menuCode,
     title: serverMenu.menuName,
     type,
   };
@@ -98,7 +99,7 @@ export async function getMenuList(): Promise<MenuItem[]> {
         // 'x-g2rain-mock': 'true',
       },
     });
-    
+
     // 将服务器返回的数据转换为前端使用的格式
     const serverMenus = res.data || [];
     return serverMenus.map((menu) => convertMenuToMenuItem(menu));

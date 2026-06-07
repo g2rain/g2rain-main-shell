@@ -9,6 +9,8 @@ import { useMicroAppStore } from '@platform/stores/app.store';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 import { getMenuList } from '@/runtime/api/menu.api';
 import type { MenuItem } from '@platform/types';
+import router from '@runtime/router/index';
+import { restoreAfterAuth } from '@runtime/navigation/sub-app-redirect';
 
 class PageBoot {
   private stopWatch: (() => void) | null = null; // watch 停止函数
@@ -21,28 +23,32 @@ class PageBoot {
     // 创建首页菜单项
     const homeMenu: MenuItem = {
       key: 'main',
+      menuCode: 'main',
       title: '首页',
       type: 'main',
-      routePath: '/main/',
+      routePath: '/home',
     };
 
     // 创建初始化菜单项（包含子菜单）
     const initMenu: MenuItem = {
       key: 'init',
+      menuCode: 'init',
       title: '初始化',
       type: 'group',
       children: [
         {
           key: 'init-passport',
+          menuCode: 'init-passport',
           title: '账号管理',
           type: 'main',
-          routePath: '/main/passport',
+          routePath: '/passport',
         },
         {
-          key: 'init-tenant-provision',
+          key: 'init-tenant_provision',
+          menuCode: 'init-tenant_provision',
           title: '租户初始化',
           type: 'main',
-          routePath: '/main/tenant-provision',
+          routePath: '/tenant_provision',
         },
       ],
     };
@@ -94,6 +100,8 @@ class PageBoot {
       }
 
       console.log('[PageBoot] 菜单和微应用列表初始化完成');
+
+      restoreAfterAuth(router);
     } catch (error) {
       console.error('[PageBoot] 初始化菜单失败:', error);
       throw error;

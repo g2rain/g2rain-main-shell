@@ -3,11 +3,7 @@
  * 统一的入口，根据消息类型自动分发到对应的处理器
  */
 
-import type {
-  MicroAppMessage,
-  MicroAppMessageHandler,
-  MicroAppMessageProcessor,
-} from './types';
+import type { MicroAppMessage, MicroAppMessageHandler, MicroAppMessageProcessor } from './types';
 import { MicroAppEventType, type MicroAppMessageUnion } from './types';
 
 /**

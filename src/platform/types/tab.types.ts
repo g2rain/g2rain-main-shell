@@ -17,6 +17,9 @@ export type TabType = 'main' | 'sub';
 export interface TabBase {
   /** TabTypes 唯一标识（与 MenuItem key 一致） */
   key: string;
+  /** 菜单编码（i18n key，与 MenuItem.menuCode 一致） */
+  menuCode?: string;
+  /** 默认展示标题（menuName） */
   /** TabTypes 显示标题 */
   title: string;
   /** TabTypes 类型：主应用 / 子应用 */
@@ -55,6 +58,9 @@ export type TabTypes = MainTab | SubTab;
 export class TabClass {
   /** TabTypes 唯一标识 */
   public readonly key: string;
+  /** 菜单编码（i18n key） */
+  public readonly menuCode?: string;
+  /** 默认展示标题 */
   /** TabTypes 显示标题 */
   public readonly title: string;
   /** TabTypes 类型 */
@@ -69,9 +75,10 @@ export class TabClass {
   /**
    * 创建主应用 TabTypes
    */
-  static createMainTab(key: string, title: string, routePath: string): TabClass {
+  static createMainTab(key: string, title: string, routePath: string, menuCode?: string): TabClass {
     return new TabClass({
       key,
+      menuCode,
       title,
       type: 'main',
       routePath,
@@ -86,9 +93,11 @@ export class TabClass {
     title: string,
     app: AppDefinition,
     initialPath?: string,
+    menuCode?: string,
   ): TabClass {
     return new TabClass({
       key,
+      menuCode,
       title,
       type: 'sub',
       app,
@@ -99,14 +108,14 @@ export class TabClass {
   /**
    * 从 MenuItem 创建 TabTypes
    */
-  static fromMenuItem(menuItem: MenuItem): TabClass | null {
+  static fromMenuItem(menuItem: MenuItem, initialPathOverride?: string): TabClass | null {
     // 只处理 'main' 和 'sub' 类型的菜单项，忽略 'group' 类型
     if (menuItem.type === 'main') {
       if (!menuItem.routePath) {
         console.warn('[TabClass] 主应用菜单项缺少 routePath，无法创建 TabTypes:', menuItem);
         return null;
       }
-      return TabClass.createMainTab(menuItem.key, menuItem.title, menuItem.routePath);
+      return TabClass.createMainTab(menuItem.key, menuItem.title, menuItem.routePath, menuItem.menuCode);
     } else if (menuItem.type === 'sub') {
       if (!menuItem.name) {
         console.warn('[TabClass] 子应用菜单项缺少 name，无法创建 TabTypes:', menuItem);
@@ -126,8 +135,11 @@ export class TabClass {
         return null;
       }
 
-      // 使用 store 中的 AppDefinition，initialPath 仍然来自菜单的 routePath（子应用内部初始路由）
-      return TabClass.createSubTab(menuItem.key, menuItem.title, appFromStore, menuItem.routePath);
+      const initialPath =
+        initialPathOverride !== undefined && initialPathOverride !== ''
+          ? initialPathOverride
+          : menuItem.routePath;
+      return TabClass.createSubTab(menuItem.key, menuItem.title, appFromStore, initialPath, menuItem.menuCode);
     }
     return null;
   }
@@ -137,10 +149,9 @@ export class TabClass {
    */
   static fromTab(tab: TabTypes): TabClass {
     if (tab.type === 'main') {
-      return TabClass.createMainTab(tab.key, tab.title, tab.routePath);
-    } else {
-      return TabClass.createSubTab(tab.key, tab.title, tab.app, tab.initialPath);
+      return TabClass.createMainTab(tab.key, tab.title, tab.routePath, tab.menuCode);
     }
+    return TabClass.createSubTab(tab.key, tab.title, tab.app, tab.initialPath, tab.menuCode);
   }
 
   /**
@@ -148,6 +159,7 @@ export class TabClass {
    */
   private constructor(data: MainTab | SubTab) {
     this.key = data.key;
+    this.menuCode = data.menuCode;
     this.title = data.title;
     this.type = data.type;
     if (data.type === 'main') {
@@ -165,19 +177,20 @@ export class TabClass {
     if (this.type === 'main') {
       return {
         key: this.key,
+        menuCode: this.menuCode,
         title: this.title,
         type: 'main',
         routePath: this.routePath!,
       };
-    } else {
-      return {
-        key: this.key,
-        title: this.title,
-        type: 'sub',
-        app: this.app!,
-        initialPath: this.initialPath,
-      };
     }
+    return {
+      key: this.key,
+      menuCode: this.menuCode,
+      title: this.title,
+      type: 'sub',
+      app: this.app!,
+      initialPath: this.initialPath,
+    };
   }
 
   /**
@@ -221,5 +234,4 @@ export class TabClass {
   getAppName(): string | undefined {
     return this.isSubTab() ? this.app?.name : undefined;
   }
-
 }

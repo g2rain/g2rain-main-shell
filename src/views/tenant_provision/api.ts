@@ -3,7 +3,7 @@
  */
 import { getHttpClient } from '@/components/http';
 import type { UserVo } from '@/runtime/api/user.api';
-import type { TenantProvisionPayload } from './type';
+import type { TenantJoinOrganPayload, TenantProvisionPayload } from './type';
 
 /**
  * 账号开通 服务类
@@ -18,6 +18,18 @@ export class TenantProvisionApi {
     const httpClient = getHttpClient('default');
     const res = await httpClient.post<UserVo>(
       '/basis/tenant_provision/provision_account',
+      payload,
+    );
+    return res.data;
+  }
+
+  /**
+   * 通过邀请码加入机构
+   */
+  static async joinOrgan(payload: TenantJoinOrganPayload): Promise<UserVo> {
+    const httpClient = getHttpClient('default');
+    const res = await httpClient.post<UserVo>(
+      '/basis/tenant_provision/join_organ',
       payload,
     );
     return res.data;

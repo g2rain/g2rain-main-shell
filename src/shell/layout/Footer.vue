@@ -2,7 +2,7 @@
   <footer class="app-footer">
     <div class="footer-content">
       <div class="footer-links">
-        <span class="copyright">© 2026 谷雨开源SaaS(G2rain)</span>
+        <span class="copyright">{{ $t('MS_FTR_COPY', '© 2026 谷雨开源SaaS(G2rain)') }}</span>
         <span class="divider">|</span>
         <a
           href="http://www.g2rain.com"
@@ -10,7 +10,7 @@
           rel="noopener noreferrer"
           class="footer-link"
         >
-          G2rain官网
+          {{ $t('MS_FTR_SITE', 'G2rain官网') }}
         </a>
         <span class="divider">|</span>
         <a
@@ -19,7 +19,7 @@
           rel="noopener noreferrer"
           class="footer-link"
         >
-          项目主页
+          {{ $t('MS_FTR_HOME', '项目主页') }}
         </a>
       </div>
     </div>

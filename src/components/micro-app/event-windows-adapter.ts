@@ -48,11 +48,13 @@ export class WindowEventAdapter implements EventAdapter {
       await this.messageProcessor.processRaw(message);
     };
 
-    // 监听所有事件类型，都使用同一个处理器
-    Object.values(MicroAppEventType).forEach((eventType) => {
-      window.addEventListener(eventType, unifiedEventHandler);
-      this.boundHandlers.set(eventType, unifiedEventHandler);
-    });
+    // 主壳只向子应用派发 TOKEN_RESPONSE，不在此注册监听，避免 emit 后同一窗口上的自监听误进 processor
+    Object.values(MicroAppEventType)
+      .filter((eventType) => eventType !== MicroAppEventType.TOKEN_RESPONSE)
+      .forEach((eventType) => {
+        window.addEventListener(eventType, unifiedEventHandler);
+        this.boundHandlers.set(eventType, unifiedEventHandler);
+      });
 
     console.log('[WindowEventAdapter] 事件监听器已初始化，使用统一的消息处理器');
   }

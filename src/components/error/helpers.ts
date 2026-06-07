@@ -3,6 +3,7 @@ import { BackendError } from './BackendError';
 import { AppError } from './AppError';
 import { FrontendErrorCode } from './types';
 import { FrontendError } from './FrontendError';
+import { t } from '@platform/i18n';
 
 /**
  * 从后端 Result 构建 BackendError
@@ -33,15 +34,11 @@ export function normalizeAxiosError(error: any): AppError {
 
   // 没有响应 -> 认为是网络错误
   if (!response) {
-    return new FrontendError('网络异常，请稍后重试', {
-      errorCode: FrontendErrorCode.NETWORK_ERROR,
-      detail: error,
-      cause: error,
-    });
+    return FrontendError.networkError(error);
   }
 
   // 兜底：未知错误
-  return new AppError(error.message || '请求失败', {
+  return new AppError(error.message || t('G2_ERR_UNKNOWN', '请求失败'), {
     status: response.status,
     detail: data,
     cause: error,

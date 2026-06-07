@@ -3,7 +3,7 @@ import type { MockData, MockDataFunction, MockDataMap } from './types';
 
 /**
  * Mock 数据管理器
- * 
+ *
  * 职责：
  * - 提供 mock 数据的注册、查询、匹配功能
  * - 不包含任何业务逻辑或业务数据
@@ -11,6 +11,17 @@ import type { MockData, MockDataFunction, MockDataMap } from './types';
  */
 export class MockManager {
   private mockDataMap: MockDataMap = {};
+
+  /**
+   * 规范化 URL：仅保留 path 部分（去掉 query/hash）
+   * 例如：
+   * - /lua/sign_code?jti=xxx -> /lua/sign_code
+   * - /main/lua/sign_code?jti=xxx#part -> /main/lua/sign_code
+   */
+  private normalizeUrl(url: string): string {
+    const [path] = url.split('?');
+    return path.split('#')[0];
+  }
 
   /**
    * 注册单个 mock 数据
@@ -35,19 +46,17 @@ export class MockManager {
    * @param config 请求配置
    * @returns Mock 数据，如果不存在则返回 null
    */
-  async getMockData(
-    url: string,
-    config: AxiosRequestConfig
-  ): Promise<MockData | null> {
+  async getMockData(url: string, config: AxiosRequestConfig): Promise<MockData | null> {
+    const normalizedUrl = this.normalizeUrl(url);
     // 精确匹配
-    if (this.mockDataMap[url]) {
-      const data = this.mockDataMap[url];
+    if (this.mockDataMap[normalizedUrl]) {
+      const data = this.mockDataMap[normalizedUrl];
       return typeof data === 'function' ? await data(config) : data;
     }
 
     // 通配符匹配
     for (const [pattern, data] of Object.entries(this.mockDataMap)) {
-      if (this.matchPattern(url, pattern)) {
+      if (this.matchPattern(normalizedUrl, pattern)) {
         return typeof data === 'function' ? await data(config) : data;
       }
     }
@@ -61,14 +70,15 @@ export class MockManager {
    * @returns 是否存在 mock 数据
    */
   hasMockData(url: string): boolean {
+    const normalizedUrl = this.normalizeUrl(url);
     // 精确匹配
-    if (this.mockDataMap[url]) {
+    if (this.mockDataMap[normalizedUrl]) {
       return true;
     }
 
     // 通配符匹配
     for (const pattern of Object.keys(this.mockDataMap)) {
-      if (this.matchPattern(url, pattern)) {
+      if (this.matchPattern(normalizedUrl, pattern)) {
         return true;
       }
     }

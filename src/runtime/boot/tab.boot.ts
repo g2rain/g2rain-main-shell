@@ -6,11 +6,15 @@
 import { watch, type WatchStopHandle } from 'vue';
 import type { Router } from 'vue-router';
 import { useTabStore } from '@platform/stores';
+import { useMenuStore } from '@platform/stores/menu.store';
+import { useMicroAppStore } from '@platform/stores/app.store';
+import { useAccessTokenStore } from '@platform/stores/token.store';
 import { storeToRefs } from 'pinia';
-import { resolveMenuRoutePath, toRouterRecordPath } from '@shared/router-path.util';
+import { restoreAfterAuth } from '@runtime/navigation/sub-app-redirect';
 
 class TabBoot {
   private stopWatch: WatchStopHandle | null = null;
+  private stopRestoreWatch: WatchStopHandle | null = null;
 
   /**
    * 启动 Tab 路由同步
@@ -23,8 +27,14 @@ class TabBoot {
     if (this.stopWatch) {
       this.stopWatch();
     }
+    if (this.stopRestoreWatch) {
+      this.stopRestoreWatch();
+    }
 
     const tabStore = useTabStore();
+    const menuStore = useMenuStore();
+    const microAppStore = useMicroAppStore();
+    const tokenStore = useAccessTokenStore();
 
     const { tabList: tabs, activeTabKey } = storeToRefs(tabStore);
 
@@ -40,11 +50,25 @@ class TabBoot {
 
         // 主应用路由
         if (currentTab.type === 'main' && currentTab.routePath) {
-          const currentFull = resolveMenuRoutePath(router.currentRoute.value.path);
-          if (currentFull !== currentTab.routePath) {
-            router.push({ path: toRouterRecordPath(currentTab.routePath) });
+          const currentPath = router.currentRoute.value.path;
+          const tabRoutePath = currentTab.routePath;
+          if (currentPath !== tabRoutePath) {
+            router.push({ path: tabRoutePath });
           }
         }
+      },
+      { immediate: true },
+    );
+
+    this.stopRestoreWatch = watch(
+      () =>
+        [
+          tokenStore.isLogin,
+          menuStore.initialized,
+          microAppStore.initialized,
+        ] as const,
+      () => {
+        restoreAfterAuth(router);
       },
       { immediate: true },
     );
@@ -59,6 +83,10 @@ class TabBoot {
     if (this.stopWatch) {
       this.stopWatch();
       this.stopWatch = null;
+    }
+    if (this.stopRestoreWatch) {
+      this.stopRestoreWatch();
+      this.stopRestoreWatch = null;
     }
     console.log('[TabBoot] 已停止 Tab 路由同步');
   }

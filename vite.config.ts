@@ -37,26 +37,32 @@ export default defineConfig(({ mode }) => {
       proxy: {
         // 将 /keys 路径代理到后端服务器
         [`${base}keys/iam-public-key`]: {
-          target: backendOrigin,
+          target: 'https://43.138.13.145:443',
           changeOrigin: true,
+          secure: false,
         },
         [`${base}keys/iam-key-id`]: {
-          target: backendOrigin,
+          target: 'https://43.138.13.145:443',
           changeOrigin: true,
+          secure: false,
         },
         // 将 /sign_code 路径代理到后端服务器
         [`${base}lua/sign_code`]: {
-          target: backendOrigin,
+          target: 'https://43.138.13.145:443',
           changeOrigin: true,
+          secure: false,
         },
         [`${base}auth/`]: {
-          target: backendOrigin,
+          target: 'https://43.138.13.145:443',
           changeOrigin: true,
+          secure: false,
         },
         // 将 /api 路径代理到后端服务器
         [`${base}api/`]: {
           target: backendOrigin,
           changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/main\/api/, ''),
+          secure: false,
         },
       }
     },

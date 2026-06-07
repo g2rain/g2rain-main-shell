@@ -1,18 +1,13 @@
 # ------------------------------------------------------------
 # 阶段 1：构建 Vue 前端
 # ------------------------------------------------------------
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
-# 声明构建参数
 ARG VITE_BUILD_MODE=production
-# 使用国内镜像加速
-RUN npm config set registry https://registry.npmmirror.com/
 
-# 复制依赖文件
-COPY package*.json ./
-
-# 安装依赖（使用 npm install 而非 ci）
-RUN npm install --legacy-peer-deps
+COPY package.json package-lock.json .npmrc ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps --no-audit --no-fund --loglevel=warn
 
 # 复制项目文件并构建
 COPY . .
