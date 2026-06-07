@@ -10,6 +10,7 @@ import { handleError, handleAuthFailure } from '../error-handler';
 import { pendingRequestManager } from '../refresh-barrier';
 import { loadingManager } from '@/components/loading';
 import { FrontendError, FrontendErrorCode } from '@/components/error';
+import { t } from '@platform/i18n';
 import { setupBaseRequestInterceptor, setupBaseResponseInterceptor, type InterceptorOptions } from './base';
 
 /**
@@ -206,7 +207,7 @@ export function setupDefaultResponseInterceptor(instance: AxiosInstance, options
           loadingManager.hide();
           // 打印响应数据，便于排查业务错误
           console.error('[Http][BusinessError] response:', response);
-          throw new FrontendError(data.errorMessage || '请求失败', {
+          throw new FrontendError(data.errorMessage || t('G2_ERR_BUSINESS', '请求失败'), {
             errorCode: data.errorCode || FrontendErrorCode.BUSINESS_ERROR,
             detail: data,
           });

@@ -3,8 +3,8 @@
   <div class="logout-page">
     <div class="logout-container">
       <div class="logo-section">
-        <h1 class="app-title">谷雨开源SaaS平台</h1>
-        <p class="app-subtitle">企业级应用管理解决方案</p>
+        <h1 class="app-title">{{ $t('MS_HDR_LOGO', '谷雨开源SaaS平台') }}</h1>
+        <p class="app-subtitle">{{ $t('MS_AU_LOGOUT_SUB', '企业级应用管理解决方案') }}</p>
       </div>
 
       <div class="content-section">
@@ -13,23 +13,24 @@
             <User />
           </el-icon>
         </div>
-        <h2 class="logout-title">您已安全退出</h2>
+        <h2 class="logout-title">{{ $t('MS_AU_LOGOUT_TITLE', '您已安全退出') }}</h2>
         <p class="logout-description">
-          感谢您使用 谷雨开源SaaS平台。您的账户已在本应用退出，如果要彻底退出请访问
+          {{ $t('MS_AU_LOGOUT_DESC_PREFIX', '感谢您使用 谷雨开源SaaS平台。您的账户已在本应用退出，如果要彻底退出请访问') }}
           <a href="javascript:void(0);" class="sso-link" @click.prevent="handleGotoSsoIndex">
-            谷雨开源SaaS平台 IAM系统
+            {{ $t('MS_AU_IAM_LINK', '谷雨开源SaaS平台 IAM系统') }}
           </a>
-          ，系统将在 {{ countdown }} 秒后自动跳转。
+          {{ $t('MS_AU_LOGOUT_DESC_SUFFIX', '，系统将在') }} {{ countdown }}
+          {{ $t('MS_AU_LOGOUT_COUNTDOWN', '秒后自动跳转。') }}
         </p>
         <p class="logout-tip">
-          如需继续使用，请重新登录。
+          {{ $t('MS_AU_LOGOUT_TIP', '如需继续使用，请重新登录。') }}
         </p>
       </div>
 
       <div class="action-section">
         <el-button type="primary" size="large" @click="handleLogin" class="login-button">
           <el-icon><Lock /></el-icon>
-          重新登录
+          {{ $t('MS_AU_RELOGIN', '重新登录') }}
         </el-button>
       </div>
     </div>
@@ -167,4 +168,3 @@ onUnmounted(() => {
   margin-right: var(--spacing-xs);
 }
 </style>
-

@@ -1,5 +1,6 @@
 import { ref, shallowRef } from 'vue';
 import { ElMessage } from 'element-plus';
+import { t } from '@platform/i18n';
 import { buildBindReturnUrl, IdpBindApi, parseIamResult } from './api';
 
 const DD_LOGIN_SRC = 'https://g.alicdn.com/dingding/dinglogin/0.0.5/ddLogin.js';
@@ -41,7 +42,7 @@ function extractLoginTmpCode(data: unknown): string | null {
 }
 
 export function useDingTalkPassportBind(bindMode: string) {
-  const statusText = ref('打开弹窗后将加载钉钉扫码');
+  const statusText = ref(t('MS_PP_DING_OPEN', '打开弹窗后将加载钉钉扫码'));
   const loading = ref(false);
   const messageHandler = shallowRef<((ev: MessageEvent) => void) | null>(null);
   let started = false;
@@ -68,7 +69,7 @@ export function useDingTalkPassportBind(bindMode: string) {
     }
     started = true;
     loading.value = true;
-    setStatus('正在加载钉钉扫码…');
+    setStatus(t('MS_PP_DING_LOADING', '正在加载钉钉扫码…'));
     try {
       await loadScript(DD_LOGIN_SRC);
       const result = await IdpBindApi.start({
@@ -77,11 +78,11 @@ export function useDingTalkPassportBind(bindMode: string) {
       });
       const { gotoUrl } = parseIamResult(result);
       if (!gotoUrl) {
-        setStatus('无法准备钉钉扫码，请稍后重试');
+        setStatus(t('MS_PP_DING_PREP_FAIL', '无法准备钉钉扫码，请稍后重试'));
         return;
       }
       if (typeof window.DDLogin !== 'function') {
-        setStatus('钉钉扫码组件未就绪，请刷新后重试');
+        setStatus(t('MS_PP_DING_NOT_READY', '钉钉扫码组件未就绪，请刷新后重试'));
         return;
       }
       const onMsg = (ev: MessageEvent) => {
@@ -99,7 +100,7 @@ export function useDingTalkPassportBind(bindMode: string) {
           url.searchParams.set('loginTmpCode', code);
           window.location.assign(url.toString());
         } catch {
-          setStatus('扫码成功，但跳转失败，请关闭弹窗后重试');
+          setStatus(t('MS_PP_DING_SCAN_FAIL', '扫码成功，但跳转失败，请关闭弹窗后重试'));
         }
       };
       messageHandler.value = onMsg;
@@ -111,9 +112,9 @@ export function useDingTalkPassportBind(bindMode: string) {
         width: '300',
         height: '300',
       });
-      setStatus('请使用钉钉扫描上方二维码');
+      setStatus(t('MS_PP_DING_SCAN', '请使用钉钉扫描上方二维码'));
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : '加载钉钉扫码失败';
+      const msg = e instanceof Error ? e.message : t('MS_PP_DING_LOAD_FAIL', '加载钉钉扫码失败');
       setStatus(msg);
       ElMessage.error(msg);
     } finally {

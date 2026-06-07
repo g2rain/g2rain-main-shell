@@ -38,8 +38,8 @@ export const useTabStore = defineStore('tab', {
     /**
      * 添加主应用 TabTypes
      */
-    addMainTab(key: string, title: string, routePath: string) {
-      const tabClass = TabClass.createMainTab(key, title, routePath);
+    addMainTab(key: string, title: string, routePath: string, menuCode?: string) {
+      const tabClass = TabClass.createMainTab(key, title, routePath, menuCode);
       this.addTab(tabClass);
     },
 

@@ -13,17 +13,20 @@ import type { Result } from '@/components/http/types';
 export const mockMenuList: MenuItem[] = [
   {
     key: 'home',
+    menuCode: 'home',
     title: '首页',
     type: 'main',
     routePath: '/main/home',
   },
   {
     key: 'system',
+    menuCode: 'system',
     title: '系统设置',
     type: 'group',
     children: [
       {
         key: 'system-passport',
+        menuCode: 'system-passport',
         title: '账号管理',
         type: 'main',
         routePath: '/main/system/passport',
@@ -32,11 +35,13 @@ export const mockMenuList: MenuItem[] = [
   },
   {
     key: 'group-test',
+    menuCode: 'group-test',
     title: '测试1',
     type: 'group',
     children: [
       {
         key: 'test-dict',
+        menuCode: 'test-dict',
         title: '字典管理',
         type: 'sub', // 子应用菜单项必须是 'sub' 类型
         routePath: '/dict',
@@ -46,6 +51,7 @@ export const mockMenuList: MenuItem[] = [
       },
       {
         key: 'test-',
+        menuCode: 'test-home',
         title: '测试应用首页',
         type: 'sub', // 子应用菜单项必须是 'sub' 类型
         routePath: '/',

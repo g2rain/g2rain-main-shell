@@ -2,6 +2,9 @@ export type MenuItemType = 'main' | 'sub' | 'group';
 
 export interface MenuItem {
   key: string;                 // 全局唯一（TabTypes / App 的逻辑主键）
+  /** 菜单编码，与 i18n_message.message_code / resource_menu.menu_code 一致 */
+  menuCode: string;
+  /** 默认展示名（后台 menu_name，i18n 未配置时使用） */
   title: string;
   type: MenuItemType;
   children?: MenuItem[];

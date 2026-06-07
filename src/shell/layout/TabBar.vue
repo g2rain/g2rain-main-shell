@@ -1,6 +1,16 @@
 <template>
-  <el-tabs v-model="activeTabKeyModel" type="card" closable @tab-remove="handleTabRemove">
-    <el-tab-pane v-for="tab in tabs" :key="tab.key" :label="tab.title" :name="tab.key">
+  <el-tabs
+    v-model="activeTabKeyModel"
+    type="card"
+    closable
+    @tab-remove="handleTabRemove"
+  >
+    <el-tab-pane
+      v-for="tab in tabs"
+      :key="tab.key"
+      :label="tabLabels[tab.key]"
+      :name="tab.key"
+    >
       <!-- 主应用页面 -->
       <template v-if="tab.type === 'main'">
         <router-view v-slot="{ Component }">
@@ -24,16 +34,29 @@
 
 <script setup lang="ts">
 import { computed, watch, nextTick } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import { useTabStore } from '@platform/stores';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
+import { useLocaleStore } from '@platform/stores/locale.store';
 import MicroAppPage from '@/shell/layout/MicroAppPage.vue';
 import { QiankunManager } from '@/platform/apps';
 import { wrapActiveRule } from '@/shared/url.util';
+import { resolveMenuTitle } from '@platform/i18n';
 
 const router = useRouter();
 const tabStore = useTabStore();
 const runtimeStore = useRuntimeStore();
+const { locale: userLocale } = storeToRefs(useLocaleStore());
+
+const tabLabels = computed(() => {
+  void userLocale.value;
+  const labels: Record<string, string> = {};
+  for (const tab of tabStore.tabs) {
+    labels[tab.key] = resolveMenuTitle(tab);
+  }
+  return labels;
+});
 
 /** 单调递增；每次进入 activateSubTabRuntime 都会 +1，用于作废过期的异步链 */
 let latestSubTabNavSerial = 0;

@@ -1,10 +1,10 @@
 <template>
   <header class="main-header">
-    <div class="logo">谷雨开源SaaS平台</div>
+    <div class="logo">{{ $t('MS_HDR_LOGO', '谷雨开源SaaS平台') }}</div>
     <div class="header-right">
       <el-select
         v-model="selectedLocale"
-        placeholder="选择语言"
+        :placeholder="$t('MS_HDR_LANG_PH', '选择语言')"
         filterable
         class="locale-select"
         :disabled="!localeStore.initialized || localeStore.options.length === 0"
@@ -24,7 +24,7 @@
           :icon="Setting"
           circle
           class="theme-switcher"
-          :title="`当前主题: ${currentTheme.displayName}`"
+          :title="themeButtonTitle"
         />
         <template #dropdown>
           <el-dropdown-menu>
@@ -37,7 +37,7 @@
               <el-icon v-if="currentMode === theme.mode" class="check-icon">
                 <Check />
               </el-icon>
-              {{ theme.displayName }}
+              {{ themeLabel(theme.mode) }}
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -47,14 +47,14 @@
       <el-dropdown trigger="click" @command="handleUserCommand">
         <div class="user-info">
           <el-avatar icon="User" />
-          <span class="username">管理员</span>
+          <span class="username">{{ $t('MS_HDR_ADMIN', '管理员') }}</span>
           <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
         </div>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="logout" divided>
               <el-icon><SwitchButton /></el-icon>
-              退出登录
+              {{ $t('MS_HDR_LOGOUT', '退出登录') }}
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -69,6 +69,7 @@ import { useRouter } from 'vue-router';
 import { Setting, Check, ArrowDown, SwitchButton } from '@element-plus/icons-vue';
 import { useThemeStore, useLocaleStore } from '@platform/stores';
 import { logout } from '@/runtime/boot';
+import { t } from '@platform/i18n';
 import type { ThemeMode } from '@platform/theme/types';
 
 const router = useRouter();
@@ -84,12 +85,24 @@ const selectedLocale = computed({
 
 // 当前主题模式
 const currentMode = computed(() => themeStore.currentMode);
-
-// 当前主题配置
-const currentTheme = computed(() => themeStore.currentTheme);
-
 // 可用主题列表
+// 当前主题配置
 const availableThemes = computed(() => themeStore.availableThemes);
+
+const THEME_I18N: Record<ThemeMode, [string, string]> = {
+  light: ['MS_THEME_LIGHT', '亮色主题'],
+  dark: ['MS_THEME_DARK', '暗色主题'],
+  g2rain: ['MS_THEME_BRAND', 'G2rain 品牌主题'],
+};
+
+function themeLabel(mode: ThemeMode): string {
+  const [key, def] = THEME_I18N[mode];
+  return t(key, def);
+}
+
+const themeButtonTitle = computed(
+  () => `${t('MS_HDR_THEME', '当前主题')}: ${themeLabel(currentMode.value)}`,
+);
 
 // 处理主题切换
 const handleThemeChange = async (mode: ThemeMode) => {

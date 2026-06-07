@@ -3,19 +3,19 @@
   <div class="sso-callback">
     <div v-if="isLoading" class="loading-container">
       <div class="spinner"></div>
-      <p>正在处理认证...</p>
+      <p>{{ $t('MS_AU_SSO_PROC', '正在处理认证...') }}</p>
     </div>
 
     <div v-else-if="error" class="error-container">
-      <h2>认证失败</h2>
+      <h2>{{ $t('MS_AU_SSO_FAIL', '认证失败') }}</h2>
       <p>{{ error }}</p>
-      <button class="retry-button" @click="retry">重试</button>
-      <button class="login-button" @click="goToLogin">返回登录</button>
+      <button class="retry-button" @click="retry">{{ $t('G2_BTN_RETRY', '重试') }}</button>
+      <button class="login-button" @click="goToLogin">{{ $t('MS_AU_BACK_LOGIN', '返回登录') }}</button>
     </div>
 
     <div v-else class="success-container">
-      <h2>认证成功</h2>
-      <p>正在跳转到应用...</p>
+      <h2>{{ $t('MS_AU_SSO_OK', '认证成功') }}</h2>
+      <p>{{ $t('MS_AU_SSO_REDIRECT', '正在跳转到应用...') }}</p>
     </div>
   </div>
 </template>
@@ -25,6 +25,7 @@ import { onMounted, ref } from 'vue';
 import { sso } from '@runtime/auth';
 import g2rainRouter from '@runtime/router/index.js';
 import { useAccessTokenStore } from '@platform/stores/token.store.js';
+import { t } from '@platform/i18n';
 
 const isLoading = ref(true);
 const error = ref<string | null>(null);
@@ -45,7 +46,7 @@ const processCallback = () => {
   const code = extractCodeFromUrl();
   const clientId = extractClientIdFromUrl();
   if (!code || !clientId) {
-    error.value = '未找到授权码或者客户端ID';
+    error.value = t('MS_AU_NO_CODE', '未找到授权码或者客户端ID');
     isLoading.value = false;
     return;
   }
@@ -53,12 +54,10 @@ const processCallback = () => {
   // 初始化sso（同步启动，不阻塞）
   sso
     .generateToken(code)
-    .then(() => {
+    .then(() => g2rainRouter.replace('/home'))
       // 先进壳稳定入口，由 tab.boot / page.boot 在菜单就绪后 restoreAfterAuth 打开 return_url
-      return g2rainRouter.replace('/home');
-    })
     .catch((err) => {
-      error.value = err instanceof Error ? err.message : '认证处理失败';
+      error.value = err instanceof Error ? err.message : t('MS_AU_SSO_ERR', '认证处理失败');
       isLoading.value = false;
     });
 };

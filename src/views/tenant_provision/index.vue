@@ -4,7 +4,7 @@
       <!-- 头部 -->
       <template #header>
         <div class="card-header">
-          <span class="title">账号开通设置</span>
+          <span class="title">{{ $t('MS_TP_TITLE', '账号开通设置') }}</span>
         </div>
       </template>
 
@@ -14,7 +14,7 @@
         v-if="!canProvision"
         type="warning"
         show-icon
-        title="当前为运营机构账号，不允许加入或创建任何租户"
+        :title="$t('MS_TP_ADMIN_BLOCK', '当前为运营机构账号，不允许加入或创建任何租户')"
         class="provision-alert"
       />
       <el-collapse
@@ -27,7 +27,7 @@
         <el-collapse-item name="join">
           <template #title>
             <span :class="['collapse-title', activeCollapse === 'join' && 'collapse-title--active']">
-              加入机构
+              {{ $t('MS_TP_JOIN', '加入机构') }}
             </span>
           </template>
           <el-form
@@ -37,10 +37,10 @@
             label-position="top"
             class="provision-form"
           >
-            <el-form-item label="机构邀请码" prop="inviteCode">
+            <el-form-item :label="$t('MS_TP_INVITE', '机构邀请码')" prop="inviteCode">
               <el-input
                 v-model="joinForm.inviteCode"
-                placeholder="请输入机构邀请码"
+                :placeholder="$t('MS_TP_INVITE_PH', '请输入机构邀请码')"
                 maxlength="64"
                 show-word-limit
               />
@@ -55,7 +55,7 @@
                 :loading="joinSubmitting"
                 @click="submitJoin"
               >
-                加入机构
+                {{ $t('MS_TP_JOIN', '加入机构') }}
               </el-button>
             </div>
           </el-form>
@@ -65,7 +65,7 @@
         <el-collapse-item name="create">
           <template #title>
             <span :class="['collapse-title', activeCollapse === 'create' && 'collapse-title--active']">
-              创建新机构
+              {{ $t('MS_TP_CREATE', '创建新机构') }}
             </span>
           </template>
           <el-form
@@ -75,10 +75,10 @@
             label-position="top"
             class="provision-form"
           >
-            <el-form-item label="机构类型" prop="organType">
+            <el-form-item :label="$t('MS_TP_ORG_TYPE', '机构类型')" prop="organType">
               <el-select
                 v-model="editForm.organType"
-                placeholder="请选择机构类型"
+                :placeholder="$t('MS_TP_ORG_TYPE_PH', '请选择机构类型')"
                 style="width: 100%"
               >
                 <el-option
@@ -90,31 +90,31 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="机构名称" prop="organName">
+            <el-form-item :label="$t('MS_TP_ORG_NAME', '机构名称')" prop="organName">
               <el-input
                 v-model="editForm.organName"
-                placeholder="请输入机构名称"
+                :placeholder="$t('MS_TP_ORG_NAME_PH', '请输入机构名称')"
               />
             </el-form-item>
 
-            <el-form-item label="姓名" prop="realName">
+            <el-form-item :label="$t('G2_FIELD_REAL_NAME', '姓名')" prop="realName">
               <el-input
                 v-model="editForm.realName"
-                placeholder="请输入姓名"
+                :placeholder="$t('G2_PH_REALNAME', '请输入姓名')"
               />
             </el-form-item>
 
-            <el-form-item label="邮箱地址" prop="email">
+            <el-form-item :label="$t('G2_FIELD_EMAIL', '邮箱地址')" prop="email">
               <el-input
                 v-model="editForm.email"
-                placeholder="请输入邮箱地址"
+                :placeholder="$t('G2_PH_EMAIL', '请输入邮箱地址')"
               />
             </el-form-item>
 
-            <el-form-item label="手机号码" prop="mobile">
+            <el-form-item :label="$t('G2_FIELD_MOBILE', '手机号码')" prop="mobile">
               <el-input
                 v-model="editForm.mobile"
-                placeholder="请输入手机号码"
+                :placeholder="$t('G2_PH_MOBILE', '请输入手机号码')"
               />
             </el-form-item>
 
@@ -127,7 +127,7 @@
                 :disabled="!canProvision"
                 @click="submitEdit"
               >
-                开通
+                {{ $t('MS_TP_SUBMIT', '开通') }}
               </el-button>
             </div>
           </el-form>
@@ -138,188 +138,174 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, onMounted } from 'vue';
-  import type { FormInstance, FormRules } from 'element-plus';
-  import { ElMessage } from 'element-plus';
-  import { getAuthorityUser } from '@/runtime/api/user.api';
-  import { sso } from '@/runtime/auth';
-  import { pageBoot } from '@/runtime/boot/page.boot';
-  import {TenantProvisionPayload} from './type'
-  import {TenantProvisionApi} from './api'
+import { ref, reactive, computed, onMounted } from 'vue';
+import type { FormInstance, FormRules } from 'element-plus';
+import { ElMessage } from 'element-plus';
+import { t } from '@platform/i18n';
+import { getAuthorityUser } from '@/runtime/api/user.api';
+import { sso } from '@/runtime/auth';
+import { TenantProvisionPayload } from './type';
+import { TenantProvisionApi } from './api';
 
   // 折叠面板激活项（单选：join/create 互斥）
-  const activeCollapse = ref<'join' | 'create'>('join');
-
+const activeCollapse = ref<'join' | 'create'>('join');
   // 是否允许加入/创建租户：当当前用户所属机构 organ.admin 为 true 时，不允许
-  const canProvision = ref(true);
-  const joinSubmitting = ref(false);
+const canProvision = ref(true);
+const joinSubmitting = ref(false);
 
   // 定义字典引用
-  const typeOptions = ref<Array<{ label: string; value: string }>>([]);
-
   // 获取字典信息
-  const loadDicts = async () => {
-    typeOptions.value = [{
-      label: '租户',
-      value: 'TENANT'
-    },{
-      label: '公司',
-      value: 'COMPANY'
-    },{
-      label: '渠道商',
-      value: 'SALES_PARTNER'
-    },{
-      label: '服务商',
-      value: 'SERVICE_PROVIDER'
-    }];
-  };
+const typeOptions = computed(() => [
+  { label: t('MS_TP_TYPE_TENANT', '租户'), value: 'TENANT' },
+  { label: t('MS_TP_TYPE_COMPANY', '公司'), value: 'COMPANY' },
+  { label: t('MS_TP_TYPE_PARTNER', '渠道商'), value: 'SALES_PARTNER' },
+  { label: t('MS_TP_TYPE_SERVICE', '服务商'), value: 'SERVICE_PROVIDER' },
+]);
 
   // 加入机构表单
-  const joinFormRef = ref<FormInstance | null>(null);
-  const joinForm = reactive({
-    inviteCode: '',
-  });
+const joinFormRef = ref<FormInstance | null>(null);
+const joinForm = reactive({
+  inviteCode: '',
+});
 
-  const joinRules: FormRules = {
-    inviteCode: [
-      { required: true, message: '请输入机构邀请码', trigger: 'blur' },
-      {
-        pattern: /^[0-9a-fA-F-]{32,64}$/,
-        message: '请输入有效的机构邀请码',
-        trigger: 'blur',
-      },
-    ],
-  };
+const joinRules = computed<FormRules>(() => ({
+  inviteCode: [
+    { required: true, message: t('G2_VLD_REQ_INVITE', '请输入机构邀请码'), trigger: 'blur' },
+    {
+      pattern: /^[0-9a-fA-F-]{32,64}$/,
+      message: t('G2_VLD_INVITE_FMT', '请输入有效的机构邀请码'),
+      trigger: 'blur',
+    },
+  ],
+}));
 
   // 创建新机构表单引用
-  const editFormRef = ref<FormInstance | null>(null);
-
+const editFormRef = ref<FormInstance | null>(null);
   // 保存表单状态
-  const editForm = reactive({
-    organType: '',
-    organName: '',
-    realName: '',
-    email: '',
-    mobile: '',
-  });
+const editForm = reactive({
+  organType: '',
+  organName: '',
+  realName: '',
+  email: '',
+  mobile: '',
+});
 
-  // 表单校验规则
-  const editRules: FormRules = {
-    organType: [{ required: true, message: '请选择机构类', trigger: 'blur' }],
-    organName: [{ required: true, message: '请输入机构名称', trigger: 'blur' }],
-    realName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-    email: [{ required: false, message: '请输入邮箱地址', trigger: 'blur' }],
-    mobile: [{ required: false, message: '请输入手机号码', trigger: 'blur' }],
-  };
+// 表单校验规则
+const editRules = computed<FormRules>(() => ({
+  organType: [{ required: true, message: t('G2_VLD_REQ_ORG_TYPE', '请选择机构类型'), trigger: 'blur' }],
+  organName: [{ required: true, message: t('G2_VLD_REQ_ORG_NAME', '请输入机构名称'), trigger: 'blur' }],
+  realName: [{ required: true, message: t('G2_VLD_REQ_REALNAME', '请输入姓名'), trigger: 'blur' }],
+  email: [{ required: false, message: t('G2_PH_EMAIL', '请输入邮箱地址'), trigger: 'blur' }],
+  mobile: [{ required: false, message: t('G2_PH_MOBILE', '请输入手机号码'), trigger: 'blur' }],
+}));
 
   // 提交加入机构表单
-  const submitJoin = async () => {
-    if (!joinFormRef.value) return;
-    const valid = await joinFormRef.value.validate();
-    if (!valid) return;
+const submitJoin = async () => {
+  if (!joinFormRef.value) return;
+  const valid = await joinFormRef.value.validate();
+  if (!valid) return;
 
-    joinSubmitting.value = true;
-    try {
-      const user = await TenantProvisionApi.joinOrgan({
-        inviteCode: joinForm.inviteCode.trim(),
-      });
-      await sso.switchToken(user.id);
-      ElMessage.success('加入机构成功');
-      setTimeout(() => window.location.reload(), 300);
-    } catch (error: any) {
-      ElMessage.error(error.message || '加入机构失败');
-    } finally {
-      joinSubmitting.value = false;
-    }
-  };
+  joinSubmitting.value = true;
+    // 先准备字典
+  try {
+    const user = await TenantProvisionApi.joinOrgan({
+      inviteCode: joinForm.inviteCode.trim(),
+    });
+    await sso.switchToken(user.id);
+    ElMessage.success(t('MS_TP_JOIN_OK', '加入机构成功'));
+    setTimeout(() => window.location.reload(), 300);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : t('MS_TP_JOIN_FAIL', '加入机构失败');
+    ElMessage.error(msg);
+  } finally {
+    joinSubmitting.value = false;
+  }
+};
 
   // 提交创建新机构表单
-  const submitEdit = async () => {
-    if (!editFormRef.value) return;
-    const valid = await editFormRef.value.validate();
-    if (!valid) return;
+const submitEdit = async () => {
+  if (!editFormRef.value) return;
+  const valid = await editFormRef.value.validate();
+  if (!valid) return;
 
-    const payload: TenantProvisionPayload = {
-      organType: editForm.organType,
-      organName: editForm.organName,
-      realName: editForm.realName,
-      email: editForm.email,
-      mobile: editForm.mobile,
-    };
-
-    try {
-      const user = await TenantProvisionApi.provisionAccount(payload);
-      // 开通成功后切换/刷新 token，并重置菜单
-      await sso.switchToken(user.id);
-      ElMessage.success('开通成功');
-      setTimeout(() => window.location.reload(), 300);
-    } catch (error: any) {
-      ElMessage.error(error.message || '开通失败');
-    }
+  const payload: TenantProvisionPayload = {
+    organType: editForm.organType,
+    organName: editForm.organName,
+    realName: editForm.realName,
+    email: editForm.email,
+    mobile: editForm.mobile,
   };
 
-  // 挂载回调
-  onMounted(async () => {
-    // 先准备字典
-    await loadDicts();
+  try {
+    const user = await TenantProvisionApi.provisionAccount(payload);
+      // 开通成功后切换/刷新 token，并重置菜单
+    await sso.switchToken(user.id);
+    ElMessage.success(t('MS_TP_CREATE_OK', '开通成功'));
+    setTimeout(() => window.location.reload(), 300);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : t('MS_TP_CREATE_FAIL', '开通失败');
+    ElMessage.error(msg);
+  }
+};
 
+  // 挂载回调
+onMounted(async () => {
     // 根据当前登录用户的机构信息判断是否允许开通/加入租户
-    try {
-      const authorityUser = await getAuthorityUser();
+  try {
+    const authorityUser = await getAuthorityUser();
       // 当所属机构 organ.admin 为 true（运营机构）时，不允许任何租户操作
-      canProvision.value = !authorityUser.organ?.admin;
-    } catch (error: any) {
-      console.error('加载当前用户信息失败:', error);
+    canProvision.value = !authorityUser.organ?.admin;
+  } catch (error: unknown) {
+    console.error('加载当前用户信息失败:', error);
       // 出错时默认允许
-    }
-  });
+  }
+});
 </script>
 
 <style scoped>
-  .tenant-provision-container {
-    padding: 20px;
-    background-color: #f5f7fa;
-    min-height: 100%;
-    box-sizing: border-box;
-  }
+.tenant-provision-container {
+  padding: 20px;
+  background-color: #f5f7fa;
+  min-height: 100%;
+  box-sizing: border-box;
+}
 
-  .form-card {
-    width: 100%;
-    background-color: #fff;
-  }
+.form-card {
+  width: 100%;
+  background-color: #fff;
+}
 
-  .card-header {
-    font-weight: bold;
-    font-size: 18px;
-  }
+.card-header {
+  font-weight: bold;
+  font-size: 18px;
+}
 
-  .collapse-title {
-    font-size: 14px;
-    color: #606266;
-  }
+.collapse-title {
+  font-size: 14px;
+  color: #606266;
+}
 
-  .collapse-title--active {
-    color: #409eff;
-    font-weight: 600;
-  }
+.collapse-title--active {
+  color: #409eff;
+  font-weight: 600;
+}
 
-  .provision-form {
-    padding: 10px 20px;
-  }
+.provision-form {
+  padding: 10px 20px;
+}
 
-  .form-actions {
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid #ebeef5;
-    text-align: center;
-  }
+.form-actions {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #ebeef5;
+  text-align: center;
+}
 
-  .submit-btn {
-    width: 160px;
-  }
+.submit-btn {
+  width: 160px;
+}
 
-  .provision-alert {
-    margin-bottom: 16px;
-  }
+.provision-alert {
+  margin-bottom: 16px;
+}
 </style>
-

@@ -55,11 +55,11 @@ export const IdpBindApi = {
     if (!tokenStore.tokenString) {
       return Promise.reject(new Error('NO_LOGIN'));
     }
-    return getHttpClient('auth').post<Result<DingTalkBindStartResponse>>(DINGTALK_BIND_START_PATH, body, {
+    return getHttpClient('auth').post<DingTalkBindStartResponse>(DINGTALK_BIND_START_PATH, body, {
       headers: {
         Authorization: `Bearer ${tokenStore.tokenString}`,
       },
-    });
+    }) as Promise<Result<DingTalkBindStartResponse>>;
   },
 };
 
