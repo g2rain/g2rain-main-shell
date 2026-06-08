@@ -1,6 +1,12 @@
 <template>
   <header class="main-header">
-    <div class="logo">{{ $t('MS_HDR_LOGO', '谷雨开源SaaS平台') }}</div>
+    <div class="logo">
+      <img
+        :src="logoHeader"
+        :alt="$t('MS_HDR_LOGO', '谷雨开源SaaS平台')"
+        class="logo-image"
+      />
+    </div>
     <div class="header-right">
       <el-select
         v-model="selectedLocale"
@@ -67,6 +73,7 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { Setting, Check, ArrowDown, SwitchButton } from '@element-plus/icons-vue';
+import logoHeader from '@/assets/brand/logo-header.png';
 import { useThemeStore, useLocaleStore } from '@platform/stores';
 import { logout } from '@/runtime/boot';
 import { t } from '@platform/i18n';
@@ -134,9 +141,17 @@ const handleUserCommand = (command: string) => {
 }
 
 .logo {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--header-logo);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.logo-image {
+  display: block;
+  height: 36px;
+  width: auto;
+  max-width: min(320px, 42vw);
+  object-fit: contain;
 }
 
 .header-right {
