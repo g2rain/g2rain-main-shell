@@ -24,6 +24,8 @@
 
 ## 4. 核心能力
 
+本章回答“这个仓库在平台里提供什么能力、解决什么问题”。
+
 - 主壳入口与微前端装载编排：解决“平台如何把多个子应用组织成一个统一入口”的问题，通过 `qiankun`、`single-spa`、`src/platform/apps` 与 `src/components/micro-app` 统一装载子应用、传递运行时上下文、承接壳层布局和工作区容器，是整个平台前端应用化落地的装载中枢。
 - SSO、Token 与登录回调主链路：解决主壳与 IAM 之间的单点登录、令牌建立、回调跳转和登录态持久化问题，通过 `src/runtime/auth`、`src/runtime/boot`、`src/platform/stores` 形成从登录入口到运行期状态恢复的统一认证链路，是子应用共享身份能力的前提。
 - 菜单、路由、Tab 与导航工作区：解决“多应用、多页面场景下如何保持一致交互体验”的问题，通过 `src/runtime/router`、`src/runtime/navigation`、`src/shell/layout`、`src/shell/pages` 管理菜单、标签页、工作区和重定向逻辑，让用户在主壳内完成跨应用切换而不失去上下文。
@@ -132,6 +134,8 @@ docker build --build-arg VITE_BUILD_MODE=production -t g2rain/g2rain-main-shell:
 
 ## 7. 项目结构
 
+本章回答“代码与目录是如何组织的、开发和排查时应该先从哪里入手”。
+
 ```text
 g2rain-main-shell/
 ├── src/                   # 主壳应用源码、运行时、平台与组件能力
@@ -144,29 +148,28 @@ g2rain-main-shell/
 └── package.json           # 前端依赖与脚本入口
 ```
 
-### `src` 模块说明
+### `src` 分层说明
 
-- `src/assets`：品牌资源与静态素材，如主壳 Logo 等。
-- `src/components`：可复用基础组件与通用能力，重点承载 `http`、`micro-app`、`loading`、`error` 等底层能力。
-- `src/platform`：平台级抽象能力，包括应用模型、主题、国际化、类型定义与状态管理，是主壳长期复用的壳层能力底座。
-- `src/runtime`：主壳运行时装配层，负责启动流程、路由、认证、导航、接口访问与 mock 引导，是主壳真正“跑起来”的流程中心。
-- `src/shared`：跨层共享工具与轻量封装，例如环境变量、URL、JWT、HTTP 辅助方法。
-- `src/shell`：主壳界面与布局实现，包括主框架、菜单、页签、工作区与壳层组件。
-- `src/views`：具体页面视图与业务型前端页面，包括认证回调、跳转、租户开通、通行证等页面。
+- `src/assets`：品牌资源与静态素材。
+- `src/components`：可复用基础组件与通用底层组件。
+- `src/platform`：平台级抽象、类型、状态与主题等公共壳层能力。
+- `src/runtime`：运行时装配代码，如启动、路由、认证、导航与请求访问。
+- `src/shared`：跨层共享工具与轻量封装。
+- `src/shell`：主壳界面、布局与工作区骨架。
+- `src/views`：具体页面视图与业务页面实现。
 
-### 关键子模块
+### 代码查阅指引
 
-- `src/components/http`：统一 HTTP 客户端、拦截器、签名、Mock 数据与错误处理，是主壳请求链路与安全协同的落点。
-- `src/components/micro-app`：微前端通信、事件适配与子应用消息处理，是主壳与子应用运行期协作的桥接层。
-- `src/platform/apps`：平台应用模型与 `qiankun` 子应用接入抽象。
-- `src/platform/stores`：平台核心状态仓库，如菜单、主题、Token、Tab、运行时信息。
-- `src/runtime/auth`：SSO 登录、回调、Token 建立与刷新链路。
-- `src/runtime/navigation`：导航跳转与子应用重定向逻辑。
-- `src/runtime/router`：主壳路由注册、鉴权与历史路由基座。
-- `src/shell/layout`：主壳布局骨架，如 `Header`、`Sidebar`、`TabBar`、`MicroAppPage`。
-- `src/views/auth`、`src/views/redirect`、`src/views/passport`、`src/views/tenant_provision`：承载登录回调、跳转、通行证与租户开通等平台关键页面。
+- 查看请求链路时，优先看 `src/components/http`。
+- 查看子应用装载与通信时，优先看 `src/components/micro-app` 与 `src/platform/apps`。
+- 查看登录、Token 与认证回调时，优先看 `src/runtime/auth`。
+- 查看菜单、路由与页面切换时，优先看 `src/runtime/router`、`src/runtime/navigation`、`src/shell/layout`。
+- 查看平台状态、主题与共享上下文时，优先看 `src/platform/stores` 与 `src/platform`。
+- 查看具体页面实现时，优先看 `src/views/auth`、`src/views/redirect`、`src/views/passport`、`src/views/tenant_provision`。
 
-### 核心业务流程介绍
+## 8. 核心业务流程
+
+本章回答“这些能力在运行时是如何串起来工作的”。
 
 #### 1. 主壳装载与子应用编排主线
 - 主壳先启动自身布局、菜单、路由和运行时状态
@@ -190,7 +193,7 @@ g2rain-main-shell/
 - `lua/` 与 `nginx/` 配合 OpenResty 在运行环境中处理 IAM 公钥、应用私钥、签名能力与转发配置
 - 这一主线解决的是“主壳如何进入平台既定安全链路”，而不是单纯发起 HTTP 请求
 
-## 8. 常用命令
+## 9. 常用命令
 
 ```bash
 # 启动本地开发环境
@@ -218,12 +221,12 @@ npm run format
 ./build.sh --image g2rain/g2rain-main-shell --tag latest --build-mode production
 ```
 
-## 9. 质量与测试
+## 10. 质量与测试
 - 当前仓库已配置 `lint`、`lint:fix`、`format` 等前端质量命令，但当前扫描结果未识别到独立测试目录
 - 当前质量保障主要依赖 TypeScript 编译、ESLint、主壳运行验证、子应用联调与容器部署验证
 - 后续建议优先补充登录回调、子应用装载、导航重定向与安全链路相关的关键回归测试
 
-## 10. 相关仓库
+## 11. 相关仓库
 
 - `g2rain-app-template`：官方子应用模板仓库
 - `g2rain-app-cli`：子应用初始化 CLI
@@ -231,14 +234,14 @@ npm run format
 - `g2rain-basis`：平台资源、应用与权限治理底座
 - `g2rain-infra`：平台基础设施与共享服务能力
 
-## 11. 使用建议
+## 12. 使用建议
 
 - 适合作为平台统一主入口与子应用装载壳层使用，而不是把业务页面长期堆在主壳内部
 - 如果要新增子应用接入能力，建议优先理解“主壳装载、导航、认证、安全协同”四条主线
 - 如果要新增壳层页面，建议仍保持 `runtime / platform / shell / views / shared` 的分层边界
 - 生产环境部署时，应优先使用运行时配置注入方式管理易变地址与接入参数
 
-## 12. 贡献指南
+## 13. 贡献指南
 
 欢迎以 Issue、文档改进、测试补充、代码优化、功能增强等形式参与贡献。
 
@@ -256,18 +259,18 @@ npm run format
 - 更新相关文档
 - 确保测试通过
 
-## 13. 许可证
+## 14. 许可证
 
 本项目基于 [Apache 2.0许可证](LICENSE) 开源。
 
-## 14. 联系我们
+## 15. 联系我们
 
 - **站点**: https://www.g2rain.com/
 - **Issues**: [GitHub Issues](https://github.com/g2rain/g2rain/issues)
 - **讨论**: [GitHub Discussions](https://github.com/g2rain/g2rain/discussions)
 - **邮箱**: g2rain_developer@163.com
 
-## 15. 致谢
+## 16. 致谢
 
 感谢所有为这个项目做出贡献的开发者们。
 
