@@ -1,63 +1,94 @@
-# G2Rain Main Shell - 管理后台框架应用
+# g2rain-main-shell
 
+## 1. 徽标与状态标识
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/Node-22+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Vue](https://img.shields.io/badge/Vue-3-42b883?logo=vue.js&logoColor=white)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![qiankun](https://img.shields.io/badge/qiankun-2.x-1f6feb)](https://qiankun.umijs.org/)
 
-一个基于 Vue3 + TypeScript + qiankun 的管理后台框架应用，提供 Token 管理、SSO 单点登录、微前端应用装载等核心功能。
+## 2. 项目简介
+`g2rain-main-shell` 是 G2rain 平台的主壳前端仓库，负责承载平台控制台主应用、子应用装载、统一导航与运行时交互能力，并与交互接入侧安全链路协同工作。
 
-**生态**：子应用官方模板见 [g2rain-app-template](https://github.com/g2rain/g2rain-app-template)；可使用脚手架 [create-g2rain-app](https://github.com/g2rain/g2rain-app-cli) 生成子应用工程。本仓库为 **qiankun 主壳**，负责布局、菜单与子应用装载等。
+## 3. 平台定位
 
-## 📋 目录
+在 G2rain“企业级 AI 原生开源 SaaS 平台”体系中，`g2rain-main-shell` 位于交互接入层，是平台“应用化接入模式”的核心承载仓库之一。
 
-- [项目简介](#项目简介)
-- [技术栈](#技术栈)
-- [快速开始](#快速开始)
-- [环境配置](#环境配置)
-- [业务开发指南](#业务开发指南)
-- [Mock 数据开发](#mock-数据开发)
-- [构建与部署](#构建与部署)
-- [架构说明](#架构说明)
-- [贡献指南](#-贡献指南)
-- [许可证](#-许可证)
-- [联系我们](#-联系我们)
-- [致谢](#-致谢)
+它主要承担以下角色：
+- 作为主应用承载平台控制台统一入口
+- 作为子应用装载容器承载微前端编排
+- 作为统一交互入口承载菜单、路由、Tab、SSO 与运行时状态
+- 作为交互接入层安全协同节点，与网关、OpenResty、Lua、IAM 共同形成前端与 API 的身份管理与安全链路
 
-## 🎯 项目简介
+它与 `g2rain-iam`、`g2rain-basis`、`g2rain-infra` 等仓库协同，共同构成平台统一身份、统一交互、统一资源权限呈现与统一应用接入体系。
 
-G2Rain Main Shell 是一个企业级管理后台框架应用，主要提供以下核心能力：
+## 4. 核心能力
 
-- **Token 管理**：基于 JWT 和 DPoP 协议的 Token 生成、验证和刷新
-- **SSO 单点登录**：集成 g2rain-iam 的 SSO 认证流程，支持授权码模式
-- **微前端架构**：基于 qiankun 的微前端应用装载和管理
-- **多 TabTypes 管理**：支持主应用和子应用的 TabTypes 页面管理
-- **安全签名**：使用 ES256 算法进行请求签名，确保 API 安全
+本章回答“这个仓库在平台里提供什么能力、解决什么问题”。
 
-## 🛠 技术栈
+- 主壳入口与微前端装载编排：解决“平台如何把多个子应用组织成一个统一入口”的问题，通过 `qiankun`、`single-spa`、`src/platform/apps` 与 `src/components/micro-app` 统一装载子应用、传递运行时上下文、承接壳层布局和工作区容器，是整个平台前端应用化落地的装载中枢。
+- SSO、Token 与登录回调主链路：解决主壳与 IAM 之间的单点登录、令牌建立、回调跳转和登录态持久化问题，通过 `src/runtime/auth`、`src/runtime/boot`、`src/platform/stores` 形成从登录入口到运行期状态恢复的统一认证链路，是子应用共享身份能力的前提。
+- 菜单、路由、Tab 与导航工作区：解决“多应用、多页面场景下如何保持一致交互体验”的问题，通过 `src/runtime/router`、`src/runtime/navigation`、`src/shell/layout`、`src/shell/pages` 管理菜单、标签页、工作区和重定向逻辑，让用户在主壳内完成跨应用切换而不失去上下文。
+- 前端与 API 安全协同链路：解决主壳请求如何与网关、OpenResty、Lua、IAM 协同完成签名和安全访问的问题，通过 `src/components/http`、`lua/`、`nginx/`、运行时环境变量与签名脚本协同工作，让前端请求不仅能发出去，还能进入平台既定的身份与安全链路。
+- 平台运行时状态与共享能力底座：解决主题、国际化、平台应用模型、共享状态和轻量工具能力分散的问题，通过 `src/platform`、`src/shared`、`src/runtime/store` 把主壳需要长期复用的状态、类型和工具沉淀下来，为子应用接入与壳层演进提供稳定基础。
+- 运行模式、Mock 与环境注入：解决开发环境、测试环境、容器环境之间配置差异大、联调成本高的问题，通过 `.env*`、`env-config.js`、`docker-entrypoint.sh`、Mock 数据与 Vite 代理能力，把“本地开发、联调验证、容器部署”三种运行方式拉到统一工程模型中。
+- 容器化交付与接入侧部署支撑：解决主壳如何以平台标准方式进入部署环境的问题，通过 `Dockerfile`、`build.sh`、`nginx/default.conf.template` 与 OpenResty 运行环境，把前端产物、运行时变量和安全脚本打包成可部署单元。
 
-### 前端技术栈
+## 5. 技术栈
 
-- **框架**：Vue 3.3.4 + TypeScript 5.4.5
-- **构建工具**：Vite 5.0.0
-- **微前端**：qiankun 2.10.14
-- **UI 组件库**：Element Plus 2.4.3
-- **状态管理**：Pinia 2.1.7 + pinia-plugin-persistedstate 3.2.1
-- **路由**：Vue Router 4.2.5
-- **HTTP 客户端**：Axios 1.12.2
-- **加密库**：jose 6.1.0、crypto-js 4.2.0、elliptic 6.6.1
-- **Mock 工具**：mockjs 1.1.0
+- 前端框架：`Vue 3`、`TypeScript`
+- 构建工具：`Vite`
+- 微前端能力：`qiankun`、`single-spa`
+- UI 与状态管理：`Element Plus`、`Pinia`
+- 路由与网络：`Vue Router`、`Axios`
+- 安全相关：`jose`、`elliptic`、`crypto-js`
+- 交互接入协同：`OpenResty`、`Lua`、`Nginx`
+- 环境要求：`Node 22+`
 
-### 后端技术栈
-
-- **Web 服务器**：OpenResty (Nginx + Lua)
-- **Lua 库**：lua-resty-openssl（ES256 签名支持）
-- **签名算法**：ES256 (ECDSA P-256 + SHA-256)
-
-## 🚀 快速开始
-
+## 6. 快速开始
 ### 环境要求
 
-- Node.js >= 18
-- npm >= 9
-- Docker（可选，用于部署）
+- `Node.js >= 22`
+- `npm >= 9`
+- `Docker`（可选，用于容器化交付）
+
+### 环境变量
+
+仓库当前同时使用构建时环境变量与运行时环境变量：
+- 构建时变量主要来自 `.env`、`.env.production`
+- 运行时变量通过 `env-config.js` 与 `nginx/docker-entrypoint.sh` 注入，用于容器部署后的动态替换
+
+当前主要变量如下：
+
+| 变量名 | 说明 | 典型用途 |
+| --- | --- | --- |
+| `VITE_BUILD_MODE` | 前端构建模式 | 区分 `development` / `production` 构建 |
+| `VITE_APPLICATION_CODE` | 应用编码 | 主壳身份标识、请求头与应用协同 |
+| `VITE_CONTEXT_PATH` | 上下文路径 | 控制 `base`、路由前缀、静态资源路径 |
+| `VITE_BACKEND_ORIGIN` | 后端服务地址 | 本地 `vite` 开发代理目标 |
+| `VITE_TOKEN_END_POINT` | Token 接口路径 | Token 创建与刷新 |
+| `VITE_SSO_BASE_URL` | SSO 基础地址 | 登录跳转与回调协同 |
+| `VITE_AUTH_END_POINT` | SSO 认证路径 | 拼接认证地址 |
+| `VITE_REDIRECT_URI` | SSO 回调路径 | 认证回跳页面 |
+| `VITE_MOCK_ENABLED` | 是否启用 Mock | 本地联调与模拟数据开关 |
+| `VITE_SERVER_PORT` | 本地开发端口 | `vite dev` 端口配置 |
+| `VITE_DINGTALK_BIND_MODE` | 钉钉绑定模式 | 绑定流程切换 |
+| `VITE_I18N_TAGS` | 国际化文案包标签 | 拉取平台文案包 |
+
+运行时部署时还会使用以下非 `VITE_` 变量：
+
+| 变量名 | 说明 | 典型用途 |
+| --- | --- | --- |
+| `SSO_BASE_URL` | 运行时 SSO 地址 | 替换容器内 `env-config.js` 占位符 |
+| `CONTEXT_PATH` | 运行时上下文路径 | 渲染 Nginx / OpenResty 配置 |
+| `SERVER_PORT` | 容器监听端口 | 控制容器内服务端口 |
+| `GATEWAY_HOST` / `GATEWAY_PORT` | 网关地址 | 渲染网关转发配置 |
+| `IAM_HOST` / `IAM_PORT` | IAM 地址 | 渲染认证相关转发配置 |
+
+建议：
+- `VITE_CONTEXT_PATH` 在构建期与部署期保持一致
+- 生产环境优先通过运行时注入方式覆盖敏感或易变配置
+- README 仅说明变量职责，不公开真实生产密钥与内部安全细节
 
 ### 安装依赖
 
@@ -66,533 +97,181 @@ npm install
 ```
 
 ### 本地开发
-
-1. 创建 `.env` 文件（参考 [环境配置](#环境配置)）
-
-2. 启动开发服务器：
-
 ```bash
 npm run dev
 ```
 
-3. 访问应用：
+默认可通过 `http://localhost:3000` 访问。
 
-打开浏览器访问 `http://localhost:3000`
-
-### 构建生产版本
+### 生产构建
 
 ```bash
 npm run build
 ```
 
-构建产物将输出到 `dist/` 目录。
+构建产物默认输出到 `dist/` 目录。
 
-### 常见命令
-
-项目提供了以下常用命令：
-
-| 命令 | 说明 |
-|------|------|
-| `npm run dev` | 启动开发服务器 |
-| `npm run build` | 构建生产版本 |
-| `npm run preview` | 预览构建产物 |
-| `npm run lint` | 检查代码规范 |
-| `npm run lint:fix` | 检查并自动修复代码规范问题 |
-| `npm run format` | 格式化代码（使用 Prettier） |
-
-#### 代码检查
-
-检查代码是否符合 ESLint 规范：
+### 直接使用 `Dockerfile` 构建镜像
 
 ```bash
+docker build -t g2rain/g2rain-main-shell:latest .
+docker build --build-arg VITE_BUILD_MODE=production -t g2rain/g2rain-main-shell:latest .
+```
+
+### 使用 `build.sh` 构建镜像
+
+仓库根目录提供了 `build.sh`，用于一键构建前端镜像。
+
+```bash
+./build.sh
+./build.sh --image g2rain/g2rain-main-shell --tag latest --build-mode production
+```
+
+脚本支持：
+- 自定义镜像名 `--image`
+- 自定义标签 `--tag`
+- 自定义构建模式 `--build-mode`
+
+## 7. 项目结构
+
+本章回答“代码与目录是如何组织的、开发和排查时应该先从哪里入手”。
+
+```text
+g2rain-main-shell/
+├── src/                   # 主壳应用源码、运行时、平台与组件能力
+├── public/                # 公共静态资源
+├── lua/                   # 前端/API 安全协同相关 Lua 脚本与密钥文件
+├── nginx/                 # Nginx / OpenResty 启动与模板配置
+├── build.sh               # 一键构建 Docker 镜像
+├── Dockerfile             # 主壳容器化构建文件
+├── vite.config.ts         # Vite 构建与代理配置
+└── package.json           # 前端依赖与脚本入口
+```
+
+### `src` 分层说明
+
+- `src/assets`：品牌资源与静态素材。
+- `src/components`：可复用基础组件与通用底层组件。
+- `src/platform`：平台级抽象、类型、状态与主题等公共壳层能力。
+- `src/runtime`：运行时装配代码，如启动、路由、认证、导航与请求访问。
+- `src/shared`：跨层共享工具与轻量封装。
+- `src/shell`：主壳界面、布局与工作区骨架。
+- `src/views`：具体页面视图与业务页面实现。
+
+### 代码查阅指引
+
+- 查看请求链路时，优先看 `src/components/http`。
+- 查看子应用装载与通信时，优先看 `src/components/micro-app` 与 `src/platform/apps`。
+- 查看登录、Token 与认证回调时，优先看 `src/runtime/auth`。
+- 查看菜单、路由与页面切换时，优先看 `src/runtime/router`、`src/runtime/navigation`、`src/shell/layout`。
+- 查看平台状态、主题与共享上下文时，优先看 `src/platform/stores` 与 `src/platform`。
+- 查看具体页面实现时，优先看 `src/views/auth`、`src/views/redirect`、`src/views/passport`、`src/views/tenant_provision`。
+
+## 8. 核心业务流程
+
+本章回答“这些能力在运行时是如何串起来工作的”。
+
+#### 1. 主壳装载与子应用编排主线
+- 主壳先启动自身布局、菜单、路由和运行时状态
+- 再根据平台资源与应用配置，决定子应用何时被装载到工作区
+- 子应用不是独立乱入，而是由主壳统一承接路径、容器、上下文与消息通道
+- 这一主线保证了“平台是一个统一入口，子应用是受控接入”这套应用化模式能够稳定落地
+
+#### 2. SSO 登录与 Token 建立主线
+- 用户进入主壳后，由 `src/runtime/auth` 判断当前登录态与回调状态
+- 主壳与 IAM 协同完成登录跳转、授权回调、Token 建立与持久化
+- 后续子应用不需要各自独立重复整套登录入口，而是优先复用主壳已建立的身份上下文
+- 这一主线是平台统一身份体验成立的前提
+
+#### 3. 菜单、Tab 与工作区导航主线
+- 主壳基于资源和权限结果组织菜单与页面入口
+- 页面访问并不只是路由跳转，还会同步影响 Tab、面包屑、工作区与子应用装载状态
+- 因此主壳承担的是“统一交互编排器”角色，而不只是一个普通 Vue 容器
+
+#### 4. 前端与 API 安全协同主线
+- 主壳请求链路通过 `src/components/http` 承接请求封装、错误处理、签名协同与 Mock 切换
+- `lua/` 与 `nginx/` 配合 OpenResty 在运行环境中处理 IAM 公钥、应用私钥、签名能力与转发配置
+- 这一主线解决的是“主壳如何进入平台既定安全链路”，而不是单纯发起 HTTP 请求
+
+## 9. 常用命令
+
+```bash
+# 启动本地开发环境
+npm run dev
+
+# 构建生产版本
+npm run build
+
+# 预览构建结果
+npm run preview
+
+# 检查代码规范
 npm run lint
-```
 
-自动修复可修复的代码规范问题：
-
-```bash
+# 自动修复规范问题
 npm run lint:fix
-```
 
-#### 代码格式化
-
-使用 Prettier 格式化代码：
-
-```bash
+# 格式化代码
 npm run format
+
+# 使用脚本构建镜像
+./build.sh
+
+# 自定义镜像参数构建
+./build.sh --image g2rain/g2rain-main-shell --tag latest --build-mode production
 ```
 
-这会格式化 `src/` 目录下的所有 TypeScript、Vue、JavaScript、CSS、SCSS 和 Markdown 文件。
+## 10. 质量与测试
+- 当前仓库已配置 `lint`、`lint:fix`、`format` 等前端质量命令，但当前扫描结果未识别到独立测试目录
+- 当前质量保障主要依赖 TypeScript 编译、ESLint、主壳运行验证、子应用联调与容器部署验证
+- 后续建议优先补充登录回调、子应用装载、导航重定向与安全链路相关的关键回归测试
 
-## ⚙️ 环境配置
+## 11. 相关仓库
 
-### 环境变量说明
+- `g2rain-app-template`：官方子应用模板仓库
+- `g2rain-app-cli`：子应用初始化 CLI
+- `g2rain-iam`：统一身份认证与令牌治理能力
+- `g2rain-basis`：平台资源、应用与权限治理底座
+- `g2rain-infra`：平台基础设施与共享服务能力
 
-在项目根目录创建 `.env` 文件，配置以下环境变量：
+## 12. 使用建议
 
-| 变量名 | 说明 | 示例 | 必填 |
-|--------|------|------|------|
-| `VITE_APPLICATION_CODE` | 应用编码 | `g2rain-main-shell` | 是 |
-| `VITE_CONTEXT_PATH` | 应用基础路径 | `/` 或 `/main` | 是 |
-| `VITE_SSO_BASE_URL` | SSO 跳转基础地址（不包含路径） | `https://sso.example.com` | 是 |
-| `VITE_AUTH_END_POINT` | SSO 认证端点 | `/auth/authorize` | 是 |
-| `VITE_REDIRECT_URI` | SSO 回调地址 | `/sso_callback` | 是 |
-| `VITE_TOKEN_END_POINT` | Token 生成/刷新接口路径 | `/auth/token` | 否 |
-| `VITE_MOCK_ENABLED` | 是否启用 Mock | `true` 或 `false` | 否 |
+- 适合作为平台统一主入口与子应用装载壳层使用，而不是把业务页面长期堆在主壳内部
+- 如果要新增子应用接入能力，建议优先理解“主壳装载、导航、认证、安全协同”四条主线
+- 如果要新增壳层页面，建议仍保持 `runtime / platform / shell / views / shared` 的分层边界
+- 生产环境部署时，应优先使用运行时配置注入方式管理易变地址与接入参数
 
-### 环境变量配置示例
+## 13. 贡献指南
 
-**开发环境** (`.env`):
+欢迎以 Issue、文档改进、测试补充、代码优化、功能增强等形式参与贡献。
 
-```env
-VITE_APPLICATION_CODE=g2rain-main-shell
-VITE_CONTEXT_PATH=/
-VITE_SSO_BASE_URL=http://localhost:8080
-VITE_AUTH_END_POINT=/auth/authorize
-VITE_REDIRECT_URI=/sso_callback
-VITE_MOCK_ENABLED=true
-```
+建议流程：
 
-**生产环境** (`.env.production`):
+1. Fork 本仓库
+2. 创建特性分支
+3. 提交修改
+4. 推送分支
+5. 提交 Pull Request
 
-```env
-VITE_APPLICATION_CODE=g2rain-main-shell
-VITE_CONTEXT_PATH=/main
-VITE_SSO_BASE_URL=https://sso.example.com
-VITE_AUTH_END_POINT=/auth/authorize
-VITE_REDIRECT_URI=/sso_callback
-VITE_MOCK_ENABLED=false
-```
+提交前请尽量确保：
+- 遵循现有技术栈与代码规范
+- 补充必要测试
+- 更新相关文档
+- 确保测试通过
 
-### 运行时环境变量配置
-
-项目支持**运行时环境变量配置**，允许在 Docker 容器启动时动态配置环境变量，无需重新构建镜像。
-
-#### 工作原理
-
-1. **构建阶段**：
-   - Vite 插件 `vite-plugin-env-config` 在构建完成后生成 `dist/env-config.js`
-   - 文件包含占位符 `__CONTEXT_PATH__` 和 `__SSO_BASE_URL__`
-
-2. **运行阶段**：
-   - `docker-entrypoint.sh` 读取 Docker 环境变量
-   - 替换 `env-config.js` 中的占位符为实际值
-
-3. **应用启动**：
-   - `index.html` 在应用脚本加载前加载 `env-config.js`
-   - 代码优先使用 `window._env_`（运行时配置），如果没有则使用 `import.meta.env`（构建时配置）
-
-#### Docker 运行时配置
-
-```bash
-docker run -d \
-  -p 8080:8080 \
-  -e CONTEXT_PATH=/main \
-  -e SSO_BASE_URL=https://sso.example.com \
-  -e GATEWAY_HOST=gateway.example.com \
-  -e GATEWAY_PORT=8080 \
-  -e IAM_HOST=iam.example.com \
-  -e IAM_PORT=8080 \
-  -e SERVER_PORT=8080 \
-  g2rain-main-shell
-```
-
-### 环境变量使用
-
-在代码中通过 `@runtime/env` 访问环境变量：
-
-```typescript
-import { env } from '@runtime/env';
-
-console.log(env.VITE_APPLICATION_CODE);
-console.log(env.VITE_CONTEXT_PATH);
-console.log(env.VITE_MOCK_ENABLED);
-```
-
-环境变量读取优先级：
-1. **运行时配置** (`window._env_`) - 用于 Docker 容器运行时替换
-2. **构建时配置** (`import.meta.env`) - 用于本地开发
-3. **默认值** - 如果以上都不存在
-
-## 💼 业务开发指南
-
-`views` 目录是主要的业务开发目录，所有业务模块都在此目录下开发。
-
-### 目录结构
-
-```
-views/
-├── api/              # API 服务层
-│   ├── user.api.ts  # 用户 API
-│   ├── user.type.ts # 用户类型定义
-│   ├── role.api.ts  # 角色 API
-│   └── role.type.ts # 角色类型定义
-├── user/             # 用户模块
-│   └── UserList.vue # 用户列表页面
-├── role/             # 角色模块
-│   └── RoleList.vue # 角色列表页面
-└── route-map.ts      # 路由映射配置
-```
-
-### 开发新模块示例
-
-以 `User` 和 `Role` 模块为例，说明如何开发新模块：
-
-#### 1. 创建类型定义文件
-
-在 `views/api/` 目录下创建类型定义文件，例如 `user.type.ts`：
-
-```typescript
-/**
- * 用户信息类型定义
- */
-export interface UserInfo {
-  id: number;
-  name: string;
-  role: string;
-  status: string;
-}
-```
-
-#### 2. 创建 API 服务文件
-
-在 `views/api/` 目录下创建 API 服务文件，例如 `user.api.ts`：
-
-```typescript
-/**
- * 用户相关 API 服务
- */
-import { http } from '@runtime/http';
-import type { UserInfo } from './user.type';
-
-export class UserApi {
-  /**
-   * 获取用户列表
-   */
-  static async list(params?: Record<string, any>): Promise<UserInfo[]> {
-    const res = await http.get<UserInfo[]>('/user/list', params, {
-      headers: {
-        'x-g2rain-mock': 'true'  // 开发时使用 Mock 数据
-      }
-    });
-    return res.data || [];
-  }
-}
-```
-
-#### 3. 创建页面组件
-
-在 `views/` 目录下创建模块目录和页面组件，例如 `views/user/UserList.vue`：
-
-```vue
-<template>
-  <div class="user-container">
-    <h2>用户管理</h2>
-    <el-table :data="tableData" border style="width: 100%">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="name" label="姓名" />
-      <el-table-column prop="role" label="角色" />
-      <el-table-column prop="status" label="状态" />
-    </el-table>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { UserApi } from '../api/user.api';
-import type { UserInfo } from '../api/user.type';
-
-const tableData = ref<UserInfo[]>([]);
-
-onMounted(async () => {
-  try {
-    tableData.value = await UserApi.list();
-  } catch (error) {
-    console.error('获取用户列表失败:', error);
-  }
-});
-</script>
-
-<style scoped>
-.user-container {
-  padding: 20px;
-}
-</style>
-```
-
-#### 4. 配置路由映射
-
-在 `views/route-map.ts` 中添加路由映射：
-
-```typescript
-export const routeComponentMap: Record<string, () => Promise<any>> = {
-  // 系统管理
-  '/system/user': () => import('@/views/user/UserList.vue'),
-  '/system/role': () => import('@/views/role/RoleList.vue'),
-
-  // 添加新模块路由
-  '/system/your-module': () => import('@/views/your-module/YourModuleList.vue'),
-};
-```
-
-#### 5. 完整示例参考
-
-- **User 模块**：
-  - 类型定义：`views/api/user.type.ts`
-  - API 服务：`views/api/user.api.ts`
-  - 页面组件：`views/user/UserList.vue`
-  - Mock 数据：`runtime/http/mock/data/user.api.ts`
-
-- **Role 模块**：
-  - 类型定义：`views/api/role.type.ts`
-  - API 服务：`views/api/role.api.ts`
-  - 页面组件：`views/role/RoleList.vue`
-  - Mock 数据：`runtime/http/mock/data/role.api.ts`
-
-### 开发规范
-
-1. **目录命名**：使用小写字母，多个单词用连字符分隔（如 `user-list`）
-2. **文件命名**：
-   - 类型定义：`*.type.ts`
-   - API 服务：`*.api.ts`
-   - 页面组件：`*.vue`（使用 PascalCase，如 `UserList.vue`）
-3. **API 调用**：统一使用 `@runtime/http` 的 `http` 实例
-4. **类型定义**：所有接口数据类型都应在 `views/api/*.type.ts` 中定义
-
-## 🎭 Mock 数据开发
-
-项目提供了灵活的 Mock 系统，支持在开发时使用 Mock 数据。
-
-### Mock 启用方式
-
-#### 方式一：环境变量控制
-
-在 `.env` 文件中设置：
-
-```env
-VITE_MOCK_ENABLED=true
-```
-
-启用后，所有 API 请求都会优先使用 Mock 数据（如果存在）。
-
-#### 方式二：请求头强制 Mock
-
-在 API 调用时添加请求头：
-
-```typescript
-const res = await http.get('/user/list', params, {
-  headers: {
-    'x-g2rain-mock': 'true'  // 强制使用 Mock 数据
-  }
-});
-```
-
-**注意**：如果 `x-g2rain-mock` 为 `true` 但 Mock 数据不存在，会抛出错误。
-
-### 创建 Mock 数据
-
-#### 1. 创建 Mock 数据文件
-
-在 `runtime/http/mock/data/` 目录下创建 Mock 数据文件，例如 `user.api.ts`：
-
-```typescript
-/**
- * 用户相关 Mock 接口
- */
-import type { MockDataMap } from '../index';
-import type { ResponseData } from '../../types';
-
-/**
- * 用户列表 Mock 数据
- */
-const userListMock: ResponseData = {
-  requestId: 'mock-user-list-request-id',
-  requestTime: new Date().toISOString(),
-  status: 200,
-  errorCode: '',
-  errorMessage: '',
-  data: [
-    { id: 1, name: '张三', role: '管理员', status: '正常' },
-    { id: 2, name: '李四', role: '普通用户', status: '正常' },
-    { id: 3, name: '王五', role: '访客', status: '禁用' }
-  ],
-} as ResponseData;
-
-/**
- * 用户相关 Mock 接口配置
- */
-export const userMockDataMap: MockDataMap = {
-  // GET /user/list - 获取用户列表
-  '/user/list': userListMock,
-
-  // 支持通配符格式（如 /main/user/list）
-  '/*/user/list': userListMock,
-};
-```
-
-#### 2. 注册 Mock 数据
-
-在 `runtime/http/mock/data.ts` 中导入并注册：
-
-```typescript
-import { userMockDataMap } from './data/user.api';
-
-export const mockDataMap: MockDataMap = {
-  ...userMockDataMap,
-  // 其他 Mock 数据...
-};
-```
-
-### Mock 数据格式
-
-Mock 数据需要符合 `ResponseData` 格式：
-
-```typescript
-interface ResponseData<T> {
-  requestId: string;
-  requestTime: string;
-  status: number;
-  errorCode: string | null;
-  errorMessage: string | null;
-  data: T;
-}
-```
-
-### Mock 数据支持的功能
-
-1. **静态数据**：直接返回固定的数据对象
-2. **函数式 Mock**：根据请求参数动态生成数据
-3. **通配符匹配**：支持 `/*` 通配符匹配 URL（如 `/main/user/list`）
-
-### 示例：函数式 Mock
-
-```typescript
-export const userMockDataMap: MockDataMap = {
-  '/user/list': (config) => {
-    // 根据请求参数动态生成数据
-    const params = config.params || {};
-    const page = params.page || 1;
-    const pageSize = params.pageSize || 10;
-
-    return {
-      requestId: 'mock-request-id',
-      requestTime: new Date().toISOString(),
-      status: 200,
-      errorCode: null,
-      errorMessage: null,
-      data: {
-        page,
-        pageSize,
-        total: 100,
-        records: [
-          // 生成数据...
-        ]
-      }
-    };
-  }
-};
-```
-
-## 🎨 主题系统
-
-项目支持运行时主题切换，提供三种主题模式：
-
-- **light**：亮色主题（默认）
-- **dark**：暗色主题
-- **g2rain**：品牌主题
-
-### 主题切换
-
-在 `Header.vue` 中提供了主题切换下拉菜单，用户可以随时切换主题。主题选择会自动保存到 `localStorage`，下次访问时会自动应用。
-
-### 主题架构
-
-主题系统采用 CSS 变量和 `data-theme` 属性实现：
-
-- **`platform/theme/`**：主题核心（类型定义、主题 CSS、Element Plus 映射）
-- **`platform/styles/`**：样式系统（基础样式、变量、入口）
-- **`platform/stores/theme.store.ts`**：主题状态管理（Pinia）
-
-详细说明请参考 [架构说明文档](./architecture.md#platform-目录)。
-
-## 🐳 构建与部署
-
-### Docker 构建
-
-```bash
-docker build --build-arg VITE_BUILD_MODE=production  -t g2rain/g2rain-main-shell .
-```
-
-### Docker 运行
-
-```bash
-docker run -d \
-  -p 8080:8080 \
-  -e CONTEXT_PATH=/main \
-  -e SSO_BASE_URL=https://sso.example.com \
-  -e GATEWAY_HOST=gateway.example.com \
-  -e GATEWAY_PORT=8080 \
-  -e IAM_HOST=iam.example.com \
-  -e IAM_PORT=8080 \
-  -e SERVER_PORT=8080 \
-  -v ./lua/keys:/usr/local/openresty/nginx/lua/keys:ro \
-  g2rain-main-shell
-```
-
-**环境变量说明**：
-- `CONTEXT_PATH`：应用基础路径（如 `/main`），会替换构建产物中的 `__CONTEXT_PATH__` 占位符
-- `SSO_BASE_URL`：SSO 跳转基础地址（不包含路径），会替换构建产物中的 `__SSO_BASE_URL__` 占位符
-- `GATEWAY_HOST`、`GATEWAY_PORT`：API 网关地址和端口
-- `IAM_HOST`、`IAM_PORT`：IAM 服务地址和端口
-- `SERVER_PORT`：Nginx 监听端口（默认 80）
-
-详细部署说明请参考 [架构说明文档](./architecture.md)。
-
-## 📚 架构说明
-
-详细的架构说明请参考 [architecture.md](./architecture.md)，包括：
-
-- 项目结构说明
-- 核心目录详解（platform、runtime、shared、shell）
-- 主题系统架构
-- 应用生命周期管理（Loader）
-- 运行时环境变量配置机制
-- 数据流说明
-- 关键设计模式
-
-## 🤝 贡献指南
-
-我们欢迎所有形式的贡献！
-
-**Issue 与讨论**请统一到主仓库 [g2rain/g2rain](https://github.com/g2rain/g2rain/issues) 提交，便于集中跟踪；请在标题或正文中注明与 **g2rain-main-shell** 相关。
-
-### 贡献流程
-
-1. **Fork** 本仓库
-2. **创建特性分支**：`git checkout -b feature/your-feature-name`
-3. 本地修改后执行 `npm run build` 与 `npm run lint`，确保可通过编译与规范检查
-4. **提交更改**：`git commit -m "Add some feature"`
-5. **推送分支**：`git push origin feature/your-feature-name`
-6. **提交 Pull Request**
-
-维护者信息与 `package.json` 中 `contributors` 字段一致（与 [g2rain-spring-boot-starter](https://github.com/g2rain/g2rain-spring-boot-starter) 开发者信息对齐）。
-
-安全相关问题请见 [SECURITY.md](SECURITY.md)。
-
-## 📄 许可证
+## 14. 许可证
 
 本项目基于 [Apache 2.0许可证](LICENSE) 开源。
 
-## 📞 联系我们
+## 15. 联系我们
 
+- **站点**: https://www.g2rain.com/
 - **Issues**: [GitHub Issues](https://github.com/g2rain/g2rain/issues)
 - **讨论**: [GitHub Discussions](https://github.com/g2rain/g2rain/discussions)
 - **邮箱**: g2rain_developer@163.com
 
-## 🙏 致谢
+## 16. 致谢
 
-感谢所有为这个项目做出贡献的开发者们！
+感谢所有为这个项目做出贡献的开发者们。
 
----
-
-⭐ 如果这个项目对您有帮助，请给我们一个Star！
+如果这个项目对您有帮助，欢迎 Star 支持。
