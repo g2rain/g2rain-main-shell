@@ -51,6 +51,8 @@
 
 该仓库位于 g2rain 前端应用层，是平台的微前端主应用。 它与 g2rain-iam 等应用、工具或支撑服务共同协作。 它为平台提供 Shell 层布局、路由入口与子应用编排能力。
 
+本项目正式采用中央 `frontend-shell 1.0.0`，并以 `frontend-app 1.0.0` 作为通用前端基础；它是当前唯一主应用实现和该 Profile 的首个正式验证对象。项目事实和采用状态见 [docs/project.yaml](docs/project.yaml)，文档入口见 [docs/index.md](docs/index.md)。
+
 ## 应用角色
 
 该仓库聚焦于 `前端 Shell、子应用编排与平台导航`。
@@ -136,7 +138,7 @@ flowchart TD
 
 | 步骤 | 命令或位置 | 说明 |
 | --- | --- | --- |
-| 安装依赖 | `npm install` | 根据 package.json 安装前端依赖。 |
+| 安装依赖 | `npm ci` | 根据 package-lock.json 安装锁定依赖。 |
 | 本地开发 | `npm run dev` | 启动微前端 Shell，本地联调子应用、路由与登录态流程。 |
 | 构建产物 | `npm run build` | 执行类型检查与前端构建，生成可发布产物。 |
 | 预览产物 | `npm run preview` | 在本地预览构建后的前端产物。 |
@@ -243,6 +245,16 @@ flowchart TD
 | 仓库 | 协作关系 |
 | --- | --- |
 | g2rain-iam | 协同完成登录认证、令牌发放、SSO 回调或前端登录态衔接。 |
+| g2rain-manager-app | 采用 `frontend-app 1.0.0` 的真实子应用，用于验证挂载、路由、Token、Locale 和卸载契约。 |
+| g2rain-gateway-webflux | 为业务 API 提供统一入口、后端鉴权和请求转发。 |
+
+## 工程文档
+
+- [文档导航](docs/index.md)
+- [架构偏差](docs/architecture/deviations.md)
+- [配置与部署](docs/operations/configuration.md)
+- [安全边界](docs/security/security-boundaries.md)
+- [需求入口](docs/requirements/README.md)
 
 ## 参与贡献
 
@@ -271,3 +283,4 @@ flowchart TD
 ## 致谢
 
 感谢所有为 g2rain 项目提交 Issue、代码、文档、建议和使用反馈的开发者们！
+
