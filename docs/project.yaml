@@ -1,0 +1,73 @@
+schemaVersion: 1
+name: g2rain-main-shell
+repository: g2rain/g2rain-main-shell
+family: frontend-shell
+role: G2rain 微前端主应用与平台运行壳
+architecture:
+  centralRepository: g2rain/g2rain
+  baselineRef: architecture-v1.2.0
+  baseProfile:
+    path: docs/architecture/profiles/frontend-app
+    version: 1.0.0
+  profile:
+    path: docs/architecture/profiles/frontend-shell
+    version: 1.0.0
+    status: adopted
+  deviations: docs/architecture/deviations.md
+ownership:
+  owns:
+    - 平台统一布局、导航、菜单、Tab 和工作区
+    - 子应用定义、注册、挂载、更新、卸载、销毁和多实例编排
+    - Shell 与子应用的路由同步、Locale 和 Token 协调协议
+    - 浏览器侧 SSO 回调、Token 刷新、失效和登出流程
+    - 主应用静态资源、OpenResty/Nginx 代理和运行时环境配置
+  excludes:
+    - 子应用内部业务页面、数据和业务校验
+    - IAM 的身份、会话和 Token 签发后端规则
+    - Gateway 和领域服务的最终鉴权与数据所有权
+toolchain:
+  node: ">=22"
+  packageManager: npm
+  framework: Vue 3.5.26
+  language: TypeScript 5.9.3
+  bundler: Vite 7.3.0
+  microFrontend: qiankun 2.10.16
+  state: Pinia 3
+runtime:
+  applicationCode: g2rain-main-shell
+  contextPath: /main
+  devServerPort: 3000
+  containerExposedPort: 8080
+  containerDefaultServerPort: 80
+  i18nTags: G2RAIN_SHARED,MAIN_SHELL
+  subAppContract:
+    - appKey
+    - name
+    - entry
+    - activeRule
+    - instanceId
+commands:
+  install: npm ci
+  dev: npm run dev
+  lint: npm run lint
+  verify: npm run build
+  preview: npm run preview
+  image: docker build --build-arg VITE_BUILD_MODE=production -t g2rain/g2rain-main-shell:<tag> .
+collaborators:
+  - repository: g2rain/g2rain-manager-app
+    role: frontend-app 主要集成验证对象
+  - repository: g2rain/g2rain-iam
+    role: SSO、Token、客户端和身份后端能力
+  - repository: g2rain/g2rain-gateway-webflux
+    role: 后端业务 API 入口、鉴权和转发
+documentation:
+  entry: docs/index.md
+  agentEntry: AGENTS.md
+aiCoding:
+  activeRequirement: null
+  requirementTemplate: docs/requirements/README.md
+  validation:
+    - 读取中央基础 Profile、Shell Profile、本地偏差、需求和 Git Diff
+    - 执行 npm run build
+    - 检查文档链接、配置路径、跨应用契约和敏感信息边界
+    - 协议变化使用真实子应用完成浏览器联调
