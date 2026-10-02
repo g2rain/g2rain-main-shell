@@ -285,6 +285,12 @@ export const setupRouter = (app: App<Element>) => {
         return;
       }
 
+      // 子应用深链恢复会 router.replace('/home') 离开网关；此时勿把激活 Tab 抢成首页
+      if (active?.isSubTab()) {
+        next();
+        return;
+      }
+
       const menuItem = findMenuItemByRoutePath(menuStore.menuItems, to.path);
       if (menuItem && menuItem.type === 'main' && menuItem.routePath) {
         // 检查 TabTypes 是否已存在
@@ -312,7 +318,13 @@ export const setupRouter = (app: App<Element>) => {
 
       initDynamicRoutes();
 
-      restoreAfterAuth(router);
+      const restored = restoreAfterAuth(router);
+      const tabStore = useTabStore();
+
+      // 深链已恢复（或进行中）：不要再强制 /home，否则会冲掉 replaceState 后的微路径
+      if (restored || tabStore.activeTab?.isSubTab()) {
+        return;
+      }
 
       const { path, fullPath } = router.currentRoute.value;
       if (isRedirectGatewayPath(fullPath)) {

@@ -416,12 +416,18 @@ export function applyNavigationTarget(router: Router, fullPath: string): boolean
     }
     const opened = openSubTarget(parsed.targetFullPath, parsed.internalPath);
     if (opened) {
-      // 对齐 shell-template：离开网关页到壳内路由，再用 replaceState 写回 /member/...
+      const tabStore = useTabStore();
+      const subTabKey = tabStore.activeTabKey;
+      // 离开网关到壳内路由，再用 replaceState 写回微路径（禁止 router.replace 微路径）
       const leaveGateway =
         router.currentRoute.value.name === 'SubAppRedirectGateway' ||
         isRedirectGatewayPath(router.currentRoute.value.fullPath);
       if (leaveGateway) {
         void router.replace('/home').then(() => {
+          // beforeEach / Sidebar 可能抢激活；强制回到子应用 Tab 再同步地址栏
+          if (subTabKey) {
+            tabStore.setActiveTab(subTabKey);
+          }
           syncBrowserAddressForActiveSubTab();
         });
       } else {
