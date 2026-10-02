@@ -25,6 +25,14 @@ export const RETURN_URL_STORAGE_KEY = 'return_url';
 
 let navigationRestored = false;
 
+/** 深链恢复：router.replace('/home') 离开网关期间，禁止 beforeEach 自动激活首页 Tab */
+let deepLinkLeavingGateway = false;
+
+export function isDeepLinkLeavingGateway(): boolean {
+  return deepLinkLeavingGateway;
+}
+
+
 function splitPathAndSuffix(fullPath: string): { pathname: string; suffix: string } {
   const q = fullPath.indexOf('?');
   const h = fullPath.indexOf('#');
@@ -414,27 +422,33 @@ export function applyNavigationTarget(router: Router, fullPath: string): boolean
     if (!parsed) {
       return false;
     }
-    const opened = openSubTarget(parsed.targetFullPath, parsed.internalPath);
-    if (opened) {
-      const tabStore = useTabStore();
-      const subTabKey = tabStore.activeTabKey;
-      // 离开网关到壳内路由，再用 replaceState 写回微路径（禁止 router.replace 微路径）
-      const leaveGateway =
-        router.currentRoute.value.name === 'SubAppRedirectGateway' ||
-        isRedirectGatewayPath(router.currentRoute.value.fullPath);
-      if (leaveGateway) {
-        void router.replace('/home').then(() => {
-          // beforeEach / Sidebar 可能抢激活；强制回到子应用 Tab 再同步地址栏
-          if (subTabKey) {
-            tabStore.setActiveTab(subTabKey);
-          }
-          syncBrowserAddressForActiveSubTab();
-        });
-      } else {
+    const leaveGateway =
+      router.currentRoute.value.name === 'SubAppRedirectGateway' ||
+      isRedirectGatewayPath(router.currentRoute.value.fullPath);
+
+    const openAndSync = (): boolean => {
+      const opened = openSubTarget(parsed.targetFullPath, parsed.internalPath);
+      if (opened) {
         syncBrowserAddressForActiveSubTab();
       }
+      return opened;
+    };
+
+    if (leaveGateway) {
+      // 先离开网关（Router 落到 /home），再开 Tab + replaceState 微路径，避免网关 URL 被写回两次
+      deepLinkLeavingGateway = true;
+      void router
+        .replace('/home')
+        .catch(() => undefined)
+        .finally(() => {
+          deepLinkLeavingGateway = false;
+          openAndSync();
+        });
+      // 乐观返回 true：菜单 watch / restoreAfterAuth 幂等标记依赖此次成功意图
+      return true;
     }
-    return opened;
+
+    return openAndSync();
   }
 
   const menuStore = useMenuStore();

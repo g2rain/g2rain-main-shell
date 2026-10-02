@@ -9,6 +9,7 @@ import { useTabStore } from '@platform/stores';
 import type { MenuItem } from '@platform/types';
 import type { IRouteMap } from './route-map.interface';
 import {
+  isDeepLinkLeavingGateway,
   isRedirectGatewayPath,
   restoreAfterAuth,
   saveReturnUrl,
@@ -285,8 +286,8 @@ export const setupRouter = (app: App<Element>) => {
         return;
       }
 
-      // 子应用深链恢复会 router.replace('/home') 离开网关；此时勿把激活 Tab 抢成首页
-      if (active?.isSubTab()) {
+      // 子应用深链恢复离开网关 / 已有子 Tab：勿把激活 Tab 抢成首页
+      if (active?.isSubTab() || isDeepLinkLeavingGateway()) {
         next();
         return;
       }
