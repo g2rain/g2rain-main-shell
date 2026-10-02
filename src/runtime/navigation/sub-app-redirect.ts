@@ -5,7 +5,7 @@
 
 import type { Router } from 'vue-router';
 import { getContextPath, getPathWithContextPath } from '@shared/env';
-import { stripActiveRule } from '@shared/url.util';
+import { stripActiveRule, wrapActiveRule } from '@shared/url.util';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 import { useMenuStore } from '@platform/stores/menu.store';
 import { useMicroAppStore } from '@platform/stores/app.store';
@@ -381,6 +381,30 @@ function openSubTarget(targetFullPath: string, internalPath?: string): boolean {
   return true;
 }
 
+/** 仅用 history.replaceState 同步子应用浏览器地址，禁止 router.replace(微路径)（会拼到 Shell base 下） */
+function syncBrowserAddressForActiveSubTab(): void {
+  const tabStore = useTabStore();
+  const runtimeStore = useRuntimeStore();
+  const tab = tabStore.activeTab;
+  if (!tab?.isSubTab() || !tab.app?.activeRule) {
+    return;
+  }
+  const rawPath = runtimeStore.getLastActivePath(tab.key) ?? tab.initialPath;
+  if (!rawPath) {
+    return;
+  }
+  const pathname = wrapActiveRule(tab.app.activeRule, rawPath);
+  const url = `${window.location.origin}${pathname}`;
+  if (window.location.href === url) {
+    return;
+  }
+  window.history.replaceState(
+    { ...(window.history.state || {}), microApp: true },
+    '',
+    url,
+  );
+}
+
 /**
  * 将导航目标（网关或真实路径）应用到 Tab + 地址栏
  */
@@ -392,9 +416,16 @@ export function applyNavigationTarget(router: Router, fullPath: string): boolean
     }
     const opened = openSubTarget(parsed.targetFullPath, parsed.internalPath);
     if (opened) {
-      const { pathname } = splitPathAndSuffix(parsed.targetFullPath);
-      if (router.currentRoute.value.path !== pathname) {
-        router.replace(parsed.targetFullPath).catch(() => undefined);
+      // 对齐 shell-template：离开网关页到壳内路由，再用 replaceState 写回 /member/...
+      const leaveGateway =
+        router.currentRoute.value.name === 'SubAppRedirectGateway' ||
+        isRedirectGatewayPath(router.currentRoute.value.fullPath);
+      if (leaveGateway) {
+        void router.replace('/home').then(() => {
+          syncBrowserAddressForActiveSubTab();
+        });
+      } else {
+        syncBrowserAddressForActiveSubTab();
       }
     }
     return opened;
@@ -410,10 +441,7 @@ export function applyNavigationTarget(router: Router, fullPath: string): boolean
   if (subResolved) {
     const opened = openSubTarget(fullPath, subResolved.internalPath);
     if (opened) {
-      const { pathname } = splitPathAndSuffix(fullPath);
-      if (router.currentRoute.value.path !== pathname) {
-        router.replace(fullPath).catch(() => undefined);
-      }
+      syncBrowserAddressForActiveSubTab();
     }
     return opened;
   }
@@ -436,12 +464,17 @@ export function restoreAfterAuth(router: Router): boolean {
   if (pending) {
     applied = applyNavigationTarget(router, pending);
   } else if (
-    router.currentRoute.value.meta.microApp &&
+    (router.currentRoute.value.meta.microApp === true ||
+      isMicroAppBrowserPath(window.location.pathname)) &&
     !tabStore.activeTabKey
   ) {
-    applied = applyNavigationTarget(router, router.currentRoute.value.fullPath);
+    const browserPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    applied = applyNavigationTarget(router, browserPath);
   } else if (isRedirectGatewayPath(router.currentRoute.value.fullPath)) {
     pending = router.currentRoute.value.fullPath;
+    applied = applyNavigationTarget(router, pending);
+  } else if (isRedirectGatewayPath(window.location.pathname)) {
+    pending = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     applied = applyNavigationTarget(router, pending);
   }
 
