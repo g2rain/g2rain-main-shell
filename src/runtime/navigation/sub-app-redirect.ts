@@ -4,7 +4,7 @@
  */
 
 import type { Router } from 'vue-router';
-import { getPathWithContextPath } from '@shared/env';
+import { getContextPath, getPathWithContextPath } from '@shared/env';
 import { stripActiveRule } from '@shared/url.util';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 import { useMenuStore } from '@platform/stores/menu.store';
@@ -65,6 +65,37 @@ export function isRedirectGatewayPath(fullPath: string): boolean {
     matchesGatewayPrefix(pathname, getRedirectGatewayPrefix()) ||
     matchesGatewayPrefix(pathname, REDIRECT_GATEWAY_ROUTE_PREFIX)
   );
+}
+
+/** 浏览器 pathname 是否落在 Shell Context Path 之外（如 /member/...） */
+export function isMicroAppBrowserPath(pathname?: string): boolean {
+  const path = normalizePathname(pathname ?? window.location.pathname);
+  if (isAuthPagePath(path) || isRedirectGatewayPath(path)) return false;
+  const ctx = normalizePathname(getContextPath());
+  if (ctx === '/' || ctx === '') return false;
+  return path !== ctx && !path.startsWith(`${ctx}/`);
+}
+
+/**
+ * SPA 若以子应用深链文档加载（Nginx 回退到 shell index），Vue Router base
+ * 会把地址改写成 /{shellContext}/member/...，破坏深链恢复。
+ * 须在 createWebHistory 之前改写到 Redirect Gateway（位于 Shell base 下）。
+ */
+export function rewriteMicroDeepLinkToGateway(): void {
+  if (typeof window === 'undefined') return;
+  const full = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (!isMicroAppBrowserPath(window.location.pathname)) return;
+
+  const gateway = buildRedirectGatewayFromTarget(full);
+  if (
+    normalizePathname(splitPathAndSuffix(gateway).pathname) ===
+    normalizePathname(window.location.pathname)
+  ) {
+    return;
+  }
+
+  console.info('[SubAppRedirect] rewrite micro deep-link → gateway', { from: full, to: gateway });
+  window.history.replaceState(window.history.state, '', gateway);
 }
 
 /** 将 router.fullPath 或 location 规范为浏览器网关路径（写入 return_url） */

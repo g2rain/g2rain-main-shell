@@ -18,8 +18,12 @@ import { useLocaleStore } from '@platform/stores/locale.store';
 import { initThemeController } from '@platform/theme/controller';
 
 import { start } from '@/runtime/boot';
+import { rewriteMicroDeepLinkToGateway } from '@runtime/navigation/sub-app-redirect';
 
 async function bootstrap() {
+  // 子应用深链文档回退到 shell 时，须在 createWebHistory 前改写到 /main/redirect/...
+  rewriteMicroDeepLinkToGateway();
+
   const app = createApp(App);
 
   setupStore(app);

@@ -314,3 +314,4 @@
 | 2026-10-02 | 初稿：基于 shell-template 对齐差距与分阶段计划，不含源码改造 |
 | 2026-10-02 | Phase 0–7 源码落地：`@g2rain/*`、HTTP、Platform Main、Auth Bridge、Theme/UI、instance-queue；浏览器联调未完成 |
 | 2026-10-02 | 联调：main-shell 访问 member-app 验证通过；文档同步；manager-app / 深链仍待报 |
+| 2026-10-02 | path: wrapActiveRule(/member,/member)->/member/member; rewriteMicroDeepLinkToGateway + lazy createWebHistory |
