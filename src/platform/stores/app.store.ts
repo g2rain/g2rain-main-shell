@@ -5,6 +5,7 @@
 
 import { defineStore } from 'pinia';
 import type { AppDefinition, MenuItem } from '@platform/types';
+import { resolveApplicationCodeConfig } from '@platform/apps/application-code.config';
 import { joinUrlSegments } from '@shared/url.util';
 
 export const useMicroAppStore = defineStore('microApp', {
@@ -69,6 +70,8 @@ export const useMicroAppStore = defineStore('microApp', {
               }
               apps.push({
                 appKey: item.key,
+                applicationCode: item.name,
+                mode: resolveApplicationCodeConfig(item.name).mode,
                 name: item.name, // 使用 menuItem.name 作为 runtime 注册名
                 entry: joinUrlSegments(item.entry, item.activeRule),
                 activeRule: item.activeRule,

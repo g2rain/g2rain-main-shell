@@ -1,12 +1,12 @@
 /**
- * 主题状态管理（Pinia）
+ * 主题状态管理 — 包装 @g2rain/platform/theme ThemeController
  */
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { ThemeMode, ThemeConfig } from '../theme/types';
 import { THEME_MODES } from '../theme/types';
-import { applyTheme, saveTheme, initTheme, getCurrentTheme } from '../theme';
+import { getThemeController, initThemeController } from '../theme/controller';
 
 export const useThemeStore = defineStore('theme', () => {
   const currentMode = ref<ThemeMode>('light');
@@ -20,17 +20,14 @@ export const useThemeStore = defineStore('theme', () => {
     return Object.values(THEME_MODES);
   });
 
-  /**
-   * 初始化主题
-   */
-  const initialize = async (defaultTheme: ThemeMode = 'light'): Promise<void> => {
+  const initialize = async (_defaultTheme: ThemeMode = 'light'): Promise<void> => {
     if (initialized.value) {
       return;
     }
 
     try {
-      await initTheme(defaultTheme);
-      currentMode.value = getCurrentTheme();
+      const ctrl = initThemeController();
+      currentMode.value = ctrl.getTheme();
       initialized.value = true;
       console.log('[ThemeStore] 主题初始化完成:', currentMode.value);
     } catch (error) {
@@ -39,18 +36,15 @@ export const useThemeStore = defineStore('theme', () => {
     }
   };
 
-  /**
-   * 切换主题
-   */
   const setTheme = async (mode: ThemeMode): Promise<void> => {
     if (currentMode.value === mode) {
       return;
     }
 
     try {
-      await applyTheme(mode);
+      const ctrl = getThemeController();
+      ctrl.setTheme(mode);
       currentMode.value = mode;
-      saveTheme(mode);
       console.log('[ThemeStore] 主题已切换:', mode);
     } catch (error) {
       console.error('[ThemeStore] 切换主题失败:', error);
@@ -58,17 +52,11 @@ export const useThemeStore = defineStore('theme', () => {
     }
   };
 
-  /**
-   * 切换亮色/暗色主题
-   */
   const toggleDarkMode = async (): Promise<void> => {
     const newMode = currentMode.value === 'dark' ? 'light' : 'dark';
     await setTheme(newMode);
   };
 
-  /**
-   * 重置主题
-   */
   const reset = (): void => {
     currentMode.value = 'light';
     initialized.value = false;

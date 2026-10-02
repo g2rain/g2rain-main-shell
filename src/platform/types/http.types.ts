@@ -4,7 +4,7 @@
 
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { JWK, JWTHeaderParameters, JWTPayload } from 'jose';
-import type { Result } from '@/components/http/types';
+import type { Result } from '@g2rain/http';
 
 // dpop协议的header
 export interface DpopHeader extends JWTHeaderParameters {

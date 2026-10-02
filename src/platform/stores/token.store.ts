@@ -2,11 +2,11 @@ import { defineStore } from 'pinia';
 import { jwtVerify } from 'jose';
 import { publicKeyStringToJwk } from '@shared/utils/jwt.util';
 import type { Token, ApplicationScope } from '@platform/types';
-import type { Client } from '@/components/http';
+import type { DpopClient } from '@g2rain/http';
 
 export const useAccessTokenStore = defineStore('token', {
   state: () => ({
-    client: null as Client | null,
+    client: null as DpopClient | null,
     token: null as Token | null,
     tokenString: null as string | null,
     logged: false,

@@ -41,11 +41,14 @@ runtime:
   containerDefaultServerPort: 80
   i18nTags: G2RAIN_SHARED,MAIN_SHELL
   subAppContract:
+    - applicationCode
+    - viewId
+    - instanceId
     - appKey
     - name
     - entry
+    - contextPath
     - activeRule
-    - instanceId
 commands:
   install: npm ci
   dev: npm run dev
@@ -55,19 +58,33 @@ commands:
   image: docker build --build-arg VITE_BUILD_MODE=production -t g2rain/g2rain-main-shell:<tag> .
 collaborators:
   - repository: g2rain/g2rain-manager-app
-    role: frontend-app 主要集成验证对象
+    role: frontend-app legacy 回归验证对象
+  - repository: g2rain/g2rain-member-app
+    role: frontend-app AppKit /sub 主验收对象
   - repository: g2rain/g2rain-iam
     role: SSO、Token、客户端和身份后端能力
   - repository: g2rain/g2rain-gateway-webflux
     role: 后端业务 API 入口、鉴权和转发
+  - repository: g2rain/g2rain-shell-template
+    role: 目标架构形状参照
+  - repository: g2rain/g2rain-appkit
+    role: platform/main、http、theme、ui 契约
 documentation:
   entry: docs/index.md
   agentEntry: AGENTS.md
+  platformMainAdoption: docs/development/platform-main-adoption.md
+  uiThemeAdoption: docs/development/ui-theme-adoption.md
+  shellTemplateUpgrade: docs/architecture/shell-template-upgrade.md
+  localDevelopment: docs/development/local-development.md
 aiCoding:
-  activeRequirement: null
+  activeRequirement: docs/requirements/shell-template-alignment.md
   requirementTemplate: docs/requirements/README.md
   validation:
     - 读取中央基础 Profile、Shell Profile、本地偏差、需求和 Git Diff
+    - 涉及 Platform Main 时读取 appkit Main Shell 生成契约与本仓 platform-main-adoption
+    - 核对 docs 必填树与 docs/index.md、project.yaml 索引一致
     - 执行 npm run build
     - 检查文档链接、配置路径、跨应用契约和敏感信息边界
     - 协议变化使用真实子应用完成浏览器联调
+    - 已验证：main-shell → member-app（AppKit）访问正常（2026-10-02）
+    - 未验证：manager-app legacy 回归、深链/F5（按需补测）

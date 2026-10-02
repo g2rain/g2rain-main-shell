@@ -99,7 +99,6 @@ const availableThemes = computed(() => themeStore.availableThemes);
 const THEME_I18N: Record<ThemeMode, [string, string]> = {
   light: ['MS_THEME_LIGHT', '亮色主题'],
   dark: ['MS_THEME_DARK', '暗色主题'],
-  g2rain: ['MS_THEME_BRAND', 'G2rain 品牌主题'],
 };
 
 function themeLabel(mode: ThemeMode): string {

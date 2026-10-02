@@ -2,7 +2,7 @@
  * 前端国际化文案包 API（免登录）
  */
 
-import { getHttpClient, type Result } from '@/components/http';
+import { getHttpClient, type Result } from '@runtime/http';
 import { env } from '@/shared/env';
 
 export interface I18nLocaleMessage {

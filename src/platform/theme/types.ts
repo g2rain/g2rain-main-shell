@@ -1,8 +1,8 @@
 /**
- * 主题类型定义
+ * 主题类型：对齐 @g2rain/theme（仅 light / dark）
  */
 
-export type ThemeMode = 'light' | 'dark' | 'g2rain';
+export type ThemeMode = 'light' | 'dark';
 
 export interface ThemeConfig {
   mode: ThemeMode;
@@ -20,10 +20,5 @@ export const THEME_MODES: Record<ThemeMode, ThemeConfig> = {
     mode: 'dark',
     name: 'dark',
     displayName: '暗色主题',
-  },
-  g2rain: {
-    mode: 'g2rain',
-    name: 'g2rain',
-    displayName: 'G2rain 品牌主题',
   },
 };

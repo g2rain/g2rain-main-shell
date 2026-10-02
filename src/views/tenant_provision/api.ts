@@ -1,7 +1,7 @@
 /**
  * 账号开通
  */
-import { getHttpClient } from '@/components/http';
+import { getHttpClient } from '@runtime/http';
 import type { UserVo } from '@/runtime/api/user.api';
 import type { TenantJoinOrganPayload, TenantProvisionPayload } from './type';
 
