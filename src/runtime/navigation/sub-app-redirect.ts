@@ -28,8 +28,16 @@ let navigationRestored = false;
 /** 深链恢复：router.replace('/home') 离开网关期间，禁止 beforeEach 自动激活首页 Tab */
 let deepLinkLeavingGateway = false;
 
+/** 网关离开 + 开 Tab 的 in-flight，防止 restoreAfterAuth / 网关页并行跑两遍 */
+let gatewayRestorePromise: Promise<boolean> | null = null;
+
 export function isDeepLinkLeavingGateway(): boolean {
   return deepLinkLeavingGateway;
+}
+
+/** 深链恢复进行中或已完成：菜单 watch 勿再强制 /home */
+export function isDeepLinkRestorePending(): boolean {
+  return deepLinkLeavingGateway || gatewayRestorePromise !== null || navigationRestored;
 }
 
 
@@ -413,6 +421,14 @@ function syncBrowserAddressForActiveSubTab(): void {
   );
 }
 
+function openSubAndSyncBrowser(targetFullPath: string, internalPath: string): boolean {
+  const opened = openSubTarget(targetFullPath, internalPath);
+  if (opened) {
+    syncBrowserAddressForActiveSubTab();
+  }
+  return opened;
+}
+
 /**
  * 将导航目标（网关或真实路径）应用到 Tab + 地址栏
  */
@@ -422,33 +438,46 @@ export function applyNavigationTarget(router: Router, fullPath: string): boolean
     if (!parsed) {
       return false;
     }
+
+    if (gatewayRestorePromise) {
+      return true;
+    }
+
     const leaveGateway =
       router.currentRoute.value.name === 'SubAppRedirectGateway' ||
       isRedirectGatewayPath(router.currentRoute.value.fullPath);
 
-    const openAndSync = (): boolean => {
-      const opened = openSubTarget(parsed.targetFullPath, parsed.internalPath);
-      if (opened) {
-        syncBrowserAddressForActiveSubTab();
-      }
-      return opened;
-    };
-
     if (leaveGateway) {
-      // 先离开网关（Router 落到 /home），再开 Tab + replaceState 微路径，避免网关 URL 被写回两次
-      deepLinkLeavingGateway = true;
-      void router
-        .replace('/home')
-        .catch(() => undefined)
-        .finally(() => {
+      // 先离开网关，再开 Tab + replaceState 微路径；全程单飞
+      const run = (async () => {
+        deepLinkLeavingGateway = true;
+        try {
+          await router.replace('/home');
+        } catch {
+          /* ignore duplicate navigation */
+        } finally {
           deepLinkLeavingGateway = false;
-          openAndSync();
-        });
-      // 乐观返回 true：菜单 watch / restoreAfterAuth 幂等标记依赖此次成功意图
+        }
+        const opened = openSubAndSyncBrowser(parsed.targetFullPath, parsed.internalPath);
+        if (opened) {
+          navigationRestored = true;
+        }
+        return opened;
+      })();
+      gatewayRestorePromise = run;
+      void run.finally(() => {
+        if (gatewayRestorePromise === run) {
+          gatewayRestorePromise = null;
+        }
+      });
       return true;
     }
 
-    return openAndSync();
+    const opened = openSubAndSyncBrowser(parsed.targetFullPath, parsed.internalPath);
+    if (opened) {
+      navigationRestored = true;
+    }
+    return opened;
   }
 
   const menuStore = useMenuStore();
@@ -473,7 +502,10 @@ export function applyNavigationTarget(router: Router, fullPath: string): boolean
  * SSO 或菜单就绪后恢复 pending 导航（幂等）
  */
 export function restoreAfterAuth(router: Router): boolean {
-  if (navigationRestored || !canRestoreNavigation()) {
+  if (navigationRestored || gatewayRestorePromise) {
+    return true;
+  }
+  if (!canRestoreNavigation()) {
     return false;
   }
 
@@ -491,15 +523,17 @@ export function restoreAfterAuth(router: Router): boolean {
     const browserPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     applied = applyNavigationTarget(router, browserPath);
   } else if (isRedirectGatewayPath(router.currentRoute.value.fullPath)) {
-    pending = router.currentRoute.value.fullPath;
-    applied = applyNavigationTarget(router, pending);
+    // 当前就在网关页：交给 SubAppRedirectGateway，避免与 restoreAfterAuth 双开
+    return false;
   } else if (isRedirectGatewayPath(window.location.pathname)) {
     pending = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     applied = applyNavigationTarget(router, pending);
   }
 
   if (applied) {
-    navigationRestored = true;
+    if (!gatewayRestorePromise) {
+      navigationRestored = true;
+    }
     console.log('[SubAppRedirect] 导航恢复完成');
     return true;
   }
@@ -518,6 +552,10 @@ export function restoreAfterAuth(router: Router): boolean {
  * 已登录用户访问网关：解析并打开子应用真实路径
  */
 export function handleRedirectGatewayWhenAuthed(router: Router, gatewayFullPath: string): boolean {
+  if (navigationRestored || gatewayRestorePromise) {
+    return true;
+  }
+
   const parsed = parseRedirectGateway(gatewayFullPath);
   if (!parsed) {
     router.replace('/home').catch(() => undefined);

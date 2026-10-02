@@ -10,6 +10,7 @@ import type { MenuItem } from '@platform/types';
 import type { IRouteMap } from './route-map.interface';
 import {
   isDeepLinkLeavingGateway,
+  isDeepLinkRestorePending,
   isRedirectGatewayPath,
   restoreAfterAuth,
   saveReturnUrl,
@@ -322,8 +323,8 @@ export const setupRouter = (app: App<Element>) => {
       const restored = restoreAfterAuth(router);
       const tabStore = useTabStore();
 
-      // 深链已恢复（或进行中）：不要再强制 /home，否则会冲掉 replaceState 后的微路径
-      if (restored || tabStore.activeTab?.isSubTab()) {
+      // 深链已恢复 / 网关离开进行中：不要再强制 /home
+      if (restored || isDeepLinkRestorePending() || tabStore.activeTab?.isSubTab()) {
         return;
       }
 
