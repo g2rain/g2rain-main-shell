@@ -60,7 +60,6 @@
         <div class="user-info">
           <el-avatar icon="User" />
           <span class="username">{{ displayName }}</span>
-          <span v-if="profile.organName" class="user-organ">· {{ profile.organName }}</span>
           <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
         </div>
         <template #dropdown>
@@ -79,8 +78,13 @@
                 :disabled="switching"
                 :class="{ 'is-active': String(item.userId) === profile.userId }"
               >
-                <span class="identity-organ">{{ item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构') }}</span>
-                <span class="identity-user">{{ item.userName }}</span>
+                <span class="identity-text">
+                  <span
+                    class="identity-organ"
+                    :title="item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构')"
+                  >{{ item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构') }}</span>
+                  <span v-if="item.userName" class="identity-user">{{ item.userName }}</span>
+                </span>
                 <el-icon v-if="String(item.userId) === profile.userId" class="check-icon"><Check /></el-icon>
               </el-dropdown-item>
             </template>
@@ -295,15 +299,6 @@ const handleUserCommand = (command: string) => {
   color: var(--header-text);
 }
 
-.user-organ {
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--font-size-sm);
-  color: var(--text-color-secondary);
-}
-
 .dropdown-icon {
   font-size: var(--font-size-xs);
   color: var(--text-color-placeholder);
@@ -345,9 +340,13 @@ const handleUserCommand = (command: string) => {
 </style>
 
 <style>
-/* 下拉菜单渲染在 body 下，scoped 样式不生效 */
+/* 下拉菜单渲染在 body 下，scoped 样式不生效；固定宽度，长机构名换行而不是撑宽菜单 */
+.user-menu-popper .el-dropdown-menu {
+  width: 260px;
+  box-sizing: border-box;
+}
+
 .user-menu-popper .user-menu-identity {
-  min-width: 220px;
   padding: 8px 16px 10px;
   border-bottom: 1px solid var(--dropdown-border);
 }
@@ -356,12 +355,15 @@ const handleUserCommand = (command: string) => {
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--dropdown-text);
+  word-break: break-all;
 }
 
 .user-menu-popper .user-menu-organ {
   margin-top: 2px;
   font-size: var(--font-size-xs);
+  line-height: 1.5;
   color: var(--text-color-secondary);
+  word-break: break-all;
 }
 
 .user-menu-popper .user-menu-title {
@@ -370,17 +372,34 @@ const handleUserCommand = (command: string) => {
   color: var(--text-color-placeholder);
 }
 
-.user-menu-popper .identity-organ {
+/* 身份项：机构名（最多两行）在上、姓名在下，勾选靠右 */
+.user-menu-popper .el-dropdown-menu__item:has(.identity-text) {
+  align-items: center;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  line-height: 1.4;
+}
+
+.user-menu-popper .identity-text {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
   min-width: 0;
+  gap: 2px;
+}
+
+.user-menu-popper .identity-organ {
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-weight: 500;
+  word-break: break-all;
+  white-space: normal;
 }
 
 .user-menu-popper .identity-user {
-  flex: 0 1 auto;
-  max-width: 96px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -389,6 +408,7 @@ const handleUserCommand = (command: string) => {
 }
 
 .user-menu-popper .check-icon {
+  flex-shrink: 0;
   color: var(--color-primary);
 }
 </style>
