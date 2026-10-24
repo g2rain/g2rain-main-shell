@@ -1,8 +1,20 @@
 import { defineStore } from 'pinia';
-import { jwtVerify } from 'jose';
+import { decodeJwt, jwtVerify } from 'jose';
 import { publicKeyStringToJwk } from '@shared/utils/jwt.util';
 import type { Token, ApplicationScope } from '@platform/types';
 import type { Client } from '@/components/http';
+
+/** Token 中的展示字段 */
+export interface TokenProfile {
+  /** 当前用户 ID（员工会话） */
+  userId?: string;
+  /** USER / PASSPORT / MEMBER / ANONYMOUS */
+  sessionType?: string;
+  /** 姓名 */
+  name?: string;
+  /** 机构名称 */
+  organName?: string;
+}
 
 export const useAccessTokenStore = defineStore('token', {
   state: () => ({
@@ -25,6 +37,24 @@ export const useAccessTokenStore = defineStore('token', {
     },
     organId(): number | undefined {
       return this.token?.organId;
+    },
+    /**
+     * 展示用身份：从已验签保存的 tokenString 解出，不参与鉴权判断。
+     * 直接读 tokenString，旧版本持久化的 token 也能取到，无需迁移。
+     */
+    profile(): TokenProfile {
+      if (!this.tokenString) return {};
+      try {
+        const payload = decodeJwt(this.tokenString);
+        return {
+          userId: payload.userId != null && payload.userId !== '' ? String(payload.userId) : undefined,
+          sessionType: (payload.sessionType as string) || undefined,
+          name: (payload.name as string) || undefined,
+          organName: (payload.organName as string) || undefined,
+        };
+      } catch {
+        return {};
+      }
     },
     isAccessTokenValid(): boolean {
       if (!this.token?.expireAt) return false;
