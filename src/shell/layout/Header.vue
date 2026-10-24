@@ -50,14 +50,40 @@
       </el-dropdown>
 
       <!-- 用户信息 -->
-      <el-dropdown trigger="click" @command="handleUserCommand">
+      <el-dropdown
+        trigger="click"
+        max-height="420px"
+        popper-class="user-menu-popper"
+        @command="handleUserCommand"
+        @visible-change="onUserMenuVisible"
+      >
         <div class="user-info">
           <el-avatar icon="User" />
-          <span class="username">{{ $t('MS_HDR_ADMIN', '管理员') }}</span>
+          <span class="username">{{ displayName }}</span>
+          <span v-if="profile.organName" class="user-organ">· {{ profile.organName }}</span>
           <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
         </div>
         <template #dropdown>
           <el-dropdown-menu>
+            <div class="user-menu-identity">
+              <div class="user-menu-name">{{ displayName }}</div>
+              <div v-if="profile.organName" class="user-menu-organ">{{ profile.organName }}</div>
+            </div>
+            <!-- 切换身份：仅员工会话且有多个身份时出现 -->
+            <template v-if="switchable">
+              <div class="user-menu-title">{{ $t('MS_HDR_SWITCH_IDENTITY', '切换身份') }}</div>
+              <el-dropdown-item
+                v-for="item in identities"
+                :key="String(item.userId)"
+                :command="`${SWITCH_PREFIX}${item.userId}`"
+                :disabled="switching"
+                :class="{ 'is-active': String(item.userId) === profile.userId }"
+              >
+                <span class="identity-organ">{{ item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构') }}</span>
+                <span class="identity-user">{{ item.userName }}</span>
+                <el-icon v-if="String(item.userId) === profile.userId" class="check-icon"><Check /></el-icon>
+              </el-dropdown-item>
+            </template>
             <el-dropdown-item command="logout" divided>
               <el-icon><SwitchButton /></el-icon>
               {{ $t('MS_HDR_LOGOUT', '退出登录') }}
@@ -70,11 +96,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Setting, Check, ArrowDown, SwitchButton } from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import logoHeader from '@/assets/brand/logo-header.png';
-import { useThemeStore, useLocaleStore } from '@platform/stores';
+import { useThemeStore, useLocaleStore, useAccessTokenStore } from '@platform/stores';
+import { sso } from '@/runtime/auth/sso';
+import { listIdentities, type UserIdentityVo } from '@/runtime/api/user.api';
 import { logout } from '@/runtime/boot';
 import { t } from '@platform/i18n';
 import type { ThemeMode } from '@platform/theme/types';
@@ -120,10 +149,72 @@ const handleThemeChange = async (mode: ThemeMode) => {
   }
 };
 
+const tokenStore = useAccessTokenStore();
+const profile = computed(() => tokenStore.profile);
+const displayName = computed(() => profile.value.name || t('MS_HDR_ADMIN', '管理员'));
+
+/** 切换身份命令前缀：`switch:<userId>` */
+const SWITCH_PREFIX = 'switch:';
+
+/** 当前账号在本应用中可切换的身份；每次打开用户菜单时刷新 */
+const identities = ref<UserIdentityVo[]>([]);
+const switching = ref(false);
+
+/** 账号会话（尚未选定身份）走账号开通流程，不展示切换 */
+const isUserSession = computed(() => profile.value.sessionType === 'USER');
+const switchable = computed(() => isUserSession.value && identities.value.length > 1);
+
+const onUserMenuVisible = async (visible: boolean) => {
+  if (!visible || !isUserSession.value) return;
+  try {
+    identities.value = await listIdentities();
+  } catch (error) {
+    console.warn('[Header] 查询可切换身份失败:', error);
+  }
+};
+
+/**
+ * 切换到同账号下的其他身份：确认后换票，整页回到首页，已打开的页签与子应用随之关闭。
+ */
+const switchIdentity = async (userId: string) => {
+  if (userId === profile.value.userId || switching.value) return;
+  const target = identities.value.find((item) => String(item.userId) === userId);
+  const organ = target?.organName || t('MS_HDR_ORGAN_UNNAMED', '未命名机构');
+  try {
+    await ElMessageBox.confirm(
+      t('MS_HDR_SWITCH_CONFIRM', '切换后将关闭所有已打开的页面，确定切换到「{organ}」吗？').replace('{organ}', organ),
+      t('MS_HDR_SWITCH_IDENTITY', '切换身份'),
+      {
+        type: 'warning',
+        confirmButtonText: t('G2_BTN_CONFIRM', '确定'),
+        cancelButtonText: t('G2_BTN_CANCEL', '取消'),
+      },
+    );
+  } catch {
+    return;
+  }
+
+  switching.value = true;
+  try {
+    await sso.switchToken(userId);
+    window.location.assign(router.resolve('/').href);
+  } catch (error) {
+    const message = error instanceof Error && error.message
+      ? error.message
+      : t('MS_HDR_SWITCH_FAIL', '切换失败，请稍后再试');
+    ElMessage.error(message);
+    switching.value = false;
+  }
+};
+
 // 处理用户下拉菜单命令
 const handleUserCommand = (command: string) => {
   if (command === 'logout') {
     logout(router);
+    return;
+  }
+  if (command.startsWith(SWITCH_PREFIX)) {
+    void switchIdentity(command.slice(SWITCH_PREFIX.length));
   }
 };
 </script>
@@ -204,6 +295,15 @@ const handleUserCommand = (command: string) => {
   color: var(--header-text);
 }
 
+.user-organ {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-secondary);
+}
+
 .dropdown-icon {
   font-size: var(--font-size-xs);
   color: var(--text-color-placeholder);
@@ -241,5 +341,54 @@ const handleUserCommand = (command: string) => {
 .check-icon {
   color: var(--color-primary);
   font-size: var(--font-size-sm);
+}
+</style>
+
+<style>
+/* 下拉菜单渲染在 body 下，scoped 样式不生效 */
+.user-menu-popper .user-menu-identity {
+  min-width: 220px;
+  padding: 8px 16px 10px;
+  border-bottom: 1px solid var(--dropdown-border);
+}
+
+.user-menu-popper .user-menu-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--dropdown-text);
+}
+
+.user-menu-popper .user-menu-organ {
+  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+}
+
+.user-menu-popper .user-menu-title {
+  padding: 8px 16px 4px;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-placeholder);
+}
+
+.user-menu-popper .identity-organ {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-menu-popper .identity-user {
+  flex: 0 1 auto;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+}
+
+.user-menu-popper .check-icon {
+  color: var(--color-primary);
 }
 </style>
