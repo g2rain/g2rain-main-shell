@@ -108,3 +108,21 @@ export async function updateUser(payload: Partial<UserVo> & { id: number }): Pro
   // 更新用户信息后清空缓存，下次调用时重新加载
   authorityUserCache = null;
 }
+
+/** 当前账号在当前应用中可切换的用户身份 */
+export interface UserIdentityVo {
+  userId: string | number;
+  userName?: string;
+  organId: string | number;
+  organName?: string;
+}
+
+/**
+ * 查询当前账号在当前应用中可切换的用户身份
+ * GET /basis/user/identities — 当前应用由后端从请求身份中取，不传参数
+ */
+export async function listIdentities(): Promise<UserIdentityVo[]> {
+  const httpClient = getHttpClient('default');
+  const res = await httpClient.get<UserIdentityVo[]>('/basis/user/identities');
+  return res.data ?? [];
+}
