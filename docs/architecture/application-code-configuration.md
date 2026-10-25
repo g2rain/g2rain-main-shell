@@ -6,7 +6,7 @@
 
 - `g2rain-member-app`：`appkit`，作为新模式代表；
 - `g2rain-manager-app`：`legacy`，作为传统模式代表；
-- 未登记的既有应用：暂按 `legacy` 运行，避免升级切断现有 `infra-app` 等应用。
+- 未登记的应用：默认 `appkit`（协议版本 `1`）；manager、infra、department、cms 通过 legacy registry 显式保留兼容。
 
 Shell 是兼容边界。业务子应用不得依应用名称、Shell 私有全局变量或菜单结构推断宿主模式。
 
@@ -17,13 +17,17 @@ Shell 是兼容边界。业务子应用不得依应用名称、Shell 私有全�
 ```ts
 export const APPLICATION_CODE_CONFIG = {
   'g2rain-member-app': { mode: 'appkit', protocolVersion: '1' },
+  'g2rain-knowledge-app': { mode: 'appkit', protocolVersion: '1' },
   'g2rain-manager-app': { mode: 'legacy', protocolVersion: 'legacy' },
+  'g2rain-infra-app': { mode: 'legacy', protocolVersion: 'legacy' },
+  'g2rain-department-app': { mode: 'legacy', protocolVersion: 'legacy' },
+  'g2rain-cms-app': { mode: 'legacy', protocolVersion: 'legacy' },
 };
 ```
 
 菜单服务仍是应用入口、路由、菜单权限的事实来源。此配置不得写入 `entry`、Token、Secret、域名或业务权限，避免把环境和安全责任复制到前端静态代码。
 
-新增应用时，必须显式增加一项配置；新应用默认采用 `appkit`。保留未登记应用的 `legacy` 回退仅用于存量兼容，不能作为新应用的接入方式。
+现有应用仍在配置表中显式列出。未登记的新应用默认采用 `appkit`，无需增加白名单。只有仍需传统契约的应用才登记到 legacy registry；配置解析与 Token props 注入共用该 registry，避免两条路径判断不一致。
 
 ## 数据流
 
@@ -59,14 +63,14 @@ qiankun 子应用生命周期
 
 ## 迁移步骤
 
-1. 以 legacy registry 登记仍需 Token-in-props 的应用（如 manager-app）；未登记且非 AppKit allow-list 的历史应用暂按 legacy。
+1. 以 legacy registry 登记仍需 Token-in-props 的应用（如 manager-app）；未登记应用统一采用 AppKit。
 2. 以 Member 验证 AppKit 字段、Auth Bridge、Locale、深链、多 Tab 和卸载。
 3. 新建应用只走 AppKit，不得新增 Token-in-props。
-4. 逐个迁出 legacy；全部完成后清空 registry 默认 legacy 回退。
+4. 逐个迁出 legacy；全部完成后清空 registry。
 5. 删除 `application-code.config` 的 mode 写入 Definition。
 
 ## 回滚与验收
 
-- 单个应用问题：将该 `applicationCode` 加回 legacy registry / config；菜单与其他应用无需回滚。
+- 单个应用问题：将该 `applicationCode` 加回 legacy registry；菜单与其他应用无需回滚。
 - 变更后至少验证：Member Auth Bridge、Manager legacy 挂载、两应用切换、关 Tab 清理、深链刷新。
 - 不记录或打印完整 Token。

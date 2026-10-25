@@ -36,4 +36,15 @@
 ## 联调对象
 
 - AppKit：`g2rain-member-app`（`/sub`）— **2026-10-02 经 main-shell 访问验证通过**
+- AppKit：`g2rain-knowledge-app`（`/sub`）— 已登记为 AppKit，浏览器联合验收待执行。
 - Legacy：`g2rain-manager-app` — 待报
+
+## 挂载身份保障
+
+QiankunAdapter 在每次挂载（包括重新挂载）前，以 RuntimeInstance 的
+`app.applicationCode`、`tabKey`、`instanceId` 重新调用 `buildPublicProps`，
+并让生成的身份字段覆盖旧 props；`viewId = tabKey`、`appKey = instanceId`。
+未登记应用默认采用 AppKit（协议版本 `1`）；接入模式配置与 Token props 分支共用 legacy registry，
+只有显式登记的 manager、infra、department、cms 应用进入 legacy 兼容路径。knowledge-app 无需白名单。
+若浏览器仍报告 `Host props require instanceId`，需核对部署中的 Shell 资源版本并更新 Shell；
+仅更新子应用无法补齐旧 Shell 缺失的公开身份字段。

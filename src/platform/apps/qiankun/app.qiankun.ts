@@ -9,6 +9,7 @@ import { loadMicroApp, start, type MicroApp } from 'qiankun';
 import { setBootstrapMaxTime, setMountMaxTime } from 'single-spa';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
 import { WindowEventAdapter } from '@/components/micro-app/event-windows-adapter';
+import { getMainPlatform } from '../../main-platform';
 
 /**
  * Qiankun 运行时适配器
@@ -24,7 +25,24 @@ class QiankunAdapter implements RuntimeAdapter {
    * - 仅在同一 instanceId 重复 mount 时会先卸载旧实例，避免重复挂载
    */
   async mount(instance: RuntimeInstance): Promise<void> {
-    const { app, containerId, props } = instance;
+    const { app, containerId } = instance;
+    // 挂载边界以运行时实例为准，避免重挂载或旧 props 缺少/覆盖身份字段。
+    const publicProps = getMainPlatform().buildPublicProps(
+      {
+        applicationCode: app.applicationCode,
+        viewId: instance.tabKey,
+        instanceId: instance.instanceId,
+        mode: 'integrated',
+        contextPath: app.activeRule || '/',
+        ...(typeof instance.props?.locale === 'string' ? { locale: instance.props.locale } : {}),
+        ...(typeof instance.props?.initialRoute === 'string'
+          ? { initialRoute: instance.props.initialRoute }
+          : {}),
+      },
+      { activeRule: app.activeRule, entryOrigin: app.entry },
+    );
+    const props = { ...instance.props, ...publicProps };
+    instance.props = props;
     // 如果同一 instanceId 之前已有 MicroApp，先卸载并移除，避免重复 mount 导致 #31
     const existingSameInstance = this.microApps.get(instance.instanceId);
     if (existingSameInstance) {
