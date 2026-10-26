@@ -4,7 +4,7 @@
  * Result 类型已迁移到 @/components/http/types
  * 此处保留重新导出以保持向后兼容
  */
-export type { Result } from '@/components/http/types';
+export type { Result } from '@g2rain/http';
 
 /**
  * 分页数据格式

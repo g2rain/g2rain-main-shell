@@ -50,10 +50,8 @@ onMounted(async () => {
   }
 
   message.value = t('MS_RD_OPEN_APP', '正在打开应用...');
-  if (await tryOpenTarget()) {
-    return;
-  }
 
+  // 只走 watch（含 immediate），避免 onMounted 再调一次 tryOpenTarget 造成网关 URL 闪两次
   let stop: WatchStopHandle | null = null;
   stop = watch(
     () => [menuStore.initialized, microAppStore.initialized] as const,

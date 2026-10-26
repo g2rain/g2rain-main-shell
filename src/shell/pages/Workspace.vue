@@ -20,23 +20,23 @@
       <el-row :gutter="16" class="feature-row">
         <el-col :span="8">
           <el-card shadow="never">
-            <h3>🔐 统一认证与授权</h3>
-            <p>内置 SSO、Token 生命周期管理、多应用统一身份体系， 支持多租户与复杂企业权限场景。</p>
+            <h3>统一认证与授权</h3>
+            <p>内置 SSO、Token 生命周期管理、多应用统一身份体系，支持多租户与复杂企业权限场景。</p>
           </el-card>
         </el-col>
 
         <el-col :span="8">
           <el-card shadow="never">
-            <h3>🧩 微前端架构</h3>
-            <p>基于 qiankun 构建的主应用 + 子应用体系， 支持按租户、按权限动态加载业务模块。</p>
+            <h3>微前端架构</h3>
+            <p>基于 qiankun 构建的主应用 + 子应用体系，支持按租户、按权限动态加载业务模块。</p>
           </el-card>
         </el-col>
 
         <el-col :span="8">
           <el-card shadow="never">
-            <h3>♻️ 可持续交付</h3>
+            <h3>可持续交付</h3>
             <p>
-              从工程模板、运行时能力到平台规范， 帮助 SaaS 产品在长期演进中保持可维护性与可扩展性。
+              从工程模板、运行时能力到平台规范，帮助 SaaS 产品在长期演进中保持可维护性与可扩展性。
             </p>
           </el-card>
         </el-col>
@@ -46,7 +46,7 @@
       <el-card class="link-card" shadow="never">
         <el-row :gutter="24">
           <el-col :span="12">
-            <h3 class="section-title">📚 平台资源</h3>
+            <h3 class="section-title">平台资源</h3>
             <ul class="link-list">
               <li>
                 <span>项目主页：</span>
@@ -83,7 +83,7 @@
             </ul>
           </el-col>
           <el-col :span="12">
-            <h3 class="section-title">📮 联系我们</h3>
+            <h3 class="section-title">联系我们</h3>
             <ul class="link-list">
               <li>
                 <span>联系邮箱：</span>
@@ -107,43 +107,38 @@
 
 <style scoped>
 .workspace {
-  padding: var(--spacing-md);
-  background-color: var(--bg-color-page);
+  padding: var(--g2-space-md, 16px);
+  background-color: var(--g2-bg-page);
   min-height: 100%;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .welcome-card {
-  margin-bottom: var(--spacing-md);
-  background-color: var(--card-bg) !important;
-  border: 1px solid var(--card-border) !important;
-  box-shadow: var(--card-shadow) !important;
+  margin-bottom: var(--g2-space-md, 16px);
+  background-color: var(--g2-bg-container);
+  border: 1px solid var(--g2-border-color-light);
   flex-shrink: 0;
 }
 
-.welcome-card :deep(.el-card__body) {
-  background-color: var(--card-bg);
-  color: var(--text-color-primary);
-}
-
 .title {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-semibold);
-  margin-bottom: var(--spacing-xs);
-  color: var(--text-color-primary);
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 var(--g2-space-sm, 8px);
+  color: var(--g2-text-primary);
 }
 
 .subtitle {
-  color: var(--text-color-secondary);
-  margin-bottom: var(--spacing-md);
-  font-size: var(--font-size-sm);
+  color: var(--g2-text-secondary);
+  margin: 0 0 var(--g2-space-md, 16px);
+  font-size: var(--g2-font-size-base, 14px);
 }
 
 .description {
-  line-height: var(--line-height-relaxed);
-  color: var(--text-color-primary);
-  font-size: var(--font-size-sm);
+  line-height: 1.7;
+  color: var(--g2-text-primary);
+  font-size: var(--g2-font-size-base, 14px);
   margin: 0;
 }
 
@@ -156,52 +151,38 @@
 }
 
 .feature-row {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--g2-space-md, 16px);
 }
 
 .feature-row :deep(.el-card) {
-  padding: var(--spacing-md);
-  background-color: var(--card-bg) !important;
-  border: 1px solid var(--card-border) !important;
-  box-shadow: var(--card-shadow) !important;
-}
-
-.feature-row :deep(.el-card__body) {
-  background-color: var(--card-bg);
-  color: var(--text-color-primary);
+  background-color: var(--g2-bg-container);
+  border: 1px solid var(--g2-border-color-light);
 }
 
 .feature-row :deep(.el-card h3) {
-  font-size: var(--font-size-md);
-  margin: 0 0 var(--spacing-sm) 0;
-  color: var(--text-color-primary);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--g2-font-size-lg, 16px);
+  margin: 0 0 var(--g2-space-sm, 8px);
+  color: var(--g2-text-primary);
+  font-weight: 600;
 }
 
 .feature-row :deep(.el-card p) {
-  font-size: var(--font-size-xs);
-  line-height: var(--line-height-relaxed);
+  font-size: 13px;
+  line-height: 1.6;
   margin: 0;
-  color: var(--text-color-secondary);
+  color: var(--g2-text-secondary);
 }
 
 .link-card {
-  padding: var(--spacing-md);
-  background-color: var(--card-bg) !important;
-  border: 1px solid var(--card-border) !important;
-  box-shadow: var(--card-shadow) !important;
-}
-
-.link-card :deep(.el-card__body) {
-  background-color: var(--card-bg);
-  color: var(--text-color-primary);
+  background-color: var(--g2-bg-container);
+  border: 1px solid var(--g2-border-color-light);
 }
 
 .section-title {
-  font-size: var(--font-size-md);
-  margin: 0 0 var(--spacing-md) 0;
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-color-primary);
+  font-size: var(--g2-font-size-lg, 16px);
+  margin: 0 0 var(--g2-space-md, 16px);
+  font-weight: 600;
+  color: var(--g2-text-primary);
 }
 
 .link-list {
@@ -211,10 +192,10 @@
 }
 
 .link-list li {
-  line-height: var(--line-height-relaxed);
-  color: var(--text-color-primary);
-  font-size: var(--font-size-xs);
-  margin-bottom: var(--spacing-xs);
+  line-height: 1.6;
+  color: var(--g2-text-primary);
+  font-size: 13px;
+  margin-bottom: var(--g2-space-sm, 8px);
 }
 
 .link-list li:last-child {
@@ -222,19 +203,17 @@
 }
 
 .link-list span {
-  color: var(--text-color-secondary);
+  color: var(--g2-text-secondary);
   display: inline-block;
   min-width: 80px;
 }
 
 .link-list a {
-  color: var(--color-primary);
+  color: var(--g2-color-primary);
   text-decoration: none;
-  transition: color var(--transition-duration-fast) var(--transition-timing-function);
 }
 
 .link-list a:hover {
-  color: var(--color-primary-light-3);
   text-decoration: underline;
 }
 </style>

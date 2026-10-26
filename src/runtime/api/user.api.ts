@@ -7,7 +7,7 @@
  * }
  */
 
-import { getHttpClient } from '@/components/http';
+import { getHttpClient } from '@runtime/http';
 import type { BaseVo } from '@platform/types';
 
 /**

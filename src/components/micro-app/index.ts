@@ -48,3 +48,12 @@ export const MICRO_APP_EVENT = {
   ROUTE_CHANGE: MicroAppEventType.ROUTE_CHANGE,
 } as const;
 
+export { emitDirectedMessage } from './emit-directed-message';
+export {
+  startRequestTokenHandler,
+  openAuthBridge,
+  closeAuthBridge,
+  clearPendingAuthForInstance,
+} from './request-token-handler';
+export { startTokenInvalidHandler } from './token-invalid-handler';
+

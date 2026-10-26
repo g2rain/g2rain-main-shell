@@ -46,6 +46,11 @@
     "format": "prettier --write \"src/**/*.{ts,vue,js,css,scss,md}\""
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "@g2rain/http": "^1.0.0",
+    "@g2rain/platform": "^1.0.0",
+    "@g2rain/theme": "^1.0.0",
+    "@g2rain/ui": "^1.0.0",
     "axios": "^1.13.2",
     "crypto-js": "^4.2.0",
     "element-plus": "^2.13.0",

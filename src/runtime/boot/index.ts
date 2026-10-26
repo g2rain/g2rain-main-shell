@@ -19,7 +19,16 @@ import { useRuntimeStore } from '@platform/stores/runtime.store';
 import { useLocaleStore } from '@platform/stores/locale.store';
 import { resetI18nLoader } from '@platform/i18n';
 import { TokenInvalidHandler } from '@platform/apps';
-import { initHttp } from '@runtime/http';
+import { initHttpClient } from '@runtime/http';
+import { initMainPlatform } from '@/platform/main-platform';
+import type { MainPublicProps } from '@g2rain/platform/main';
+import {
+  emitDirectedMessage,
+  openAuthBridge,
+  startRequestTokenHandler,
+  startTokenInvalidHandler,
+  closeAuthBridge,
+} from '@/components/micro-app';
 import { clearReturnUrl, resetNavigationRestoreState } from '@runtime/navigation/sub-app-redirect';
 
 /**
@@ -35,9 +44,25 @@ import { clearReturnUrl, resetNavigationRestoreState } from '@runtime/navigation
 export function start(): void {
   console.log('[Boot] 开始加载服务...');
 
-  // -1. 初始化 HTTP 组件（认证会话 + 认证异常处理），需在所有 HTTP 请求之前
-  initHttp();
-  console.log('[Boot] ✅ Http 已初始化');
+  // -1. 初始化 HTTP + Platform Main（认证会话与公开 props 协调）
+  initHttpClient();
+  console.log('[Boot] ✅ Http (@g2rain/http) 已初始化');
+
+  const runtimeStore = useRuntimeStore();
+  initMainPlatform({
+    async updateInstanceProps(instanceId, props: Readonly<MainPublicProps>) {
+      await runtimeStore.updateInstanceProps(instanceId, props as Record<string, unknown>);
+    },
+    emit(message) {
+      emitDirectedMessage(message);
+    },
+  });
+  console.log('[Boot] ✅ Platform Main 已初始化');
+
+  startTokenInvalidHandler();
+  startRequestTokenHandler();
+  openAuthBridge();
+  console.log('[Boot] ✅ Auth Bridge 已启动');
 
   // 0. 加载 Mock 数据（在 HTTP 请求之前注册）
   mockBoot.start();
@@ -64,11 +89,10 @@ export function start(): void {
   console.log('[Boot] ✅ Tab Route Sync Service 已加载');
 
   // 5. 初始化微应用事件监听器（依赖微应用）
-  const runtimeStore = useRuntimeStore();
   runtimeStore.initEventListeners();
   console.log('[Boot] ✅ 微应用事件监听器已加载');
 
-  //6. 初始化sso到message-handlers的TokenInvalidHandler
+  //6. 初始化sso到message-handlers的TokenInvalidHandler（legacy 兼容路径）
   TokenInvalidHandler.setAuthHandler(sso);
   console.log('[Boot] ✅ TokenInvalidHandler 已绑定 SSO AuthHandler');
 
@@ -118,6 +142,8 @@ export function unloadServices(): void {
  */
 export function logout(router?: Router): void {
   console.log('[Boot] 开始退出登录...');
+
+  closeAuthBridge();
 
   // 1. 卸载所有服务
   unloadServices();

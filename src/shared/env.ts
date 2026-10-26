@@ -103,3 +103,34 @@ export function getRouterHistoryBase(): string {
   return `/${base}/`.replace(/\/+/g, '/');
 }
 
+/** Context Path without trailing slash (except root `/`). */
+export function getContextPath(): string {
+  const raw = getEnvVar('VITE_CONTEXT_PATH', '/');
+  return raw.endsWith('/') ? raw.slice(0, -1) || '/' : raw;
+}
+
+export function getApplicationCode(): string {
+  return getEnvVar('VITE_APPLICATION_CODE', 'g2rain-main-shell').trim() || 'g2rain-main-shell';
+}
+
+export function getSsoBaseUrl(): string {
+  return getEnvVar('VITE_SSO_BASE_URL', '').replace(/\/$/, '');
+}
+
+export function getAuthEndPoint(): string {
+  return getEnvVar('VITE_AUTH_END_POINT', '/auth/authorize');
+}
+
+export function getTokenEndPoint(): string {
+  return getEnvVar('VITE_TOKEN_END_POINT', '/auth/token');
+}
+
+export function getRedirectUriPath(): string {
+  const raw = getEnvVar('VITE_REDIRECT_URI', '/sso_callback');
+  return raw.startsWith('/') ? raw : `/${raw}`;
+}
+
+export function isAuthPublicPath(pathname: string): boolean {
+  return pathname.endsWith('/sso_callback') || pathname.endsWith('/logout');
+}
+

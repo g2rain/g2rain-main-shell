@@ -3,7 +3,7 @@
  * Shell 层跨应用能力（如 Header 语言选择）使用
  */
 
-import { getHttpClient, type Result } from '@/components/http';
+import { getHttpClient, type Result } from '@runtime/http';
 
 /**
  * 对应后端 LocaleCodeNameVo

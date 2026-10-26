@@ -76,23 +76,27 @@ export function stripActiveRule(activeRule: string | null | undefined, path: str
  *
  * 示例：
  * wrapActiveRule('/app', '/home') -> '/app/home'
- * wrapActiveRule('/app', '/')     -> '/app'
- * wrapActiveRule('/', '/home')    -> '/home'
+ * wrapActiveRule('/member', '/member') -> '/member/member'
+ *   （内部 route 可以与 contextPath 同名；调用方只应传入 INTERNAL path）
+ * wrapActiveRule('/member', '/') -> '/member'
+ * wrapActiveRule('/', '/home') -> '/home'
  */
 export function wrapActiveRule(activeRule: string | null | undefined, path: string | null | undefined): string {
   // 1. 规范化 activeRule（确保以 / 开头，且结尾没有 /）
   const normalizedRule = `/${(activeRule || '').trim()}`.replace(/\/+/g, '/').replace(/\/$/, '') || '/';
 
   // 2. 规范化子应用内部 path
-  let normalizedPath = `/${(path || '').trim()}`.replace(/\/+/g, '/');
+  const normalizedPath = `/${(path || '').trim()}`.replace(/\/+/g, '/');
 
   // 3. 如果规则是根路径 '/'，直接返回规范化后的路径即可
   if (normalizedRule === '/') {
     return normalizedPath;
   }
 
-  // 4. 核心判定：如果路径已经包含了该前缀，则无需重复拼接，直接返回
-  if (normalizedPath === normalizedRule || normalizedPath.startsWith(`${normalizedRule}/`)) {
+  // 4. 已是该 rule 下的完整浏览器路径（activeRule 后还有段）则不重复拼接。
+  //    不要把 path === rule 当成「已加壳」：内部路由可与 contextPath 同名
+  //    （如 activeRule=/member, internal=/member → 浏览器 /member/member）。
+  if (normalizedPath.startsWith(`${normalizedRule}/`)) {
     return normalizedPath;
   }
 

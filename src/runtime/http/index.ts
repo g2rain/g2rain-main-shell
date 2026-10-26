@@ -1,66 +1,136 @@
 /**
- * Runtime 层 HTTP 初始化入口
+ * Shell HTTP assembly on @g2rain/http.
+ * - business: withAuth → `{contextPath}/api`
+ * - auth / sign: withAuth false → same-origin Context Path
  *
- * - 负责为 HttpClient 注入认证会话上下文（HttpAuthSession）
- * - 负责注入统一的认证异常处理逻辑（未登录 / 刷新失败时跳转 SSO）
+ * Local `src/components/http` remains for mock helpers until Phase 7 cleanup.
  */
 
+import {
+  createHttpClient,
+  type EnsureAccessTokenOptions,
+  type HttpAuthSession,
+  type HttpClient,
+  type HttpClientInstance,
+  type Result,
+} from '@g2rain/http';
 import { loadingManager } from '@/components/loading';
-import { sso } from '@runtime/auth';
-import { updateHttpClientOptions, type HttpAuthSession, type HttpClientOptions, type Client } from '@/components/http';
+import { getApplicationCode, getContextPath } from '@shared/env';
 import { useAccessTokenStore } from '@platform/stores/token.store';
+import { useLocaleStore } from '@platform/stores/locale.store';
 
-/**
- * 将 platform 层的 token.store 适配为 HttpAuthSession
- */
-function createHttpAuthSession(): HttpAuthSession {
+let businessClient: HttpClientInstance | undefined;
+let authClient: HttpClientInstance<true> | undefined;
+let signClient: HttpClientInstance<true> | undefined;
+
+function authSessionProvider(): HttpAuthSession {
   const store = useAccessTokenStore();
-
   return {
-    client: store.client as Client | null,
+    client: store.client,
     isLogin: store.isLogin,
     isAccessTokenValid: store.isAccessTokenValid,
     tokenExpired: store.tokenExpired,
     tokenString: store.tokenString,
-    setTokenExpired: store.setTokenExpired,
+    setTokenExpired: (expired) => store.setTokenExpired(expired),
   };
 }
 
-/**
- * 默认的认证异常处理：
- * - 统一处理 NO_LOGIN / TOKEN_REFRESH_FAILED 等认证相关错误
- * - 当前实现：关闭 loading 并跳转到 SSO
- */
-async function defaultAuthErrorHandler(reason: 'NO_LOGIN' | 'TOKEN_REFRESH_FAILED', error: unknown): Promise<void> {
-  console.warn('[Runtime HTTP] Auth error:', reason, error);
+export function initHttpClient(): HttpClientInstance {
+  if (businessClient) return businessClient;
 
-  // 确保关闭 loading
-  loadingManager.hide();
+  const ensureAccessToken = async (opts?: EnsureAccessTokenOptions): Promise<void> => {
+    const { sso } = await import('../auth/sso');
+    await sso.ensureAccessToken(opts);
+  };
 
-  try {
+  const authErrorHandler = async (
+    reason: 'NO_LOGIN' | 'TOKEN_REFRESH_FAILED',
+    error: unknown,
+  ): Promise<void> => {
+    console.warn(`[shell-http] auth error: ${reason}`, error);
+    loadingManager.hide();
+    const store = useAccessTokenStore();
+    if (store.client) {
+      store.client = { ...store.client, isAuthenticated: false };
+    }
+    const { sso } = await import('../auth/sso');
     await sso.redirectToSSO();
-  } catch (redirectError) {
-    console.error('[Runtime HTTP] redirectToSSO failed:', redirectError);
+  };
+
+  const shellBaseURL = getContextPath();
+  const sameOriginBase = shellBaseURL === '/' ? undefined : shellBaseURL;
+  const apiBaseURL =
+    shellBaseURL === '/' || shellBaseURL === '' ? '/api' : `${shellBaseURL}/api`;
+
+  businessClient = createHttpClient({
+    baseURL: apiBaseURL,
+    withAuth: true,
+    dpop: { applicationCode: getApplicationCode() },
+    authSessionProvider,
+    ensureAccessToken,
+    authErrorHandler,
+    getLocale: () => useLocaleStore().locale || undefined,
+  });
+
+  authClient = createHttpClient({
+    baseURL: sameOriginBase,
+    withAuth: false,
+    isDirectResponse: true,
+  });
+
+  signClient = createHttpClient({
+    baseURL: sameOriginBase,
+    withAuth: false,
+    isDirectResponse: true,
+  });
+
+  return businessClient;
+}
+
+/** @deprecated Use initHttpClient; kept for boot call sites during migration. */
+export function initHttp(): void {
+  initHttpClient();
+}
+
+export function getBusinessHttpClient(): HttpClientInstance {
+  if (!businessClient) {
+    throw new Error('HTTP client is not initialized. Call initHttpClient from the composition root.');
   }
+  return businessClient;
+}
+
+export function getAuthHttpClient(): HttpClientInstance<true> {
+  if (!authClient) {
+    initHttpClient();
+  }
+  if (!authClient) {
+    throw new Error('Auth HTTP client is not initialized');
+  }
+  return authClient;
+}
+
+export function getSignHttpClient(): HttpClientInstance<true> {
+  if (!signClient) {
+    initHttpClient();
+  }
+  if (!signClient) {
+    throw new Error('Sign HTTP client is not initialized');
+  }
+  return signClient;
 }
 
 /**
- * 初始化 HTTP 组件：
- * - 为 default HttpClient 注入 HttpAuthSession 提供者
- * - 为 default HttpClient 注入统一的认证异常处理器
- *
- * 建议在应用启动时尽早调用（如 runtime/boot 中）
+ * Compatibility shim for call sites that used local getHttpClient('default'|'auth').
  */
-export function initHttp(): void {
-  const authSessionProvider = (): HttpAuthSession => createHttpAuthSession();
-
-  const defaultOptions: Partial<HttpClientOptions> = {
-    authSessionProvider,
-    authErrorHandler: defaultAuthErrorHandler,
-    ensureAccessToken: (opts) => sso.ensureAccessToken(opts),
-  };
-
-  // 为 default 客户端「增量」注入认证相关配置（保持 components/http 中的默认 baseURL 等配置不变）
-  updateHttpClientOptions('default', defaultOptions);
+export function getHttpClient(type?: 'default'): HttpClient;
+export function getHttpClient(type: 'auth'): HttpClient<true>;
+export function getHttpClient(type: 'default' | 'auth' = 'default'): HttpClient | HttpClient<true> {
+  if (type === 'auth') {
+    return getAuthHttpClient().client;
+  }
+  return getBusinessHttpClient().client;
 }
 
+export type { Result, HttpClient, EnsureAccessTokenOptions };
+export { refreshBarrier } from './refresh-barrier';
+export { fetchIamKeyId, fetchIamPublicKey, clearIamKeyCache } from './iam-keys';

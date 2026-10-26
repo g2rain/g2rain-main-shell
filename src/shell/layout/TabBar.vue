@@ -42,6 +42,7 @@ import { useLocaleStore } from '@platform/stores/locale.store';
 import MicroAppPage from '@/shell/layout/MicroAppPage.vue';
 import { QiankunManager } from '@/platform/apps';
 import { wrapActiveRule } from '@/shared/url.util';
+import { isRedirectGatewayPath } from '@runtime/navigation/sub-app-redirect';
 import { resolveMenuTitle } from '@platform/i18n';
 
 const router = useRouter();
@@ -97,10 +98,11 @@ async function activateSubTabRuntime(tabKey: string): Promise<void> {
     return;
   }
 
-  // 1) 先从 runtime 中读取 lastActivePath，如果有则同步到浏览器地址栏（须与 ROUTE_CHANGE 的 fullPath 语义一致，避免二次 replaceState 抖动）
+  // 1) 同步浏览器地址栏。若 Vue Router 仍停在 redirect 网关，禁止 replaceState：
+  //    否则微路径会被 Router 立刻写回 /main/redirect/...（用户看到网关地址闪两次）
   const lastActivePath = runtimeStore.getLastActivePath(tab.key);
   const rawPath = lastActivePath ?? tab.initialPath;
-  if (rawPath) {
+  if (rawPath && !isRedirectGatewayPath(router.currentRoute.value.fullPath)) {
     const pathname = wrapActiveRule(tab.app.activeRule, rawPath);
     const url = `${window.location.origin}${pathname}`;
     window.history.replaceState({ ...window.history.state || {}, microApp: true }, '', url);
