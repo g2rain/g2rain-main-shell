@@ -52,7 +52,6 @@
       <!-- 用户信息 -->
       <el-dropdown
         trigger="click"
-        max-height="420px"
         popper-class="user-menu-popper"
         @command="handleUserCommand"
         @visible-change="onUserMenuVisible"
@@ -68,27 +67,29 @@
               <div class="user-menu-name">{{ displayName }}</div>
               <div v-if="profile.organName" class="user-menu-organ">{{ profile.organName }}</div>
             </div>
-            <!-- 切换身份：仅员工会话且有多个身份时出现 -->
-            <template v-if="switchable">
+            <!-- 切换身份：员工会话展示，列表超出约 5 条时单独滚动 -->
+            <div v-if="isUserSession" class="user-menu-switch">
               <div class="user-menu-title">{{ $t('MS_HDR_SWITCH_IDENTITY', '切换身份') }}</div>
-              <el-dropdown-item
-                v-for="item in identities"
-                :key="String(item.userId)"
-                :command="`${SWITCH_PREFIX}${item.userId}`"
-                :disabled="switching"
-                :class="{ 'is-active': String(item.userId) === profile.userId }"
-              >
-                <span class="identity-text">
-                  <span
-                    class="identity-organ"
-                    :title="item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构')"
-                  >{{ item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构') }}</span>
-                  <span v-if="item.userName" class="identity-user">{{ item.userName }}</span>
-                </span>
-                <el-icon v-if="String(item.userId) === profile.userId" class="check-icon"><Check /></el-icon>
-              </el-dropdown-item>
-            </template>
-            <el-dropdown-item command="logout" divided>
+              <div class="user-menu-identities">
+                <el-dropdown-item
+                  v-for="item in identities"
+                  :key="String(item.userId)"
+                  :command="`${SWITCH_PREFIX}${item.userId}`"
+                  :disabled="switching"
+                  :class="{ 'is-active': String(item.userId) === profile.userId }"
+                >
+                  <span class="identity-text">
+                    <span
+                      class="identity-organ"
+                      :title="item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构')"
+                    >{{ item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构') }}</span>
+                    <span v-if="item.userName" class="identity-user">{{ item.userName }}</span>
+                  </span>
+                  <el-icon v-if="String(item.userId) === profile.userId" class="check-icon"><Check /></el-icon>
+                </el-dropdown-item>
+              </div>
+            </div>
+            <el-dropdown-item command="logout">
               <el-icon><SwitchButton /></el-icon>
               {{ $t('MS_HDR_LOGOUT', '退出登录') }}
             </el-dropdown-item>
@@ -166,7 +167,6 @@ const switching = ref(false);
 
 /** 账号会话（尚未选定身份）走账号开通流程，不展示切换 */
 const isUserSession = computed(() => profile.value.sessionType === 'USER');
-const switchable = computed(() => isUserSession.value && identities.value.length > 1);
 
 const onUserMenuVisible = async (visible: boolean) => {
   if (!visible || !isUserSession.value) return;
@@ -364,6 +364,16 @@ const handleUserCommand = (command: string) => {
   line-height: 1.5;
   color: var(--text-color-secondary);
   word-break: break-all;
+}
+
+/* 身份列表区块：自带下边框与"退出登录"分隔；列表约 5 条高度后滚动，退出登录始终可见 */
+.user-menu-popper .user-menu-switch {
+  border-bottom: 1px solid var(--dropdown-border);
+}
+
+.user-menu-popper .user-menu-identities {
+  max-height: 260px;
+  overflow-y: auto;
 }
 
 .user-menu-popper .user-menu-title {
