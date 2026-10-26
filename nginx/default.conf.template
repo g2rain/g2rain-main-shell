@@ -71,10 +71,12 @@ server {
     }
     
     location ^~ ${CONTEXT_PATH}/api/ {
-        # 可切换身份：丢弃客户端查询串，机构类型由本 shell 固定；路由前缀不写死
+        # 可切换身份：机构类型由本 shell 写入请求头并覆盖客户端传值；查询串不动，不影响 DPoP pha 校验
         location ~ ^${CONTEXT_PATH}/api/(?<identities_path>.+/user/identities)$ {
-            rewrite ^ /$identities_path?organType=TENANT? break;
+            # 去掉 shell 路径与 /api 前缀，原查询串自动保留
+            rewrite ^ /$identities_path break;
             proxy_pass http://$GATEWAY_HOST:$GATEWAY_PORT;
+            proxy_set_header   X-Identity-Organ-Type TENANT;
             proxy_set_header   Host    $host;
             proxy_set_header   X-Real-IP   $remote_addr;
             proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
