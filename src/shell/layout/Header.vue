@@ -185,7 +185,7 @@ const switchIdentity = async (userId: string) => {
   const organ = target?.organName || t('MS_HDR_ORGAN_UNNAMED', '未命名机构');
   try {
     await ElMessageBox.confirm(
-      t('MS_HDR_SWITCH_CONFIRM', '切换后将关闭所有已打开的页面，确定切换到「{organ}」吗？').replace('{organ}', organ),
+      t('MS_HDR_SWITCH_CONFIRM', { organ }, '切换后将关闭所有已打开的页面，确定切换到「{organ}」吗？'),
       t('MS_HDR_SWITCH_IDENTITY', '切换身份'),
       {
         type: 'warning',

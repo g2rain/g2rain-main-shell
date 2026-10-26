@@ -21,11 +21,20 @@ function currentI18nLocale(): string {
   return typeof loc === 'string' ? loc : loc.value;
 }
 
-/** 在 script 中取文案；第二参数为页面填写的默认文案，后台未配置时使用 */
-export function t(code: string, defaultText?: string): string {
+/** 无占位：`t(code, '默认')`；有占位：`t(code, { n }, '{n} 个')`（与模板 `$t` 三参一致） */
+export function t(code: string, defaultText?: string): string;
+export function t(code: string, vars: Record<string, unknown>, defaultText: string): string;
+export function t(
+  code: string,
+  varsOrDefault?: string | Record<string, unknown>,
+  defaultText?: string,
+): string {
   void currentI18nLocale();
-  if (defaultText !== undefined) {
-    return i18n.global.t(code, defaultText);
+  if (varsOrDefault !== undefined && typeof varsOrDefault === 'object') {
+    return i18n.global.t(code, varsOrDefault, defaultText ?? '');
+  }
+  if (typeof varsOrDefault === 'string') {
+    return i18n.global.t(code, varsOrDefault);
   }
   return i18n.global.t(code);
 }
