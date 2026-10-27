@@ -4,4 +4,4 @@
 
 export type { ThemeMode, ThemeConfig } from './types';
 export { THEME_MODES } from './types';
-export { initThemeController, getThemeController } from './controller';
+export { initThemeController, getThemeController, applyThemeToSubApps } from './controller';

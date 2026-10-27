@@ -429,9 +429,7 @@ async function loadIdpBindings() {
   idpBindingLoading.value = true;
   try {
     idpBindingList.value = await PassportIdpBindingApi.listByPassport(Number(passportId));
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : t('MS_PP_IDP_LOAD_FAIL', '加载三方绑定信息失败');
-    ElMessage.error(msg);
+  } catch {
     idpBindingList.value = [];
   } finally {
     idpBindingLoading.value = false;
@@ -556,9 +554,8 @@ const loadUserInfo = async () => {
     userInfo.value = authorityUser;
     passportInfo.value = authorityUser.passport;
     await loadIdpBindings();
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : t('MS_PP_LOAD_FAIL', '加载Passport信息失败');
-    ElMessage.error(msg);
+  } catch {
+    // 请求失败已由 http 层统一提示
   } finally {
     loading.value = false;
   }
@@ -605,9 +602,6 @@ const submitEditPassport = async () => {
     editPassportDialogVisible.value = false;
     // 重新加载用户信息
     await loadUserInfo();
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : t('MS_PP_UPDATE_FAIL', '更新Passport信息失败');
-    ElMessage.error(msg);
   } finally {
     submitting.value = false;
   }
@@ -647,9 +641,6 @@ const submitChangePassword = async () => {
     changePasswordDialogVisible.value = false;
     // 清空表单
     handleChangePasswordClose();
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : t('MS_PP_PWD_FAIL', '修改密码失败');
-    ElMessage.error(msg);
   } finally {
     submitting.value = false;
   }

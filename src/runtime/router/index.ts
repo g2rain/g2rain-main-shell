@@ -21,10 +21,13 @@ import { useMicroAppStore } from '@platform/stores/app.store';
 const routes: RouteRecordRaw[] = [
   ...authRoutes,
   ...getShellRoutes(),
+  // 子应用网关：只用于匹配 /redirect/{context}/...，不渲染内容；离开网关与开 Tab 由 restoreAfterAuth 处理
   {
     path: '/redirect/:pathMatch(.*)*',
     name: 'SubAppRedirectGateway',
-    component: () => import('@/views/redirect/SubAppRedirectGateway.vue'),
+    component: {
+      render: () => null,
+    },
     meta: { title: '子应用跳转', requiresAuth: false },
   },
   // 静默的兜底路由，只用于匹配，避免 Vue Router 警告

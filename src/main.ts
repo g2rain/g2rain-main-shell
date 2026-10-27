@@ -18,6 +18,7 @@ import { useLocaleStore } from '@platform/stores/locale.store';
 import { initThemeController } from '@platform/theme/controller';
 
 import { start } from '@/runtime/boot';
+import { silenceNotified } from '@runtime/http/notified';
 import { rewriteMicroDeepLinkToGateway } from '@runtime/navigation/sub-app-redirect';
 
 async function bootstrap() {
@@ -25,6 +26,7 @@ async function bootstrap() {
   rewriteMicroDeepLinkToGateway();
 
   const app = createApp(App);
+  silenceNotified(app);
 
   setupStore(app);
 

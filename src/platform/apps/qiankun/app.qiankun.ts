@@ -10,6 +10,7 @@ import { setBootstrapMaxTime, setMountMaxTime } from 'single-spa';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
 import { WindowEventAdapter } from '@/components/micro-app/event-windows-adapter';
 import { getMainPlatform } from '../../main-platform';
+import { applyThemeToSubApps } from '../../theme';
 
 /**
  * Qiankun 运行时适配器
@@ -116,6 +117,10 @@ class QiankunAdapter implements RuntimeAdapter {
         sandbox: {
           experimentalStyleIsolation: true,
         },
+      },
+      {
+        // 包裹层此时已渲染、子应用尚未挂载：先写主题，避免子应用先以亮色闪一下
+        beforeMount: async () => applyThemeToSubApps(document.getElementById(containerId) ?? document),
       },
     );
 

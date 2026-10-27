@@ -35,7 +35,8 @@ import {
 class SSOService implements AuthHandler {
   private isAuthenticationPending = false;
   private isRefreshPending = false;
-  private pendingSubscribers: Array<() => void> = [];
+  /** 等待同一次换票的调用方：成功时 resolve，失败时 reject，不会永远挂起 */
+  private pendingSubscribers: Array<{ resolve: () => void; reject: (error: unknown) => void }> = [];
   private refreshPromise: Promise<{ token: string; tokenKid: string }> | null = null;
   private ensureAccessTokenPromise: Promise<void> | null = null;
   private stopWatchTokenExpired: (() => void) | null = null;
@@ -134,8 +135,8 @@ class SSOService implements AuthHandler {
 
   public async generateToken(code: string): Promise<void> {
     if (this.isAuthenticationPending) {
-      return new Promise((resolve) => {
-        this.pendingSubscribers.push(() => resolve());
+      return new Promise((resolve, reject) => {
+        this.pendingSubscribers.push({ resolve, reject });
       });
     }
 
@@ -144,10 +145,10 @@ class SSOService implements AuthHandler {
     const http = getAuthHttpClient();
     const data = { code, grantType: 'authorization_code' };
     const jti = Generator.random();
-    const dpop = await this.createTokenProof(getTokenEndPoint(), data, store.client, jti);
-    const applicationDpop = await this.callSignApi(data, dpop, jti);
-
+    // 签名等前置步骤也放进 try：失败时同样复位状态并通知等待者，重试不会挂起
     try {
+      const dpop = await this.createTokenProof(getTokenEndPoint(), data, store.client, jti);
+      const applicationDpop = await this.callSignApi(data, dpop, jti);
       const response = await http.client.post<{ token: string; keyId: string }>(
         getTokenEndPoint(),
         data,
@@ -169,9 +170,9 @@ class SSOService implements AuthHandler {
       const iamKeyId = await fetchIamKeyId(signHttp.client);
       const publicKey = await fetchIamPublicKey(signHttp.client);
       await store.setTokens(token, keyId, iamKeyId, publicKey);
-      this.pendingSubscribers.splice(0).forEach((fn) => fn());
+      this.pendingSubscribers.splice(0).forEach(({ resolve }) => resolve());
     } catch (error) {
-      this.pendingSubscribers = [];
+      this.pendingSubscribers.splice(0).forEach(({ reject }) => reject(error));
       throw error;
     } finally {
       this.isAuthenticationPending = false;
@@ -284,6 +285,10 @@ class SSOService implements AuthHandler {
   }
 
   public async switchToken(userId: string | number): Promise<TokenRefreshResult> {
+    // 等在途的普通刷新结束再换票：并入它的话 exchange_token 不会发出，身份不会切换
+    while (this.refreshPromise) {
+      await this.refreshPromise.catch(() => undefined);
+    }
     const result = await this.requestRefreshToken({ grantType: 'exchange_token', userId });
     const latestStore = this.getAccessTokenStore();
 
@@ -298,12 +303,12 @@ class SSOService implements AuthHandler {
     this.stop();
     const tokenStore = this.getAccessTokenStore();
 
-    if (isAuthPublicPath(window.location.pathname)) {
-      console.log('[SSOService] Auth public path, skipping SSO redirect.');
-      return;
-    }
-
-    if (!tokenStore.isLogin && (!tokenStore.status || tokenStore.status === 'NORMAL')) {
+    // 公开路径也挂 watch：登录态失效时需能跳转；仅跳过启动时立刻 redirect
+    if (
+      !isAuthPublicPath(window.location.pathname) &&
+      !tokenStore.isLogin &&
+      (!tokenStore.status || tokenStore.status === 'NORMAL')
+    ) {
       this.redirectToSSO().catch((error) => {
         console.error('[SSOService] 启动时跳转 SSO 失败:', error);
       });
@@ -328,6 +333,9 @@ class SSOService implements AuthHandler {
     this.stopWatchLogged = watch(
       () => tokenStore.logged,
       async (newLogged) => {
+        if (isAuthPublicPath(window.location.pathname)) {
+          return;
+        }
         if (tokenStore.status === 'SSO' || tokenStore.status === 'LOGOUT') {
           return;
         }

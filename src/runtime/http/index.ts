@@ -9,11 +9,14 @@
 import {
   createHttpClient,
   type EnsureAccessTokenOptions,
+  type G2rainHttpError,
   type HttpAuthSession,
   type HttpClient,
   type HttpClientInstance,
   type Result,
 } from '@g2rain/http';
+import { ElMessage } from 'element-plus';
+import { markNotified } from './notified';
 import { loadingManager } from '@/components/loading';
 import { getApplicationCode, getContextPath } from '@shared/env';
 import { useAccessTokenStore } from '@platform/stores/token.store';
@@ -33,6 +36,16 @@ function authSessionProvider(): HttpAuthSession {
     tokenString: store.tokenString,
     setTokenExpired: (expired) => store.setTokenExpired(expired),
   };
+}
+
+/**
+ * 请求失败的统一提示：显示后端返回的 errorMessage。
+ * 登录态错误由认证流程处理，不重复提示。
+ */
+function notifyHttpError(error: G2rainHttpError): void {
+  if (error.source === 'auth') return;
+  markNotified(error);
+  ElMessage.error(error.message);
 }
 
 export function initHttpClient(): HttpClientInstance {
@@ -69,6 +82,7 @@ export function initHttpClient(): HttpClientInstance {
     authSessionProvider,
     ensureAccessToken,
     authErrorHandler,
+    onError: notifyHttpError,
     getLocale: () => useLocaleStore().locale || undefined,
   });
 

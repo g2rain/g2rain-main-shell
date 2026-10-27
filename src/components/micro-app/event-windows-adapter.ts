@@ -5,7 +5,6 @@
 
 import type { EventAdapter, MicroAppMessageUnion } from './types';
 import { MicroAppEventType } from './types';
-import { env } from '@shared/env';
 import { MicroAppMessageProcessorImpl } from './message-processor';
 
 /**
@@ -31,18 +30,8 @@ export class WindowEventAdapter implements EventAdapter {
     // 统一的事件监听器：所有事件都通过 processor 处理
     const unifiedEventHandler = async (event: Event) => {
       const customEvent = event as CustomEvent;
+      // 主壳收到的都是子应用发给主壳的消息：message.appKey 是来源实例，不是投递目标，不按它过滤
       const message = customEvent.detail as MicroAppMessageUnion;
-      const appKey = message.appKey ?? '';
-
-      // appKey 为空：所有子应用都处理
-      // appKey 不为空：只有 appKey 等于当前应用 appKey 的实例处理
-      if (appKey) {
-        const currentAppKey = env.VITE_APPLICATION_CODE || '';
-
-        if (!currentAppKey || appKey !== currentAppKey) {
-          return;
-        }
-      }
 
       // 使用 processor 的 processRaw 方法处理原始数据
       await this.messageProcessor.processRaw(message);

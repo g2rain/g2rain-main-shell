@@ -142,10 +142,6 @@
 | MS_PP_UPDATE_ACCOUNT | 更新账号信息 | passport |
 | MS_PP_UPDATE_FAIL | 更新Passport信息失败 | passport |
 | MS_PP_USER_INFO | 用户信息 | passport |
-| MS_RD_JUMP | 正在跳转... | SubAppRedirectGateway |
-| MS_RD_JUMP_FAIL | 跳转登录失败 | SubAppRedirectGateway |
-| MS_RD_JUMP_LOGIN | 正在跳转登录... | SubAppRedirectGateway |
-| MS_RD_OPEN_APP | 正在打开应用... | SubAppRedirectGateway |
 | MS_THEME_BRAND | G2rain 品牌主题 | Header |
 | MS_THEME_DARK | 暗色主题 | Header |
 | MS_THEME_LIGHT | 亮色主题 | Header |

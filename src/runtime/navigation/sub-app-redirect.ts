@@ -179,7 +179,7 @@ export function parseRedirectGateway(fullPath: string): {
   }
 
   const contextPath = `/${segments[0]}`;
-  const internalPath = stripActiveRule(contextPath, targetPathname);
+  const internalPath = `${stripActiveRule(contextPath, targetPathname)}${suffix}`;
 
   return {
     targetFullPath,
@@ -288,7 +288,7 @@ function findSubMenuItemByTargetPath(menuItems: MenuItem[], targetFullPath: stri
   menuItem: MenuItem;
   internalPath: string;
 } | null {
-  const { pathname } = splitPathAndSuffix(targetFullPath);
+  const { pathname, suffix } = splitPathAndSuffix(targetFullPath);
   const normalizedTarget = normalizePathname(pathname);
 
   const candidates: { menuItem: MenuItem; rule: string }[] = [];
@@ -333,7 +333,7 @@ function findSubMenuItemByTargetPath(menuItems: MenuItem[], targetFullPath: stri
 
   return {
     menuItem: bestItem,
-    internalPath,
+    internalPath: `${internalPath}${suffix}`,
   };
 }
 
@@ -370,7 +370,7 @@ function openMainTarget(router: Router, menuItem: MenuItem, targetFullPath: stri
   return true;
 }
 
-function openSubTarget(targetFullPath: string, internalPath?: string): boolean {
+function openSubTarget(targetFullPath: string): boolean {
   const menuStore = useMenuStore();
   const tabStore = useTabStore();
   const runtimeStore = useRuntimeStore();
@@ -382,7 +382,8 @@ function openSubTarget(targetFullPath: string, internalPath?: string): boolean {
     return false;
   }
 
-  const pathToRemember = internalPath ?? resolved.internalPath;
+  // 内部路径只按菜单里最长匹配的 activeRule 剥离一次：多段 activeRule（如 /biz/member）不能只去掉第一段
+  const pathToRemember = resolved.internalPath;
 
   if (tabStore.tabs.some((t) => t.key === resolved.menuItem.key)) {
     tabStore.setActiveTab(resolved.menuItem.key);
@@ -421,8 +422,20 @@ function syncBrowserAddressForActiveSubTab(): void {
   );
 }
 
-function openSubAndSyncBrowser(targetFullPath: string, internalPath: string): boolean {
-  const opened = openSubTarget(targetFullPath, internalPath);
+/** 刷新恢复时首页固定在第一个 Tab；已存在则不重复添加 */
+function openHomeTab(): void {
+  const menuStore = useMenuStore();
+  const tabStore = useTabStore();
+  const home = menuStore.defaultMenu;
+  if (home && !tabStore.tabs.some((t) => t.key === home.key)) {
+    tabStore.addTabFromMenuItem(home);
+  }
+}
+
+/** 刷新恢复子应用页面：首页在前，当前页面紧随其后并激活，地址栏同步为子应用真实路径 */
+function openSubAndSyncBrowser(targetFullPath: string): boolean {
+  openHomeTab();
+  const opened = openSubTarget(targetFullPath);
   if (opened) {
     syncBrowserAddressForActiveSubTab();
   }
@@ -458,7 +471,7 @@ export function applyNavigationTarget(router: Router, fullPath: string): boolean
         } finally {
           deepLinkLeavingGateway = false;
         }
-        const opened = openSubAndSyncBrowser(parsed.targetFullPath, parsed.internalPath);
+        const opened = openSubAndSyncBrowser(parsed.targetFullPath);
         if (opened) {
           navigationRestored = true;
         }
@@ -473,7 +486,7 @@ export function applyNavigationTarget(router: Router, fullPath: string): boolean
       return true;
     }
 
-    const opened = openSubAndSyncBrowser(parsed.targetFullPath, parsed.internalPath);
+    const opened = openSubAndSyncBrowser(parsed.targetFullPath);
     if (opened) {
       navigationRestored = true;
     }
@@ -488,11 +501,7 @@ export function applyNavigationTarget(router: Router, fullPath: string): boolean
 
   const subResolved = findSubMenuItemByTargetPath(menuStore.menuItems, fullPath);
   if (subResolved) {
-    const opened = openSubTarget(fullPath, subResolved.internalPath);
-    if (opened) {
-      syncBrowserAddressForActiveSubTab();
-    }
-    return opened;
+    return openSubAndSyncBrowser(fullPath);
   }
 
   return false;
@@ -523,8 +532,8 @@ export function restoreAfterAuth(router: Router): boolean {
     const browserPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     applied = applyNavigationTarget(router, browserPath);
   } else if (isRedirectGatewayPath(router.currentRoute.value.fullPath)) {
-    // 当前就在网关页：交给 SubAppRedirectGateway，避免与 restoreAfterAuth 双开
-    return false;
+    // 刷新子应用页面后停在网关路由：网关页组件不会被渲染，必须在这里离开网关并打开 Tab
+    applied = applyNavigationTarget(router, router.currentRoute.value.fullPath);
   } else if (isRedirectGatewayPath(window.location.pathname)) {
     pending = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     applied = applyNavigationTarget(router, pending);
@@ -546,29 +555,4 @@ export function restoreAfterAuth(router: Router): boolean {
   }
 
   return false;
-}
-
-/**
- * 已登录用户访问网关：解析并打开子应用真实路径
- */
-export function handleRedirectGatewayWhenAuthed(router: Router, gatewayFullPath: string): boolean {
-  if (navigationRestored || gatewayRestorePromise) {
-    return true;
-  }
-
-  const parsed = parseRedirectGateway(gatewayFullPath);
-  if (!parsed) {
-    router.replace('/home').catch(() => undefined);
-    return false;
-  }
-
-  if (!canRestoreNavigation()) {
-    return false;
-  }
-
-  const opened = applyNavigationTarget(router, gatewayFullPath);
-  if (!opened) {
-    router.replace('/home').catch(() => undefined);
-  }
-  return opened;
 }

@@ -41,6 +41,10 @@ export class TokenInvalidHandler implements MicroAppMessageHandler {
     }
 
     const typedMessage = messageUnion as TokenInvalidMessage;
+    // 带 instanceId 的消息由按实例定向的 token-invalid-handler 处理，这里只处理旧格式
+    if ((typedMessage as { instanceId?: string }).instanceId) {
+      return;
+    }
     const appKey = typedMessage.appKey;
 
     try {
