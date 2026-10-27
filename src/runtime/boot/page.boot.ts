@@ -14,6 +14,8 @@ import { restoreAfterAuth } from '@runtime/navigation/sub-app-redirect';
 
 class PageBoot {
   private stopWatch: (() => void) | null = null; // watch 停止函数
+  /** 菜单请求序号：只采用最新一次请求的结果；停止或重置时作废进行中的请求 */
+  private menuRequest = 0;
 
   /**
    * 创建默认菜单项
@@ -61,6 +63,7 @@ class PageBoot {
    * 从后端加载菜单数据，存储到 menu.store
    */
   async initMenu(): Promise<void> {
+    const request = ++this.menuRequest;
     try {
       const tokenStore = useAccessTokenStore();
       const menuStore = useMenuStore();
@@ -83,6 +86,8 @@ class PageBoot {
 
       // 3. 获取菜单列表
       const menuList = await getMenuList();
+      // 退出登录后的旧响应、被更新请求取代的乱序响应都丢弃
+      if (request !== this.menuRequest || !tokenStore.isLogin) return;
 
       // 4. 将默认菜单添加到菜单列表的开头
       const finalMenuList = [...defaultMenus, ...menuList];
@@ -103,6 +108,7 @@ class PageBoot {
 
       restoreAfterAuth(router);
     } catch (error) {
+      if (request !== this.menuRequest) return;
       console.error('[PageBoot] 初始化菜单失败:', error);
       throw error;
     }
@@ -147,6 +153,7 @@ class PageBoot {
    * 停止监听（用于清理）
    */
   stop(): void {
+    this.menuRequest++;
     if (this.stopWatch) {
       this.stopWatch();
       this.stopWatch = null;
@@ -157,6 +164,7 @@ class PageBoot {
    * 重置初始化状态（用于登出后重新初始化）
    */
   reset(): void {
+    this.menuRequest++;
     const menuStore = useMenuStore();
     menuStore.reset();
   }

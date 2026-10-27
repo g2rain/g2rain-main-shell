@@ -46,6 +46,7 @@ const processCallback = () => {
   const code = extractCodeFromUrl();
   const clientId = extractClientIdFromUrl();
   if (!code || !clientId) {
+    accessTokenStore.status = 'NORMAL';
     error.value = t('MS_AU_NO_CODE', '未找到授权码或者客户端ID');
     isLoading.value = false;
     return;
@@ -57,6 +58,7 @@ const processCallback = () => {
     .then(() => g2rainRouter.replace('/home'))
       // 先进壳稳定入口，由 tab.boot / page.boot 在菜单就绪后 restoreAfterAuth 打开 return_url
     .catch((err) => {
+      accessTokenStore.status = 'NORMAL';
       error.value = err instanceof Error ? err.message : t('MS_AU_SSO_ERR', '认证处理失败');
       isLoading.value = false;
     });

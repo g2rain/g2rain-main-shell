@@ -315,10 +315,11 @@ function findSubMenuItemByTargetPath(menuItems: MenuItem[], targetFullPath: stri
   const longestRule = candidates.reduce((a, b) => (a.rule.length >= b.rule.length ? a : b)).rule;
   const internalPath = stripActiveRule(longestRule, normalizedTarget);
 
-  const matching = candidates.filter((c) =>
+  const sameRule = candidates.filter((candidate) => candidate.rule === longestRule);
+  const matching = sameRule.filter((c) =>
     menuItemMatchesInternalPath(c.menuItem, internalPath),
   );
-  const pool = matching.length > 0 ? matching : candidates;
+  const pool = matching.length > 0 ? matching : sameRule;
 
   let bestItem = pool[0].menuItem;
   let bestScore = scoreSubMenuItemForInternalPath(bestItem, pool[0].rule, internalPath);
