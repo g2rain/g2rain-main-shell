@@ -19,16 +19,7 @@
         // 勿用 location.pathname 截断：/main/redirect/manager/... 会误请求 .../manager/env-config.js
         var basePath = '__G2RAIN_APP_CONTEXT_PATH__';
         script.src = basePath + '/env-config.js';
-
-        script.onerror = function () {
-          // 本地开发时文件不存在，使用默认空对象（已在上面初始化）
-          console.log('[env-config] env-config.js 未找到，使用默认配置');
-        };
-
-        script.onload = function () {
-          console.log('[env-config] env-config.js 已加载');
-        };
-
+        // 本地开发无 env-config.js 时 onerror，_env_ 已初始化为空对象
         document.head.appendChild(script);
       })();
     </script>
