@@ -28,7 +28,6 @@
       <el-dropdown trigger="click" @command="handleThemeChange">
         <el-button
           :icon="Setting"
-          circle
           class="theme-switcher"
           :title="themeButtonTitle"
         />
@@ -40,10 +39,10 @@
               :command="theme.mode"
               :class="{ 'is-active': currentMode === theme.mode }"
             >
+              {{ themeLabel(theme.mode) }}
               <el-icon v-if="currentMode === theme.mode" class="check-icon">
                 <Check />
               </el-icon>
-              {{ themeLabel(theme.mode) }}
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -57,7 +56,6 @@
         @visible-change="onUserMenuVisible"
       >
         <div class="user-info">
-          <el-avatar icon="User" />
           <span class="username">{{ displayName }}</span>
           <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
         </div>
@@ -251,7 +249,7 @@ const handleUserCommand = (command: string) => {
 .header-right {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
 .locale-select {
@@ -267,9 +265,12 @@ const handleUserCommand = (command: string) => {
 }
 
 .theme-switcher {
+  height: 32px;
   border: 1px solid var(--border-color-base);
+  border-radius: var(--border-radius-md);
   background-color: transparent;
   color: var(--header-text);
+  padding: 0 8px;
   transition: all var(--transition-duration-fast) var(--transition-timing-function);
 }
 
@@ -283,13 +284,19 @@ const handleUserCommand = (command: string) => {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  box-sizing: border-box;
+  height: 32px;
   cursor: pointer;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: 0 10px;
+  border: 1px solid var(--border-color-base);
   border-radius: var(--border-radius-md);
-  transition: background-color var(--transition-duration-fast) var(--transition-timing-function);
+  background-color: transparent;
+  transition: background-color var(--transition-duration-fast) var(--transition-timing-function),
+    border-color var(--transition-duration-fast) var(--transition-timing-function);
 }
 
 .user-info:hover {
+  border-color: var(--color-primary);
   background-color: var(--bg-color-page);
 }
 
@@ -333,6 +340,8 @@ const handleUserCommand = (command: string) => {
 }
 
 .check-icon {
+  margin-left: auto;
+  flex-shrink: 0;
   color: var(--color-primary);
   font-size: var(--font-size-sm);
 }

@@ -1,5 +1,5 @@
 // Result 类型直接复用 HTTP 组件定义，避免重复定义
-export type { Result } from '@/components/http/types';
+export type { Result } from '@g2rain/http';
 
 // 错误来源：后端 / 前端 / 未知
 export type ErrorSource = 'BACKEND' | 'FRONTEND' | 'UNKNOWN';

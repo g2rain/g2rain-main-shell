@@ -10,7 +10,6 @@ import { pageBoot } from '@/runtime/boot/page.boot';
 import { localeBoot } from '@/runtime/boot/locale.boot';
 import { tabBoot } from '@/runtime/boot/tab.boot';
 import { microAppBoot } from '@/runtime/boot/micro-app.boot';
-import { mockBoot } from '@/runtime/boot/mock.boot';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 import { useMenuStore } from '@platform/stores/menu.store';
 import { useMicroAppStore } from '@platform/stores';
@@ -34,7 +33,6 @@ import { clearReturnUrl, resetNavigationRestoreState } from '@runtime/navigation
 /**
  * 启动所有服务
  * 按依赖顺序加载：
- * 0. Mock Data - Mock 数据注册（最基础，在 HTTP 请求之前）
  * 1. SSO Service - 认证服务（最基础）
  * 2. Resource Service - 资源服务（依赖 token）
  * 3. Micro App - 微应用管理（依赖菜单）
@@ -64,10 +62,6 @@ export function start(): void {
   openAuthBridge();
   console.log('[Boot] ✅ Auth Bridge 已启动');
 
-  // 0. 加载 Mock 数据（在 HTTP 请求之前注册）
-  mockBoot.start();
-  console.log('[Boot] ✅ Mock Data 已加载');
-
   // 1. 加载 SSO 服务（认证服务，最基础）
   sso.start();
   console.log('[Boot] ✅ SSO Service 已加载');
@@ -92,7 +86,7 @@ export function start(): void {
   runtimeStore.initEventListeners();
   console.log('[Boot] ✅ 微应用事件监听器已加载');
 
-  //6. 初始化sso到message-handlers的TokenInvalidHandler（legacy 兼容路径）
+  //6. 初始化 sso 到 message-handlers 的 TokenInvalidHandler
   TokenInvalidHandler.setAuthHandler(sso);
   console.log('[Boot] ✅ TokenInvalidHandler 已绑定 SSO AuthHandler');
 
@@ -127,10 +121,6 @@ export function unloadServices(): void {
   // 1. 停止 SSO 服务
   sso.stop();
   console.log('[Boot] ✅ SSO Service 已卸载');
-
-  // 0. 停止 Mock 数据
-  mockBoot.stop();
-  console.log('[Boot] ✅ Mock Data 已卸载');
 
   console.log('[Boot] 所有服务已卸载');
 }

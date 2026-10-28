@@ -2,8 +2,6 @@
  * Shell HTTP assembly on @g2rain/http.
  * - business: withAuth → `{contextPath}/api`
  * - auth / sign: withAuth false → same-origin Context Path
- *
- * Local `src/components/http` remains for mock helpers until Phase 7 cleanup.
  */
 
 import {

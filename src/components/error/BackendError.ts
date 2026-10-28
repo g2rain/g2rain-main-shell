@@ -1,6 +1,6 @@
 import { AppError } from './AppError';
 import type { AppErrorOptions } from './types';
-import type { Result } from '@/components/http/types';
+import type { Result } from '@g2rain/http';
 
 /**
  * 后端 Result<T> 对应的错误类型

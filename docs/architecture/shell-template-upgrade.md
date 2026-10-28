@@ -1,11 +1,11 @@
 # Main Shell 对齐 shell-template 升级总方案
 
-状态：`开发中`（Phase 0–7 源码已落地；**member-app 联调通过**；manager-app / 深链待报）  
+状态：`开发中`（协议与 HTTP/Theme 已收口为 AppKit + `@g2rain/*`；**member-app 联调通过**；多应用冒烟 / 深链待报）  
 适用仓库：`g2rain-main-shell`  
 对齐基线：`g2rain-shell-template`（`frontend-shell-template`，baseline `architecture-v1.2.0`）  
-跨仓规范：中央 `frontend-shell 1.0.0`、appkit [Main Shell 生成契约](https://github.com/g2rain/g2rain-appkit/blob/main/docs/packages/main-shell-contract.md)、模板 [双协议兼容升级方案](https://github.com/g2rain/g2rain-shell-template/blob/main/docs/architecture/legacy-compatibility-upgrade.md)
+跨仓规范：中央 `frontend-shell 1.0.0`、appkit [Main Shell 生成契约](https://github.com/g2rain/g2rain-appkit/blob/main/docs/packages/main-shell-contract.md)
 
-> 本文是 **总方案**，不替代逐步改造中的专题文档。代码落地前只更新本方案与偏差登记；各 Phase 开工时再改源码与对应采纳说明。
+> **当前事实（2026-10-28）**：仅 AppKit 单协议；已删除 `Definition.mode`、`application-code.config`、`platform/legacy`、本地 `components/http` 与 `theme/themes/*`。下文 Phase 0–6 为升级过程归档，**不以其中的 legacy / 双轨表述为现网口径**。
 
 ## 1. 目标与非目标
 
@@ -15,18 +15,18 @@
 
 1. 依赖并装配 `@g2rain/http`、`@g2rain/platform`（以及后续的 `@g2rain/theme`、`@g2rain/ui`）。
 2. 组合根接线 `createMainPlatform` / `runtimePort`；公开 props **禁止**下发 Token / Token Kid / client。
-3. AppKit 子应用经 Auth Bridge（定向消息）取票与失效刷新。
-4. Legacy 子应用仅在 **边缘适配层** 保留 Token-in-props / 旧消息映射，核心 Definition / Workspace / Token Store / qiankun handle 表保持单套。
+3. 子应用经 Auth Bridge（定向消息）取票与失效刷新。
+4. **仅 AppKit**：无 Token-in-props、无 legacy registry / Definition.mode。
 5. 保留 main-shell 作为生产权威参考实现的责任：真实菜单、SSO、OpenResty/Lua、存量联调与运维配置。
 
 ### 1.2 非目标
 
 - 不用模板整仓覆盖 main-shell；不把脚手架占位符（`{{PROJECT_NAME}}` 等）写入本仓。
 - 不把 Context Path 从 `/main` 改成模板默认 `/admin`。
-- 不一次性切断 `manager-app` 等 legacy 接入。
+- 不恢复 legacy / Token-in-props 兼容路径。
 - 不在本方案内统一或强制改写中央 Profile / appkit API（若需改契约，另提中央 ADR）。
 - 不把子应用业务规则、IAM Token 签发或 Gateway 鉴权搬入 Shell。
-- 不删除本仓已有生产能力（ESLint、Mock、远程 i18n tags、现网 Nginx/Lua 实践），除非某一 Phase 明确验收后收缩。
+- 不删除本仓已有生产能力（ESLint、远程 i18n tags、现网 Nginx/Lua 实践），除非某一 Phase 明确验收后收缩。
 
 ### 1.3 关系定位
 
@@ -52,7 +52,7 @@
 | P3 | Store / boot 结构 | `tab`+`app`+`boot/*` | `workspace` + 单文件 `boot.ts` 模式 | 可维护性，非功能阻塞 |
 
 本仓采纳说明现状见 [platform-main-adoption.md](../development/platform-main-adoption.md)（未安装 / 未接线）。  
-既有双模式说明见 [application-code-configuration.md](application-code-configuration.md)（升级过程中演进为 legacy registry，而非直接删除）。
+挂载契约见 [application-code-configuration.md](application-code-configuration.md)（现已收口为仅 AppKit）。
 
 ## 3. 目标架构
 
@@ -251,16 +251,18 @@
 
 **做什么**
 
-- 删除或收缩已替代的 `components/http`、本地 theme 冗余、无用 deep import。
+- 删除已替代的 `components/http`、本地 `theme/themes`、无用 Mock（**已完成**）。
 - Token 存储：选定最终键策略 + **一次性迁移**（从 `g2rain_token:*` 读出并写入目标键，或明确保持本仓键并登记与模板差异为长期偏差）。
 - 更新 `project.yaml`（`subAppContract`、collaborators、文档索引、adoption 状态）。
 - 关闭已兑现的偏差行；遗留项给出退出条件。
-- 联合冒烟：member-app（AppKit）+ manager-app（legacy）+ SSO + 深链 + 登出。
+- **协议收口（已完成）**：删除 `Definition.mode`、`application-code.config`、`platform/legacy`；仅 AppKit + Auth Bridge。
+- 联合冒烟：各 AppKit 子应用 + SSO + 深链 + 登出（浏览器项按需补测）。
 
 **闸门**
 
 - 满足 [definition-of-done.md](../development/definition-of-done.md)。
 - `platform-main-adoption.md` 状态与模板「已完成态」对齐（联合验收项如实填写）。
+- SHELL-009 / SHELL-014 关闭；源码无 legacy 协议分叉。
 
 ## 6. 建议偏差登记（升级期）
 
@@ -269,12 +271,12 @@
 | 建议 ID | 描述 | 退出条件 |
 | --- | --- | --- |
 | SHELL-008 | 未安装/未接线 `@g2rain/platform` 与 `@g2rain/http` | Phase 2–3 完成后关闭 |
-| SHELL-009 | 公开 props 仍下发 Token/client（全量或未迁完的应用） | Phase 3 核心去 Token + legacy 仅边缘注入后关闭「全量」表述 |
+| SHELL-009 | 公开 props 仍下发 Token/client（全量或未迁完的应用） | **已关闭**（仅 AppKit，无 Token-in-props） |
 | SHELL-010 | Auth Bridge 未完整落地 | Phase 4 与 member-app 联调后关闭 |
 | SHELL-011 | `loadMicroApp.name` 与模板 TPL-008 分叉 | 中央契约统一并完成多实例验证后收敛 |
 | SHELL-012 | Token localStorage 键与模板不一致 | 完成迁移策略或登记为有意长期偏差 |
 | SHELL-013 | Theme/UI 仍本地实现 | Phase 5 完成后关闭 |
-| SHELL-014 | Legacy 仍写在核心 Definition.mode（若尚未迁 registry） | 迁入 `platform/legacy/registry` 后关闭 |
+| SHELL-014 | Legacy 仍写在核心 Definition.mode / 双轨 config | **已关闭**（已删 mode、config、`platform/legacy`） |
 
 既有 SHELL-001～007 不因本方案自动关闭；与消息校验、私钥跟踪相关的项在对应 Phase 中显式处理。
 
@@ -285,7 +287,7 @@
 | `g2rain-shell-template` | 结构与契约落地参照；不反向要求模板跟随本仓临时兼容 |
 | `g2rain-appkit` | `/main`、`/http`、公开 props、消息类型权威 |
 | `g2rain-member-app` | AppKit + `/sub` 主验收对象 |
-| `g2rain-manager-app` | Legacy 回归对象 |
+| `g2rain-manager-app` | AppKit 验收对象 |
 | `g2rain-iam` / `g2rain-gateway-webflux` | SSO、换票、业务 API 入口 |
 | 中央 `g2rain` Profile | `loadMicroApp.name`、身份字段等跨仓变更的裁决处 |
 
@@ -298,14 +300,16 @@
 ## 9. 验收总清单（升级完成时）
 
 - [x] `@g2rain/http`、`@g2rain/platform` 已接线；Theme/UI 已接入（旧本地 CSS 待删见 SHELL-013/015）
-- [x] 公开 props 无 Token；legacy 仅边缘注入
+- [x] 公开 props 无 Token；无 legacy 注入
 - [x] Auth Bridge：member-app 经 main-shell 访问正常（2026-10-02）；卸载停回票细节可按需补测
 - [ ] SSO 全链路与 Application-DPoP 签名路径单独报验（若本次访问已含登录则事实已覆盖）
-- [x] member-app 冒烟通过；[ ] manager-app legacy 联合冒烟
+- [x] member-app 冒烟通过；[ ] 多 AppKit 子应用浏览器联合冒烟
 - [ ] Tab 打开 / 切换 / 关闭清理顺序正确（按需补测）
 - [ ] 深链与 F5（及生产 Nginx 微路径回退，若环境可测）
 - [x] `npm run build`；文档索引、`project.yaml`、adoption、偏差表一致
-- [x] 未验证项已写入文档（manager-app / 深链等）
+- [x] 协议收口：已删 `Definition.mode` / `application-code.config` / `platform/legacy`；SHELL-009/014 关闭
+- [x] 已删本地 `theme/themes/*`、`components/http` 与 Mock；SHELL-013 余项 / SHELL-015 关闭
+- [x] 未验证项已写入文档（多应用冒烟 / 深链等）
 
 ## 10. 修订记录
 
@@ -315,3 +319,5 @@
 | 2026-10-02 | Phase 0–7 源码落地：`@g2rain/*`、HTTP、Platform Main、Auth Bridge、Theme/UI、instance-queue；浏览器联调未完成 |
 | 2026-10-02 | 联调：main-shell 访问 member-app 验证通过；文档同步；manager-app / 深链仍待报 |
 | 2026-10-02 | path: wrapActiveRule(/member,/member)->/member/member; rewriteMicroDeepLinkToGateway + lazy createWebHistory |
+| 2026-10-28 | Phase 7 协议收口：删除 legacy 模块与 Definition.mode；仅 AppKit；关闭 SHELL-009/014 |
+| 2026-10-28 | 清理：删 `theme/themes/*`、本地 `components/http` 与 Mock；关闭 SHELL-013 余项 / SHELL-015；文档口径对齐现网 |

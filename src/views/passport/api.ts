@@ -14,9 +14,6 @@ import type {
   PassportPayload,
 } from './type';
 
-// 导入 mock 数据以触发自动注册（副作用导入）
-import './mock';
-
 const DINGTALK_BIND_START_PATH = '/auth/dingtalk/bind/passport/start';
 
 export class PassportApi {

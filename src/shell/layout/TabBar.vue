@@ -297,21 +297,30 @@ const handleTabRemove = async (key: string) => {
 :deep(.el-tabs) {
   display: flex;
   flex-direction: column;
-  height: 100%;
-}
-
-:deep(.el-tabs__content) {
   flex: 1;
-  overflow: visible; /* 让内容溢出，由父容器 .app-content 处理滚动 */
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* 确保 flex 子元素可以缩小 */
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
+:deep(.el-tabs__header) {
+  flex-shrink: 0;
+}
+
+/* height:0 + flex:1：把内容区锁在剩余高度内，避免被内容撑开后整页无滚动 */
+:deep(.el-tabs__content) {
+  flex: 1 1 auto;
+  height: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 业务页在 pane 内滚动；Tab 头不跟着动 */
 :deep(.el-tab-pane) {
-  min-height: 100%; /* 最小高度为父容器高度，但允许内容超出 */
-  overflow: visible; /* 让内容溢出，由父容器处理滚动 */
-  display: flex;
-  flex-direction: column;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 </style>

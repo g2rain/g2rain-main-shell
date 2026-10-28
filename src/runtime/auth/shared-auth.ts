@@ -30,7 +30,7 @@ export function cloneClient(client: DpopClient): DpopClient {
 }
 
 /**
- * Read Shell-owned session for Auth Bridge / legacy edge inject.
+ * Read Shell-owned session for Auth Bridge.
  * Never logs token / client.
  */
 export async function getSharedAuth(): Promise<SharedAuthPayload> {

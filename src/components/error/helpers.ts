@@ -1,4 +1,4 @@
-import type { Result } from '@/components/http/types';
+import type { Result } from '@g2rain/http';
 import { BackendError } from './BackendError';
 import { AppError } from './AppError';
 import { FrontendErrorCode } from './types';

@@ -5,7 +5,7 @@
 ## 1. 分层与角色
 - **Shell 壳层**：主布局（Header/Sidebar/TabBar/MainLayout）、菜单导航、标签页交互、微应用容器 DOM；负责把 Tab 激活转换为运行时实例操作。
 - **Platform 平台层**：微应用管理抽象（AppManager/Adapter）、事件、Pinia stores、类型、主题与全局样式；为上层提供统一能力与单一数据源。
-- **Runtime 运行时**：HTTP、认证、环境变量、Mock、错误处理、签名、启动器等实际业务运行支撑。
+- **Runtime 运行时**：HTTP（`@g2rain/http`）、认证、环境变量、错误处理、签名、启动器等实际业务运行支撑。
 - **Router 路由层**：应用路由与认证守卫，壳层与业务路由映射。
 - **Views 业务视图**：用户、角色等示例页面，验证壳层与运行时能力。
 - **Deploy 支撑**：Nginx 模板、entrypoint、Lua 签名脚本/密钥，支撑容器化部署与接口签名。
@@ -37,9 +37,9 @@
 - `runtime/env/index.ts`：Proxy + `loadEnvConfig()`，优先 `window._env_`，回退 `import.meta.env`，占位符兜底；可从 `/env-config.json` 动态加载。  
 - 容器启动：`nginx/docker-entrypoint.sh` 用 envsubst 渲染 Nginx 与前端 `env-config.json`（当前仅 SSO_BASE_URL）。
 
-### 2.6 HTTP / Mock / 错误处理
-- `runtime/http/axios.ts` 创建实例；`interceptors.ts` 处理 Mock、鉴权/签名、统一错误；`error-handler.ts` 兜底。  
-- Mock 数据位于 `runtime/http/mock/data/*`，开关由 `VITE_MOCK_ENABLED` / `VITE_USE_MOCK` 控制。
+### 2.6 HTTP / 错误处理
+- HTTP 经 `runtime/http` 装配 `@g2rain/http`（business / auth / sign）；本地 `components/http` 与 Mock 已删除。  
+- 业务错误提示走 Shell 侧 `notifyHttpError` / `components/error`。
 
 ## 3. 状态管理（Pinia）
 - **app.store**：微应用定义（菜单初始化为唯一来源）。  
@@ -74,11 +74,11 @@
 - `runtime/starter/index.ts`：聚合启动入口。
 
 ## 8. 主题与样式
-- 主题定义 `platform/theme/*.ts`，预设主题 CSS 在 `platform/theme/themes/*.css`。  
+- 主题定义 `platform/theme/*.ts`；主题 CSS 由 `@g2rain/theme` 提供（本地 `themes/*.css` 已删除）。  
 - 全局样式与变量在 `platform/styles/*.css`。
 
-## 9. Mock 与本地开发
-- Mock 数据 `runtime/http/mock/data/*`；拦截器按开关决定走 Mock 或真实后端，便于联调前的自洽演示。
+## 9. 本地开发
+- 本地开发对接真实后端 / SSO；内置 HTTP Mock 已移除（SHELL-015）。
 
 ## 10. 构建与部署
 - **Vite 插件**：`vite-plugin-env-config.ts` 构建期生成 `dist/env-config.js`（占位符）。  
@@ -150,7 +150,7 @@
 - `src/platform/stores/token.store.ts`：认证 token 状态。
 - `src/platform/styles/base.css` / `index.css` / `variables.css`：全局样式与变量。
 - `src/platform/theme/element.ts` / `index.ts` / `types.ts`：主题配置与类型。
-- `src/platform/theme/themes/*.css`：预设主题样式（dark/g2rain/light）。
+- 主题运行时：`src/platform/theme/controller.ts`（`@g2rain/theme`）。
 - `src/platform/types/app.type.ts`：微应用定义类型。
 - `src/platform/types/http.types.ts`：HTTP 相关类型定义。
 - `src/platform/types/menu.type.ts`：菜单数据类型。
@@ -208,6 +208,6 @@
 - `src/views/user/mock.ts` / `types.ts`：用户模块 mock 与类型。
 
 ## 其他资源
-- `src/platform/styles` / `src/platform/theme/themes`：全局/主题样式资源。
+- `src/platform/styles`：全局样式资源；主题 CSS 来自 `@g2rain/theme`。
 - `src/runtime/http/mock/data/*`：Mock 数据定义。
 - `lua/*`、`nginx/*`：部署与签名支持脚本和密钥。

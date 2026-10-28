@@ -22,7 +22,7 @@ let started = false;
 
 /**
  * Sub → Main TOKEN_INVALID → refresh → TOKEN_RESPONSE (+ client copy).
- * Complements legacy TokenInvalidHandler; prefers instanceId targeting.
+ * Prefers instanceId targeting.
  */
 export function startTokenInvalidHandler(): void {
   if (started || typeof window === 'undefined') return;

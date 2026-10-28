@@ -58,7 +58,7 @@ commands:
   image: docker build --build-arg VITE_BUILD_MODE=production -t g2rain/g2rain-main-shell:<tag> .
 collaborators:
   - repository: g2rain/g2rain-manager-app
-    role: frontend-app legacy 回归验证对象
+    role: frontend-app AppKit 验收对象
   - repository: g2rain/g2rain-member-app
     role: frontend-app AppKit /sub 主验收对象
   - repository: g2rain/g2rain-iam
@@ -87,4 +87,6 @@ aiCoding:
     - 检查文档链接、配置路径、跨应用契约和敏感信息边界
     - 协议变化使用真实子应用完成浏览器联调
     - 已验证：main-shell → member-app（AppKit）访问正常（2026-10-02）
-    - 未验证：manager-app legacy 回归、深链/F5（按需补测）
+    - 协议收口：仅 AppKit；已删 Definition.mode / application-code.config / platform/legacy（SHELL-009/014 关闭）
+    - 清理：已删 theme/themes、components/http 与 Mock（SHELL-013 余项 / SHELL-015 关闭）
+    - 未验证：多应用浏览器联合冒烟、深链/F5（按需补测）

@@ -9,7 +9,7 @@
 - [层次](architecture/layers.md)
 - [依赖规则](architecture/dependencies.md)
 - [运行流程](architecture/runtime-flows.md)
-- [应用编码配置与双模式升级](architecture/application-code-configuration.md)
+- [应用编码与挂载契约](architecture/application-code-configuration.md)
 - [对齐 shell-template 升级总方案](architecture/shell-template-upgrade.md)
 - [已知偏差](architecture/deviations.md)
 - [本地开发](development/local-development.md)

@@ -4,12 +4,9 @@ import type { AppManager } from '@/platform/apps/app-manager.type';
 import type { MicroAppMessageUnion } from '@/components/micro-app';
 import type { AppDefinition, RuntimeInstance, TabClass } from '@platform/types';
 import { useTabStore } from '@platform/stores/tab.store';
-import { useAccessTokenStore } from '@platform/stores/token.store';
 import { useLocaleStore } from '@platform/stores/locale.store';
 import { buildSubAppLocaleProps } from '@platform/locale';
-import { decodeProtectedHeader } from 'jose';
 import { getMainPlatform } from '../main-platform';
-import { isLegacyApplication } from '../legacy';
 import { clearPendingAuthForInstance } from '@/components/micro-app';
 import { createInstanceQueue } from '../apps/instance-queue';
 
@@ -68,7 +65,7 @@ export const useRuntimeStore = defineStore('runtime', {
 
   actions: {
     /**
-     * 核心公开 props 经 buildPublicProps（无 Token）；legacy 仅边缘注入 Token。
+     * 公开 props 经 buildPublicProps（无 Token）；鉴权走 Auth Bridge。
      */
     buildInstanceFromTab(tab: TabClass): RuntimeInstance | null {
       if (!tab.isSubTab() || !tab.app) {
@@ -115,30 +112,11 @@ export const useRuntimeStore = defineStore('runtime', {
         },
       );
 
-      let props: Record<string, unknown> = {
+      const props: Record<string, unknown> = {
         mainAppInfo: { name: '主应用' },
         ...publicProps,
         ...localeProps,
       };
-
-      if (isLegacyApplication(app.applicationCode)) {
-        const tokenStore = useAccessTokenStore();
-        if (tokenStore.tokenString && tokenStore.token) {
-          let tokenKid: string | undefined;
-          try {
-            const header = decodeProtectedHeader(tokenStore.tokenString);
-            tokenKid = header.kid || undefined;
-          } catch (error) {
-            console.warn('[RuntimeStore] 解析 tokenKid 失败:', error);
-          }
-          props = {
-            ...props,
-            token: tokenStore.tokenString,
-            tokenKid,
-            client: tokenStore.client || undefined,
-          };
-        }
-      }
 
       return {
         instanceId,
