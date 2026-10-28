@@ -1,41 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>谷雨开源SaaS平台</title> <!-- 页面标题 -->
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>谷雨G2rain-控制台</title>
+    <!-- 页面标题 -->
     <link rel="icon" type="image/png" href="favicon.png" />
 
     <!-- 加载环境配置（必须在应用脚本之前加载） -->
     <script>
       // 动态加载 env-config.js，失败时使用默认值
-      (function() {
+      (function () {
         // 初始化 window._env_ 为空对象，防止未定义
         window._env_ = window._env_ || {};
-        
+
         var script = document.createElement('script');
         // 构建时由 vite-plugin-env-config 注入 VITE_CONTEXT_PATH（如 /main），与静态资源 base 一致
         // 勿用 location.pathname 截断：/main/redirect/manager/... 会误请求 .../manager/env-config.js
         var basePath = '__G2RAIN_APP_CONTEXT_PATH__';
         script.src = basePath + '/env-config.js';
-        
-        script.onerror = function() {
+
+        script.onerror = function () {
           // 本地开发时文件不存在，使用默认空对象（已在上面初始化）
           console.log('[env-config] env-config.js 未找到，使用默认配置');
         };
-        
-        script.onload = function() {
+
+        script.onload = function () {
           console.log('[env-config] env-config.js 已加载');
         };
-        
+
         document.head.appendChild(script);
       })();
     </script>
-</head>
-<body>
-<!-- Vue 应用的挂载点：必须与 main.ts 中 app.mount('#app') 对应 -->
-<div id="app"></div>
-<!-- 加载主应用入口脚本（Vite 会自动处理路径） -->
-<script type="module" src="src/main.ts"></script>
-</body>
+  </head>
+  <body>
+    <!-- Vue 应用的挂载点：必须与 main.ts 中 app.mount('#app') 对应 -->
+    <div id="app"></div>
+    <!-- 加载主应用入口脚本（Vite 会自动处理路径） -->
+    <script type="module" src="src/main.ts"></script>
+  </body>
 </html>
