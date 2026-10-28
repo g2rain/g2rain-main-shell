@@ -8,7 +8,6 @@ import type { RuntimeInstance, RuntimeAdapter } from '@platform/types';
 import { loadMicroApp, start, type MicroApp } from 'qiankun';
 import { setBootstrapMaxTime, setMountMaxTime } from 'single-spa';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
-import { WindowEventAdapter } from '@/components/micro-app/event-windows-adapter';
 import { getMainPlatform } from '../../main-platform';
 import { applyThemeToSubApps } from '../../theme';
 
@@ -219,7 +218,6 @@ class QiankunAdapter implements RuntimeAdapter {
  */
 export class QiankunManager extends BaseAppManager {
   protected adapter: RuntimeAdapter = new QiankunAdapter();
-  protected eventAdapter = new WindowEventAdapter();
   /** qiankun 框架是否已初始化 */
   private static qiankunInitialized = false;
 

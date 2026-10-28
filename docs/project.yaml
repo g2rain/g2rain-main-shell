@@ -89,4 +89,5 @@ aiCoding:
     - 已验证：main-shell → member-app（AppKit）访问正常（2026-10-02）
     - 协议收口：仅 AppKit；已删 Definition.mode / application-code.config / platform/legacy（SHELL-009/014 关闭）
     - 清理：已删 theme/themes、components/http 与 Mock（SHELL-013 余项 / SHELL-015 关闭）
+    - 消息通道：仅 Auth Bridge / route-change 专用 handler（SHELL-006 关闭）
     - 未验证：多应用浏览器联合冒烟、深链/F5（按需补测）

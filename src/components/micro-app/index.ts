@@ -56,4 +56,5 @@ export {
   clearPendingAuthForInstance,
 } from './request-token-handler';
 export { startTokenInvalidHandler } from './token-invalid-handler';
+export { startRouteChangeHandler } from './route-change-handler';
 

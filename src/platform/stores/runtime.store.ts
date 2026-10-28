@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
 import { QiankunManager } from '@/platform/apps';
 import type { AppManager } from '@/platform/apps/app-manager.type';
-import type { MicroAppMessageUnion } from '@/components/micro-app';
 import type { AppDefinition, RuntimeInstance, TabClass } from '@platform/types';
 import { useTabStore } from '@platform/stores/tab.store';
 import { useLocaleStore } from '@platform/stores/locale.store';
@@ -330,23 +329,6 @@ export const useRuntimeStore = defineStore('runtime', {
           instance.props = { ...instance.props, ...props };
         }
       });
-    },
-
-    emitEvent(message: MicroAppMessageUnion) {
-      const manager = this.getManager;
-      manager.emitEvent(message);
-    },
-
-    initEventListeners() {
-      const manager = this.getManager;
-      manager.initEventListeners();
-      console.log('[RuntimeStore] 事件监听器已初始化');
-    },
-
-    cleanupEventListeners() {
-      const manager = this.getManager;
-      manager.cleanupEventListeners();
-      console.log('[RuntimeStore] 事件监听器已清理');
     },
   },
 });

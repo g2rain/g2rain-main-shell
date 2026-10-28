@@ -309,6 +309,7 @@
 - [x] `npm run build`；文档索引、`project.yaml`、adoption、偏差表一致
 - [x] 协议收口：已删 `Definition.mode` / `application-code.config` / `platform/legacy`；SHELL-009/014 关闭
 - [x] 已删本地 `theme/themes/*`、`components/http` 与 Mock；SHELL-013 余项 / SHELL-015 关闭
+- [x] 消息仅专用 handler（无 WindowEventAdapter/processor）；SHELL-006 关闭
 - [x] 未验证项已写入文档（多应用冒烟 / 深链等）
 
 ## 10. 修订记录
@@ -321,3 +322,4 @@
 | 2026-10-02 | path: wrapActiveRule(/member,/member)->/member/member; rewriteMicroDeepLinkToGateway + lazy createWebHistory |
 | 2026-10-28 | Phase 7 协议收口：删除 legacy 模块与 Definition.mode；仅 AppKit；关闭 SHELL-009/014 |
 | 2026-10-28 | 清理：删 `theme/themes/*`、本地 `components/http` 与 Mock；关闭 SHELL-013 余项 / SHELL-015；文档口径对齐现网 |
+| 2026-10-28 | 消息通道收口：删除 WindowEventAdapter/processor；对齐 admin 专用 handler；关闭 SHELL-006 |

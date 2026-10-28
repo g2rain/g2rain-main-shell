@@ -23,7 +23,7 @@
 | Main 协调器 | `src/platform/main-platform.ts` |
 | HTTP 装配 | `src/runtime/http/index.ts` |
 | SSO / shared-auth | `src/runtime/auth/sso.ts`、`shared-auth.ts` |
-| Auth Bridge | `src/components/micro-app/{emit-directed-message,request-token-handler,token-invalid-handler}.ts` |
+| Auth Bridge / 路由同步 | `src/components/micro-app/{emit-directed-message,request-token-handler,token-invalid-handler,route-change-handler}.ts`（无旧 WindowEventAdapter/processor） |
 | 实例队列 | `src/platform/apps/instance-queue.ts` |
 | Adapter | `src/platform/apps/adapters/`（AppKit-only；QiankunManager 拥有 loader） |
 

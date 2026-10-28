@@ -9,7 +9,7 @@
 | SHELL-003 | runtime auth router 直接懒加载 `views` | 与严格单向层次不一致 | 评估将路由定义移入 views/shell 后由组合根注册 |
 | SHELL-004 | 多处跨模块深度导入内部文件 | 公共 API 难演进 | 新代码优先使用 `index.ts`，逐步收口 |
 | SHELL-005 | 仓库跟踪 `lua/keys/private-key.pem`，Docker 构建会复制整个 `lua/` | 若不是明确的无效开发夹具，可能造成密钥泄露和镜像固化 | 立即确认用途；生产私钥改为部署时注入并轮换，完成安全审计 |
-| SHELL-006 | 跨应用消息基于 window 事件；Auth Bridge 已按 instanceId 校验，旧 WindowEventAdapter 路径仍弱 | 任意同页脚本仍可能干扰旧处理器路径 | 收敛到仅 Auth Bridge / 定向信封后关闭；补安全测试 |
+| SHELL-006 | ~~跨应用消息双轨：Auth Bridge + 旧 WindowEventAdapter/processor~~ | — | **已关闭**（仅 `startRequestTokenHandler` / `startTokenInvalidHandler` / `startRouteChangeHandler` + `emitDirectedMessage`） |
 | SHELL-007 | 当前只有一个正式 Shell 实现 | 新环境或未来第二个 Shell 可能暴露未覆盖的兼容差异 | 跨应用协议变更时使用多个 AppKit 子应用验证挂载、路由、Auth Bridge、Locale、卸载和深链刷新 |
 | SHELL-008 | ~~未安装/未接线 `@g2rain/platform` 与 `@g2rain/http`~~ | — | **已关闭**（Phase 1–3：依赖已装，`initHttpClient` + `initMainPlatform` 已接线） |
 | SHELL-009 | ~~公开 props 全量 / legacy 边缘下发 Token~~ | — | **已关闭**（仅 AppKit：`buildPublicProps` 无 Token；已删除 legacy 注入） |

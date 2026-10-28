@@ -17,7 +17,6 @@ import { useTabStore } from '@platform/stores';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
 import { useLocaleStore } from '@platform/stores/locale.store';
 import { resetI18nLoader } from '@platform/i18n';
-import { TokenInvalidHandler } from '@platform/apps';
 import { initHttpClient } from '@runtime/http';
 import { initMainPlatform } from '@/platform/main-platform';
 import type { MainPublicProps } from '@g2rain/platform/main';
@@ -25,6 +24,7 @@ import {
   emitDirectedMessage,
   openAuthBridge,
   startRequestTokenHandler,
+  startRouteChangeHandler,
   startTokenInvalidHandler,
   closeAuthBridge,
 } from '@/components/micro-app';
@@ -37,7 +37,6 @@ import { clearReturnUrl, resetNavigationRestoreState } from '@runtime/navigation
  * 2. Resource Service - 资源服务（依赖 token）
  * 3. Micro App - 微应用管理（依赖菜单）
  * 4. Tab Route Sync - Tab 路由同步（依赖路由和 tab store）
- * 5. Micro App Event Listeners - 微应用事件监听（依赖微应用）
  */
 export function start(): void {
   console.log('[Boot] 开始加载服务...');
@@ -59,8 +58,9 @@ export function start(): void {
 
   startTokenInvalidHandler();
   startRequestTokenHandler();
+  startRouteChangeHandler();
   openAuthBridge();
-  console.log('[Boot] ✅ Auth Bridge 已启动');
+  console.log('[Boot] ✅ Auth Bridge / route-change 已启动');
 
   // 1. 加载 SSO 服务（认证服务，最基础）
   sso.start();
@@ -82,14 +82,6 @@ export function start(): void {
   tabBoot.start(router);
   console.log('[Boot] ✅ Tab Route Sync Service 已加载');
 
-  // 5. 初始化微应用事件监听器（依赖微应用）
-  runtimeStore.initEventListeners();
-  console.log('[Boot] ✅ 微应用事件监听器已加载');
-
-  //6. 初始化 sso 到 message-handlers 的 TokenInvalidHandler
-  TokenInvalidHandler.setAuthHandler(sso);
-  console.log('[Boot] ✅ TokenInvalidHandler 已绑定 SSO AuthHandler');
-
   console.log('[Boot] 所有服务加载完成');
 }
 
@@ -99,11 +91,6 @@ export function start(): void {
  */
 export function unloadServices(): void {
   console.log('[Boot] 开始卸载服务...');
-
-  // 5. 清理微应用事件监听器
-  const runtimeStore = useRuntimeStore();
-  runtimeStore.cleanupEventListeners();
-  console.log('[Boot] ✅ 微应用事件监听器已卸载');
 
   // 4. 停止 Tab 路由同步
   tabBoot.stop();
