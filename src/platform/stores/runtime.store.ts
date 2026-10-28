@@ -141,12 +141,9 @@ export const useRuntimeStore = defineStore('runtime', {
         if (!instance.app?.appKey) {
           continue;
         }
+        // 始终写入内存 props，供下次挂载使用；qiankun update 仅对真正 MOUNTED 的实例调用
         instance.props = { ...instance.props, ...localeProps };
-        if (
-          instance.status === 'mounted' ||
-          instance.status === 'inactive' ||
-          instance.status === 'loading'
-        ) {
+        if (instance.status === 'mounted' || instance.status === 'inactive') {
           void manager.updateInstanceProps(instance.instanceId, localeProps);
           try {
             void getMainPlatform().notifyLocale(instance.instanceId, localeStore.locale);

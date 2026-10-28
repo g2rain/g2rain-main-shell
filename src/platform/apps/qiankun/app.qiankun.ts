@@ -279,15 +279,28 @@ export class QiankunManager extends BaseAppManager {
       return;
     }
 
-    // 更新实例的 props
+    // 更新实例的 props（含 inactive：下次 remount 生效）
     instance.props = { ...instance.props, ...props };
 
-    // 调用 qiankun 的 update 方法
+    // single-spa #32：parcel 非 MOUNTED 时禁止 update
     const qiankunAdapter = this.adapter as QiankunAdapter;
     const microApp = qiankunAdapter.getMicroApp(instanceId);
-    if (microApp && microApp.update) {
-      microApp.update(instance.props);
+    if (!microApp?.update) {
+      return;
+    }
+    if (typeof microApp.getStatus === 'function' && microApp.getStatus() !== 'MOUNTED') {
+      return;
+    }
+    try {
+      await microApp.update(instance.props);
       console.log(`[QiankunManager] 已更新实例 props: ${instanceId}`);
+    } catch (error) {
+      // 竞态下 status 可能已变；忽略 #32，避免切语言 Uncaught
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('minified message #32') || message.includes('not mounted')) {
+        return;
+      }
+      throw error;
     }
   }
 }

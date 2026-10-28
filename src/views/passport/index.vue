@@ -654,15 +654,16 @@ onMounted(() => {
 <style scoped>
 .passport-page {
   padding: 20px;
-  background-color: #f5f7fa;
+  background-color: var(--g2-bg-page);
   min-height: 100%;
   box-sizing: border-box;
+  color: var(--g2-text-primary);
 }
 
 .passport-page__header {
   margin-bottom: 20px;
   padding: 16px 20px;
-  background-color: #fff;
+  background-color: var(--g2-bg-container);
   border-radius: 4px;
 }
 
@@ -671,11 +672,12 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 600;
   line-height: 1.4;
+  color: var(--g2-text-primary);
 }
 
 .passport-page__info-card {
   margin-bottom: 20px;
-  background-color: #fff;
+  background-color: var(--g2-bg-container);
 }
 
 .card-header {
@@ -702,7 +704,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8fafc;
+  background: var(--g2-bg-page);
   border-radius: 8px;
 }
 
@@ -710,6 +712,6 @@ onMounted(() => {
   margin: 12px 0 0;
   text-align: center;
   font-size: 14px;
-  color: #64748b;
+  color: var(--g2-text-secondary);
 }
 </style>
