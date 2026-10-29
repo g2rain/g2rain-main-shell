@@ -41,7 +41,8 @@ import { useRuntimeStore } from '@platform/stores/runtime.store';
 import { useLocaleStore } from '@platform/stores/locale.store';
 import MicroAppPage from '@/shell/layout/MicroAppPage.vue';
 import { QiankunManager } from '@/platform/apps';
-import { wrapActiveRule } from '@/shared/url.util';
+import { setShellParam, wrapActiveRule } from '@/shared/url.util';
+import { getContextPath } from '@shared/env';
 import { isRedirectGatewayPath } from '@runtime/navigation/sub-app-redirect';
 import { resolveMenuTitle } from '@platform/i18n';
 
@@ -103,7 +104,8 @@ async function activateSubTabRuntime(tabKey: string): Promise<void> {
   const lastActivePath = runtimeStore.getLastActivePath(tab.key);
   const rawPath = lastActivePath ?? tab.initialPath;
   if (rawPath && !isRedirectGatewayPath(router.currentRoute.value.fullPath)) {
-    const pathname = wrapActiveRule(tab.app.activeRule, rawPath);
+    const shell = getContextPath().replace(/^\//, '') || null;
+    const pathname = setShellParam(wrapActiveRule(tab.app.activeRule, rawPath), shell);
     const url = `${window.location.origin}${pathname}`;
     window.history.replaceState({ ...window.history.state || {}, microApp: true }, '', url);
   }

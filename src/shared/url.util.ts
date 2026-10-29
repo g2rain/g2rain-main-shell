@@ -103,3 +103,24 @@ export function wrapActiveRule(activeRule: string | null | undefined, path: stri
   // 5. 核心加壳：如果内部路径是 '/'，直接返回前缀；否则拼接前缀与路径
   return normalizedPath === '/' ? normalizedRule : `${normalizedRule}${normalizedPath}`;
 }
+
+/** 宿主壳保留参数：子应用页面的地址带上它，刷新或分享后子应用据此跳回打开它的壳。 */
+export const SHELL_PARAM = 'g2shell';
+
+/**
+ * 设置或去掉路径里的 g2shell，其余 query 与 hash 原样保留（不重新编码）。
+ * setShellParam('/member/list?a=1#x', 'admin') → '/member/list?a=1&g2shell=admin#x'
+ * setShellParam('/member/list?g2shell=admin&a=1', null) → '/member/list?a=1'
+ */
+export function setShellParam(fullPath: string, shell: string | null): string {
+  const hashIndex = fullPath.indexOf('#');
+  const hash = hashIndex >= 0 ? fullPath.slice(hashIndex) : '';
+  const beforeHash = hashIndex >= 0 ? fullPath.slice(0, hashIndex) : fullPath;
+  const queryIndex = beforeHash.indexOf('?');
+  const pathname = queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash;
+  const pairs = (queryIndex >= 0 ? beforeHash.slice(queryIndex + 1) : '')
+    .split('&')
+    .filter((pair) => pair && pair.split('=')[0] !== SHELL_PARAM);
+  if (shell) pairs.push(`${SHELL_PARAM}=${encodeURIComponent(shell)}`);
+  return `${pathname}${pairs.length ? `?${pairs.join('&')}` : ''}${hash}`;
+}

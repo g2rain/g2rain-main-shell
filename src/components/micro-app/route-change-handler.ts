@@ -1,4 +1,5 @@
-import { stripActiveRule } from '@/shared/url.util';
+import { setShellParam, stripActiveRule } from '@/shared/url.util';
+import { getContextPath } from '@shared/env';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
 import { useTabStore } from '@platform/stores/tab.store';
 
@@ -69,9 +70,14 @@ function handleRouteChange(event: Event): void {
     internalPath,
   });
 
+  const shell = getContextPath().replace(/^\//, '') || null;
+  const pathname = setShellParam(
+    fullPath.startsWith('/') ? fullPath : `/${fullPath}`,
+    shell,
+  );
   window.history.replaceState(
     { ...(window.history.state || {}), microApp: true },
     '',
-    `${window.location.origin}${fullPath.startsWith('/') ? fullPath : `/${fullPath}`}`,
+    `${window.location.origin}${pathname}`,
   );
 }

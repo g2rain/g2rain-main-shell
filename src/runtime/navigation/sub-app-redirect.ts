@@ -5,7 +5,7 @@
 
 import type { Router } from 'vue-router';
 import { getContextPath, getPathWithContextPath } from '@shared/env';
-import { stripActiveRule, wrapActiveRule } from '@shared/url.util';
+import { setShellParam, stripActiveRule, wrapActiveRule } from '@shared/url.util';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 import { useMenuStore } from '@platform/stores/menu.store';
 import { useMicroAppStore } from '@platform/stores/app.store';
@@ -21,7 +21,10 @@ export function getRedirectGatewayPrefix(): string {
 /** Vue Router 内注册的相对路径前缀（history base 之下） */
 export const REDIRECT_GATEWAY_ROUTE_PREFIX = '/redirect';
 
-export const RETURN_URL_STORAGE_KEY = 'return_url';
+/** 按壳隔离的回跳地址 key：同域多个壳同时重新登录时互不覆盖 */
+export function returnUrlKey(): string {
+  return `return_url:${getContextPath()}`;
+}
 
 let navigationRestored = false;
 
@@ -153,7 +156,8 @@ export function parseRedirectGateway(fullPath: string): {
   contextPath: string;
   internalPath: string;
 } | null {
-  const { pathname, suffix } = splitPathAndSuffix(fullPath);
+  // g2shell 只用于选择宿主，不传给子应用
+  const { pathname, suffix } = splitPathAndSuffix(setShellParam(fullPath, null));
   const normalized = normalizePathname(pathname);
 
   let rest = '';
@@ -199,27 +203,27 @@ export function saveReturnUrl(fullPath?: string): void {
   }
 
   if (isRedirectGatewayPath(pathname)) {
-    localStorage.setItem(RETURN_URL_STORAGE_KEY, normalizeToBrowserGatewayPath(raw));
+    localStorage.setItem(returnUrlKey(), normalizeToBrowserGatewayPath(raw));
     return;
   }
 
-  localStorage.setItem(RETURN_URL_STORAGE_KEY, buildRedirectGatewayFromTarget(raw));
+  localStorage.setItem(returnUrlKey(), buildRedirectGatewayFromTarget(raw));
 }
 
 export function peekReturnUrl(): string | null {
-  return localStorage.getItem(RETURN_URL_STORAGE_KEY);
+  return localStorage.getItem(returnUrlKey());
 }
 
 export function consumeReturnUrl(): string | null {
-  const value = localStorage.getItem(RETURN_URL_STORAGE_KEY);
+  const value = localStorage.getItem(returnUrlKey());
   if (value) {
-    localStorage.removeItem(RETURN_URL_STORAGE_KEY);
+    localStorage.removeItem(returnUrlKey());
   }
   return value;
 }
 
 export function clearReturnUrl(): void {
-  localStorage.removeItem(RETURN_URL_STORAGE_KEY);
+  localStorage.removeItem(returnUrlKey());
 }
 
 export function resetNavigationRestoreState(): void {
@@ -411,7 +415,8 @@ function syncBrowserAddressForActiveSubTab(): void {
   if (!rawPath) {
     return;
   }
-  const pathname = wrapActiveRule(tab.app.activeRule, rawPath);
+  const shell = getContextPath().replace(/^\//, '') || null;
+  const pathname = setShellParam(wrapActiveRule(tab.app.activeRule, rawPath), shell);
   const url = `${window.location.origin}${pathname}`;
   if (window.location.href === url) {
     return;
@@ -446,7 +451,9 @@ function openSubAndSyncBrowser(targetFullPath: string): boolean {
 /**
  * 将导航目标（网关或真实路径）应用到 Tab + 地址栏
  */
-export function applyNavigationTarget(router: Router, fullPath: string): boolean {
+export function applyNavigationTarget(router: Router, target: string): boolean {
+  // g2shell 只用于选择宿主，不进入子应用的 initialRoute
+  const fullPath = setShellParam(target, null);
   if (isRedirectGatewayPath(fullPath)) {
     const parsed = parseRedirectGateway(fullPath);
     if (!parsed) {
