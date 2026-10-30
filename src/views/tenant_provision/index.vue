@@ -75,21 +75,6 @@
             label-position="top"
             class="provision-form"
           >
-            <el-form-item :label="$t('MS_TP_ORG_TYPE', '机构类型')" prop="organType">
-              <el-select
-                v-model="editForm.organType"
-                :placeholder="$t('MS_TP_ORG_TYPE_PH', '请选择机构类型')"
-                style="width: 100%"
-              >
-                <el-option
-                  v-for="item in typeOptions"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
-            </el-form-item>
-
             <el-form-item :label="$t('MS_TP_ORG_NAME', '机构名称')" prop="organName">
               <el-input
                 v-model="editForm.organName"
@@ -97,10 +82,10 @@
               />
             </el-form-item>
 
-            <el-form-item :label="$t('G2_FIELD_REAL_NAME', '姓名')" prop="realName">
+            <el-form-item :label="$t('G2_FIELD_REAL_NAME', '真实姓名')" prop="realName">
               <el-input
                 v-model="editForm.realName"
-                :placeholder="$t('G2_PH_REALNAME', '请输入姓名')"
+                :placeholder="$t('G2_PH_REALNAME', '请输入真实姓名')"
               />
             </el-form-item>
 
@@ -153,15 +138,6 @@ const activeCollapse = ref<'join' | 'create'>('join');
 const canProvision = ref(true);
 const joinSubmitting = ref(false);
 
-  // 定义字典引用
-  // 获取字典信息
-const typeOptions = computed(() => [
-  { label: t('MS_TP_TYPE_TENANT', '租户'), value: 'TENANT' },
-  { label: t('MS_TP_TYPE_COMPANY', '公司'), value: 'COMPANY' },
-  { label: t('MS_TP_TYPE_PARTNER', '渠道商'), value: 'SALES_PARTNER' },
-  { label: t('MS_TP_TYPE_SERVICE', '服务商'), value: 'SERVICE_PROVIDER' },
-]);
-
   // 加入机构表单
 const joinFormRef = ref<FormInstance | null>(null);
 const joinForm = reactive({
@@ -183,7 +159,6 @@ const joinRules = computed<FormRules>(() => ({
 const editFormRef = ref<FormInstance | null>(null);
   // 保存表单状态
 const editForm = reactive({
-  organType: '',
   organName: '',
   realName: '',
   email: '',
@@ -192,9 +167,8 @@ const editForm = reactive({
 
 // 表单校验规则
 const editRules = computed<FormRules>(() => ({
-  organType: [{ required: true, message: t('G2_VLD_REQ_ORG_TYPE', '请选择机构类型'), trigger: 'blur' }],
   organName: [{ required: true, message: t('G2_VLD_REQ_ORG_NAME', '请输入机构名称'), trigger: 'blur' }],
-  realName: [{ required: true, message: t('G2_VLD_REQ_REALNAME', '请输入姓名'), trigger: 'blur' }],
+  realName: [{ required: true, message: t('G2_VLD_REQ_REALNAME', '请输入真实姓名'), trigger: 'blur' }],
   email: [{ required: false, message: t('G2_PH_EMAIL', '请输入邮箱地址'), trigger: 'blur' }],
   mobile: [{ required: false, message: t('G2_PH_MOBILE', '请输入手机号码'), trigger: 'blur' }],
 }));
@@ -232,7 +206,7 @@ const submitEdit = async () => {
   if (!valid) return;
 
   const payload: TenantProvisionPayload = {
-    organType: editForm.organType,
+    organType: 'TENANT',
     organName: editForm.organName,
     realName: editForm.realName,
     email: editForm.email,

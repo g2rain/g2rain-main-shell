@@ -3,7 +3,7 @@
 > 统计范围：main-shell 使用层已接入的 key（不含菜单 `menu_code`、Workspace 演示页）。  
 > Tag 约定：`G2_*` → `G2RAIN_SHARED`；`MS_*` → `MAIN_SHELL`。
 
-## G2RAIN_SHARED（共 52）
+## G2RAIN_SHARED（共 62）
 
 | Key | 默认中文 | 用途 |
 |-----|----------|------|
@@ -43,8 +43,6 @@
 | G2_LBL_ERR_CODE | 错误码 | 错误展示 |
 | G2_MSG_SAVE_OK | 保存成功 | 成功提示 |
 | G2_OPT_NO | 否 | 布尔选项 |
-| G2_OPT_SEX_FEMALE | 女性 | 性别选项 |
-| G2_OPT_SEX_MALE | 男性 | 性别选项 |
 | G2_OPT_YES | 是 | 布尔选项 |
 | G2_PH_BIRTHDAY | 请选择生日 | 占位符 |
 | G2_PH_CONFIRM_PWD | 请再次输入新密码 | 占位符 |
@@ -55,7 +53,6 @@
 | G2_PH_OLD_PWD | 请输入原密码 | 占位符 |
 | G2_PH_REALNAME | 请输入真实姓名 / 请输入姓名 | 占位符 |
 | G2_PH_SEX | 请选择性别 | 占位符 |
-| G2_PH_USERNAME | 请输入用户名 | 占位符 |
 | G2_VLD_BIRTHDAY_LEN | 生日长度不能超过16个字符 | 表单校验 |
 | G2_VLD_EMAIL_FMT | 请输入正确的邮箱格式 | 表单校验 |
 | G2_VLD_EMAIL_LEN | 邮箱长度不能超过128个字符 | 表单校验 |
@@ -71,13 +68,9 @@
 | G2_VLD_REQ_NEW_PWD | 请输入新密码 | 表单校验 |
 | G2_VLD_REQ_OLD_PWD | 请输入原密码 | 表单校验 |
 | G2_VLD_REQ_ORG_NAME | 请输入机构名称 | 表单校验 |
-| G2_VLD_REQ_ORG_TYPE | 请选择机构类型 | 表单校验 |
 | G2_VLD_REQ_REALNAME | 请输入姓名 | 表单校验 |
-| G2_VLD_REQ_USERNAME | 请输入用户名 | 表单校验 |
-| G2_VLD_SEX | 性别只能是MALE（男性）或FEMALE（女性） | 表单校验 |
-| G2_VLD_USERNAME_LEN | 用户名长度不能超过64个字符 | 表单校验 |
 
-## MAIN_SHELL（共 68）
+## MAIN_SHELL（共 76）
 
 | Key | 默认中文 | 用途 |
 |-----|----------|------|
@@ -103,6 +96,10 @@
 | MS_HDR_LANG_PH | 选择语言 | Header |
 | MS_HDR_LOGO | 谷雨开源SaaS平台 | Header / Logout |
 | MS_HDR_LOGOUT | 退出登录 | Header |
+| MS_HDR_ORGAN_UNNAMED | 未命名机构 | Header |
+| MS_HDR_SWITCH_CONFIRM | 切换后将关闭所有已打开的页面，确定切换到「{organ}」吗？ | Header |
+| MS_HDR_SWITCH_FAIL | 切换失败，请稍后再试 | Header |
+| MS_HDR_SWITCH_IDENTITY | 切换身份 | Header |
 | MS_HDR_THEME | 当前主题 | Header |
 | MS_PP_ACCOUNT_INFO | 账号信息 | passport |
 | MS_PP_APP_CODE | 应用标识 | passport |
@@ -124,17 +121,12 @@
 | MS_PP_DING_SCAN | 请使用钉钉扫描上方二维码 | dingTalk |
 | MS_PP_DING_SCAN_FAIL | 扫码成功，但跳转失败，请关闭弹窗后重试 | dingTalk |
 | MS_PP_IDP_BIND | 三方应用绑定 | passport |
-| MS_PP_IDP_DINGTALK | 钉钉 | passport |
 | MS_PP_IDP_EMPTY | 暂未绑定任何三方应用 | passport |
-| MS_PP_IDP_FEISHU | 飞书 | passport |
 | MS_PP_IDP_LOAD_FAIL | 加载三方绑定信息失败 | passport |
 | MS_PP_IDP_SUBJECT | 主体标识 (unionId) | passport |
 | MS_PP_IDP_TYPE | 身份源 | passport |
 | MS_PP_IDP_USER | 用户 ID | passport |
-| MS_PP_IDP_WECHAT | 企业微信 | passport |
 | MS_PP_LOAD_FAIL | 加载Passport信息失败 | passport |
-| MS_PP_MODE_INTERNAL | 企业内部应用 | passport |
-| MS_PP_MODE_THIRD | 第三方企业应用 | passport |
 | MS_PP_NOT_LOADED | Passport信息未加载，请稍后再试 | passport |
 | MS_PP_PWD_FAIL | 修改密码失败 | passport |
 | MS_PP_PWD_OK | 密码修改成功，请重新登录 | passport |
@@ -156,14 +148,8 @@
 | MS_TP_JOIN_OK | 加入机构成功 | tenant_provision |
 | MS_TP_ORG_NAME | 机构名称 | tenant_provision |
 | MS_TP_ORG_NAME_PH | 请输入机构名称 | tenant_provision |
-| MS_TP_ORG_TYPE | 机构类型 | tenant_provision |
-| MS_TP_ORG_TYPE_PH | 请选择机构类型 | tenant_provision |
 | MS_TP_SUBMIT | 开通 | tenant_provision |
 | MS_TP_TITLE | 账号开通设置 | tenant_provision |
-| MS_TP_TYPE_COMPANY | 公司 | tenant_provision |
-| MS_TP_TYPE_PARTNER | 渠道商 | tenant_provision |
-| MS_TP_TYPE_SERVICE | 服务商 | tenant_provision |
-| MS_TP_TYPE_TENANT | 租户 | tenant_provision |
 
 ## 菜单 key（动态，tag 通常为 MAIN_SHELL）
 
@@ -173,6 +159,6 @@
 
 | Tag | Key 数量 |
 |-----|----------|
-| G2RAIN_SHARED | 52 |
-| MAIN_SHELL | 68 |
+| G2RAIN_SHARED | 62 |
+| MAIN_SHELL | 76 |
 | 菜单 menu_code | 动态 |

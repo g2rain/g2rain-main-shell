@@ -1,5 +1,6 @@
 <template>
   <el-tabs
+    class="workspace-tabs"
     v-model="activeTabKeyModel"
     type="card"
     closable
@@ -296,7 +297,7 @@ const handleTabRemove = async (key: string) => {
 </script>
 
 <style scoped>
-:deep(.el-tabs) {
+.workspace-tabs {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -305,12 +306,12 @@ const handleTabRemove = async (key: string) => {
   overflow: hidden;
 }
 
-:deep(.el-tabs__header) {
+.workspace-tabs :deep(.el-tabs__header) {
   flex-shrink: 0;
 }
 
 /* height:0 + flex:1：把内容区锁在剩余高度内，避免被内容撑开后整页无滚动 */
-:deep(.el-tabs__content) {
+.workspace-tabs :deep(.el-tabs__content) {
   flex: 1 1 auto;
   height: 0;
   min-height: 0;
@@ -319,7 +320,7 @@ const handleTabRemove = async (key: string) => {
 }
 
 /* 业务页在 pane 内滚动；Tab 头不跟着动 */
-:deep(.el-tab-pane) {
+.workspace-tabs :deep(.el-tab-pane) {
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
