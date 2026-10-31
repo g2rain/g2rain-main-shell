@@ -23,7 +23,7 @@
           {{ userInfo?.email || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('G2_FIELD_ADMIN', '管理员')">
-          {{ userInfo?.admin ? $t('G2_OPT_YES', '是') : $t('G2_OPT_NO', '否') }}
+          {{ userInfo?.admin ? $t('G2_LBL_YES', '是') : $t('G2_LBL_NO', '否') }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('G2_FIELD_CREATE_TIME', '创建时间')">
           {{ userInfo?.createTime || '-' }}
@@ -64,7 +64,7 @@
           {{ passportInfo?.email || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('G2_FIELD_STATUS', '状态')">
-          <DictText :value="passportInfo?.status" usage-code="PASSPORT_STATUS" :api-method="DictItemApi.select" />
+          <DictText :value="passportInfo?.status" usage-code="SUBJECT_STATUS" :api-method="DictItemApi.select" />
         </el-descriptions-item>
         <el-descriptions-item :label="$t('G2_FIELD_CREATE_TIME', '创建时间')">
           {{ passportInfo?.createTime || '-' }}
@@ -100,7 +100,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="bindMode" :label="$t('MS_PP_BIND_MODE', '接入形态')" width="130">
+        <el-table-column prop="bindMode" :label="$t('G2_FIELD_BIND_MODE', '接入形态')" width="130">
           <template #default="{ row }">
             <DictText :value="row?.bindMode" usage-code="IDP_BIND_MODE" :api-method="DictItemApi.select" />
           </template>
@@ -125,7 +125,7 @@
         />
         <el-table-column
           prop="idpApplicationCode"
-          :label="$t('MS_PP_APP_CODE', '应用标识')"
+          :label="$t('G2_FIELD_APP_ID', '应用标识')"
           min-width="140"
           show-overflow-tooltip
         />
@@ -187,7 +187,7 @@
         <el-descriptions-item :label="$t('MS_PP_IDP_TYPE', '身份源')">
           <DictText :value="idpBindingDetail.idpType" usage-code="PASSPORT_IDP_TYPE" :api-method="DictItemApi.select" />
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('MS_PP_BIND_MODE', '接入形态')">
+        <el-descriptions-item :label="$t('G2_FIELD_BIND_MODE', '接入形态')">
           <DictText :value="idpBindingDetail.bindMode" usage-code="IDP_BIND_MODE" :api-method="DictItemApi.select" />
         </el-descriptions-item>
         <el-descriptions-item :label="$t('MS_PP_CORP_ID', '企业 ID')">
@@ -199,7 +199,7 @@
         <el-descriptions-item :label="$t('MS_PP_IDP_USER', '用户 ID')">
           {{ idpBindingDetail.idpUserId || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('MS_PP_APP_CODE', '应用标识')">
+        <el-descriptions-item :label="$t('G2_FIELD_APP_ID', '应用标识')">
           {{ idpBindingDetail.idpApplicationCode || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('MS_PP_BIND_TIME', '绑定时间')">

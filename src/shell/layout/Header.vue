@@ -10,7 +10,7 @@
     <div class="header-right">
       <el-select
         v-model="selectedLocale"
-        :placeholder="$t('MS_HDR_LANG_PH', '选择语言')"
+        :placeholder="$t('G2_PH_LANG', '选择语言')"
         filterable
         class="locale-select"
         :disabled="!localeStore.initialized || localeStore.options.length === 0"
@@ -153,7 +153,7 @@ const handleThemeChange = async (mode: ThemeMode) => {
 
 const tokenStore = useAccessTokenStore();
 const profile = computed(() => tokenStore.profile);
-const displayName = computed(() => profile.value.name || t('MS_HDR_ADMIN', '管理员'));
+const displayName = computed(() => profile.value.name || t('G2_FIELD_ADMIN', '管理员'));
 
 /** 切换身份命令前缀：`switch:<userId>` */
 const SWITCH_PREFIX = 'switch:';

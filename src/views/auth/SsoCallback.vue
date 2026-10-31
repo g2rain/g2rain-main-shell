@@ -3,19 +3,19 @@
   <div class="sso-callback">
     <div v-if="isLoading" class="loading-container">
       <div class="spinner"></div>
-      <p>{{ $t('MS_AU_SSO_PROC', '正在处理认证...') }}</p>
+      <p>{{ $t('G2_AU_SSO_PROC', '正在处理认证...') }}</p>
     </div>
 
     <div v-else-if="error" class="error-container">
-      <h2>{{ $t('MS_AU_SSO_FAIL', '认证失败') }}</h2>
+      <h2>{{ $t('G2_AU_SSO_FAIL', '认证失败') }}</h2>
       <p>{{ error }}</p>
       <button class="retry-button" @click="retry">{{ $t('G2_BTN_RETRY', '重试') }}</button>
-      <button class="login-button" @click="goToLogin">{{ $t('MS_AU_BACK_LOGIN', '返回登录') }}</button>
+      <button class="login-button" @click="goToLogin">{{ $t('G2_AU_BACK_LOGIN', '返回登录') }}</button>
     </div>
 
     <div v-else class="success-container">
-      <h2>{{ $t('MS_AU_SSO_OK', '认证成功') }}</h2>
-      <p>{{ $t('MS_AU_SSO_REDIRECT', '正在跳转到应用...') }}</p>
+      <h2>{{ $t('G2_AU_SSO_OK', '认证成功') }}</h2>
+      <p>{{ $t('G2_AU_SSO_REDIRECT', '正在跳转到应用...') }}</p>
     </div>
   </div>
 </template>
@@ -47,7 +47,7 @@ const processCallback = () => {
   const clientId = extractClientIdFromUrl();
   if (!code || !clientId) {
     accessTokenStore.status = 'NORMAL';
-    error.value = t('MS_AU_NO_CODE', '未找到授权码或者客户端ID');
+    error.value = t('G2_AU_NO_CODE', '未找到授权码或者客户端ID');
     isLoading.value = false;
     return;
   }
@@ -59,7 +59,7 @@ const processCallback = () => {
       // 先进壳稳定入口，由 tab.boot / page.boot 在菜单就绪后 restoreAfterAuth 打开 return_url
     .catch((err) => {
       accessTokenStore.status = 'NORMAL';
-      error.value = err instanceof Error ? err.message : t('MS_AU_SSO_ERR', '认证处理失败');
+      error.value = err instanceof Error ? err.message : t('G2_AU_SSO_ERR', '认证处理失败');
       isLoading.value = false;
     });
 };

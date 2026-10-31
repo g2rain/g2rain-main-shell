@@ -40,7 +40,7 @@
             <el-form-item :label="$t('MS_TP_INVITE', '机构邀请码')" prop="inviteCode">
               <el-input
                 v-model="joinForm.inviteCode"
-                :placeholder="$t('MS_TP_INVITE_PH', '请输入机构邀请码')"
+                :placeholder="$t('G2_VLD_REQ_INVITE', '请输入机构邀请码')"
                 maxlength="64"
                 show-word-limit
               />
@@ -75,10 +75,10 @@
             label-position="top"
             class="provision-form"
           >
-            <el-form-item :label="$t('MS_TP_ORG_NAME', '机构名称')" prop="organName">
+            <el-form-item :label="$t('G2_FIELD_ORGAN_NAME', '机构名称')" prop="organName">
               <el-input
                 v-model="editForm.organName"
-                :placeholder="$t('MS_TP_ORG_NAME_PH', '请输入机构名称')"
+                :placeholder="$t('G2_VLD_REQ_ORG_NAME', '请输入机构名称')"
               />
             </el-form-item>
 
