@@ -1,7 +1,7 @@
 {
   "name": "g2rain-main-shell",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "G2rain micro-frontend main shell (Vue 3 + Vite + qiankun): SSO, token management, sub-app loading, and admin layout.",
   "license": "Apache-2.0",
   "repository": {

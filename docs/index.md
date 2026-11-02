@@ -21,6 +21,7 @@
 - [部署](operations/deployment.md)
 - [排障](operations/troubleshooting.md)
 - [安全边界](security/security-boundaries.md)
+- [发布记录](releases/README.md)
 - [需求入口](requirements/README.md)
 - [对齐 shell-template 升级（开发中）](requirements/shell-template-alignment.md)
 

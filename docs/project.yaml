@@ -55,7 +55,10 @@ commands:
   lint: npm run lint
   verify: npm run build
   preview: npm run preview
-  image: docker build --build-arg VITE_BUILD_MODE=production -t g2rain/g2rain-main-shell:<tag> .
+  image: docker build --build-arg VITE_BUILD_MODE=production --build-arg IMAGE_VERSION=<tag> --build-arg VCS_REF=<commit> -t ghcr.io/g2rain/g2rain-main-shell:<tag> .
+release:
+  version: 1.0.0
+  notes: docs/releases/v1.0.0.md
 collaborators:
   - repository: g2rain/g2rain-manager-app
     role: frontend-app AppKit 验收对象
