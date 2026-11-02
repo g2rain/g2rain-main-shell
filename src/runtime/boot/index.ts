@@ -10,7 +10,6 @@ import { pageBoot } from '@/runtime/boot/page.boot';
 import { localeBoot } from '@/runtime/boot/locale.boot';
 import { tabBoot } from '@/runtime/boot/tab.boot';
 import { microAppBoot } from '@/runtime/boot/micro-app.boot';
-import { mockBoot } from '@/runtime/boot/mock.boot';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 import { useMenuStore } from '@platform/stores/menu.store';
 import { useMicroAppStore } from '@platform/stores';
@@ -18,30 +17,50 @@ import { useTabStore } from '@platform/stores';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
 import { useLocaleStore } from '@platform/stores/locale.store';
 import { resetI18nLoader } from '@platform/i18n';
-import { TokenInvalidHandler } from '@platform/apps';
-import { initHttp } from '@runtime/http';
+import { initHttpClient } from '@runtime/http';
+import { initMainPlatform } from '@/platform/main-platform';
+import type { MainPublicProps } from '@g2rain/platform/main';
+import {
+  emitDirectedMessage,
+  openAuthBridge,
+  startRequestTokenHandler,
+  startRouteChangeHandler,
+  startTokenInvalidHandler,
+  closeAuthBridge,
+} from '@/components/micro-app';
 import { clearReturnUrl, resetNavigationRestoreState } from '@runtime/navigation/sub-app-redirect';
 
 /**
  * 启动所有服务
  * 按依赖顺序加载：
- * 0. Mock Data - Mock 数据注册（最基础，在 HTTP 请求之前）
  * 1. SSO Service - 认证服务（最基础）
  * 2. Resource Service - 资源服务（依赖 token）
  * 3. Micro App - 微应用管理（依赖菜单）
  * 4. Tab Route Sync - Tab 路由同步（依赖路由和 tab store）
- * 5. Micro App Event Listeners - 微应用事件监听（依赖微应用）
  */
 export function start(): void {
   console.log('[Boot] 开始加载服务...');
 
-  // -1. 初始化 HTTP 组件（认证会话 + 认证异常处理），需在所有 HTTP 请求之前
-  initHttp();
-  console.log('[Boot] ✅ Http 已初始化');
+  // -1. 初始化 HTTP + Platform Main（认证会话与公开 props 协调）
+  initHttpClient();
+  console.log('[Boot] ✅ Http (@g2rain/http) 已初始化');
 
-  // 0. 加载 Mock 数据（在 HTTP 请求之前注册）
-  mockBoot.start();
-  console.log('[Boot] ✅ Mock Data 已加载');
+  const runtimeStore = useRuntimeStore();
+  initMainPlatform({
+    async updateInstanceProps(instanceId, props: Readonly<MainPublicProps>) {
+      await runtimeStore.updateInstanceProps(instanceId, props as Record<string, unknown>);
+    },
+    emit(message) {
+      emitDirectedMessage(message);
+    },
+  });
+  console.log('[Boot] ✅ Platform Main 已初始化');
+
+  startTokenInvalidHandler();
+  startRequestTokenHandler();
+  startRouteChangeHandler();
+  openAuthBridge();
+  console.log('[Boot] ✅ Auth Bridge / route-change 已启动');
 
   // 1. 加载 SSO 服务（认证服务，最基础）
   sso.start();
@@ -63,15 +82,6 @@ export function start(): void {
   tabBoot.start(router);
   console.log('[Boot] ✅ Tab Route Sync Service 已加载');
 
-  // 5. 初始化微应用事件监听器（依赖微应用）
-  const runtimeStore = useRuntimeStore();
-  runtimeStore.initEventListeners();
-  console.log('[Boot] ✅ 微应用事件监听器已加载');
-
-  //6. 初始化sso到message-handlers的TokenInvalidHandler
-  TokenInvalidHandler.setAuthHandler(sso);
-  console.log('[Boot] ✅ TokenInvalidHandler 已绑定 SSO AuthHandler');
-
   console.log('[Boot] 所有服务加载完成');
 }
 
@@ -81,11 +91,6 @@ export function start(): void {
  */
 export function unloadServices(): void {
   console.log('[Boot] 开始卸载服务...');
-
-  // 5. 清理微应用事件监听器
-  const runtimeStore = useRuntimeStore();
-  runtimeStore.cleanupEventListeners();
-  console.log('[Boot] ✅ 微应用事件监听器已卸载');
 
   // 4. 停止 Tab 路由同步
   tabBoot.stop();
@@ -104,10 +109,6 @@ export function unloadServices(): void {
   sso.stop();
   console.log('[Boot] ✅ SSO Service 已卸载');
 
-  // 0. 停止 Mock 数据
-  mockBoot.stop();
-  console.log('[Boot] ✅ Mock Data 已卸载');
-
   console.log('[Boot] 所有服务已卸载');
 }
 
@@ -118,6 +119,8 @@ export function unloadServices(): void {
  */
 export function logout(router?: Router): void {
   console.log('[Boot] 开始退出登录...');
+
+  closeAuthBridge();
 
   // 1. 卸载所有服务
   unloadServices();

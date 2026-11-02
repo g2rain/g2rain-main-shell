@@ -5,7 +5,7 @@
 import type { MenuItem, MenuItemType } from '@platform/types';
 import type { AuthorityMenuVo } from './menu.type';
 import { env } from '@shared/env';
-import { getHttpClient } from '@/components/http';
+import { getHttpClient } from '@runtime/http';
 
 /**
  * 开发环境：按子应用 `applicationCode` 覆盖菜单里的 `endpointUrl`（本地联调）

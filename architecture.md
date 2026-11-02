@@ -31,7 +31,7 @@
 - **路由**: Vue Router 4.2.5
 - **HTTP 客户端**: Axios 1.12.2
 - **加密库**: jose 6.1.0、crypto-js 4.2.0、elliptic 6.6.1
-- **Mock 工具**: mockjs 1.1.0
+- **HTTP**: `@g2rain/http`（本地 Mock / `components/http` 已删除）
 
 ### 后端技术栈
 
@@ -54,7 +54,7 @@ g2rain-main-shell/
 │   │   ├── api/          # API 接口封装
 │   │   ├── auth/         # 认证服务（SSO、Token）
 │   │   ├── env/          # 环境变量管理
-│   │   ├── http/         # HTTP 客户端（Axios、Mock）
+│   │   ├── http/         # HTTP 装配（@g2rain/http）
 │   │   ├── sign/         # 签名服务
 │   │   ├── starter/      # 启动器（统一管理服务生命周期）
 │   │   └── store/        # Store 配置
@@ -125,15 +125,12 @@ g2rain-main-shell/
 
 #### `platform/theme/` - 主题系统
 
-- **`index.ts`**: 主题切换入口（`applyTheme`、`initTheme`、`saveTheme`）
-- **`types.ts`**: 主题类型定义（`ThemeMode`、`ThemeConfig`）
+- **`index.ts`**: 主题模块出口（`initThemeController` / `getThemeController`）
+- **`controller.ts`**: 基于 `@g2rain/theme` 的 ThemeController 与持久化
+- **`types.ts`**: 主题类型
 - **`element.ts`**: Element Plus 变量映射
-- **`themes/`**: 主题 CSS 文件
-  - **`light.css`**: 亮色主题
-  - **`dark.css`**: 暗色主题
-  - **`g2rain.css`**: 品牌主题
 
-**作用**: 提供运行时主题切换能力，支持亮色、暗色和品牌主题，使用 CSS 变量和 `data-theme` 属性实现。
+**作用**: 运行时主题切换（light/dark，`data-g2-theme`）；主题 CSS 由 `@g2rain/theme` 提供。
 
 #### `platform/styles/` - 样式系统
 
@@ -555,12 +552,7 @@ Tab 作为用户交互的入口，驱动微应用实例的创建和管理：
 
 ### 7. Mock 系统
 
-提供灵活的 Mock 系统：
-
-- 支持环境变量控制（`VITE_MOCK_ENABLED`）
-- 支持请求头强制 Mock（`x-g2rain-mock`）
-- 支持通配符 URL 匹配
-- 支持函数式 Mock 数据生成
+请求统一经 `@g2rain/http`（`runtime/http` 装配）。本地 Mock / `components/http` 已删除。
 
 ### 8. 微前端通信
 

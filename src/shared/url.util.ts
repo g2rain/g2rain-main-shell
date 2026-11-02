@@ -76,26 +76,51 @@ export function stripActiveRule(activeRule: string | null | undefined, path: str
  *
  * 示例：
  * wrapActiveRule('/app', '/home') -> '/app/home'
- * wrapActiveRule('/app', '/')     -> '/app'
- * wrapActiveRule('/', '/home')    -> '/home'
+ * wrapActiveRule('/member', '/member') -> '/member/member'
+ *   （内部 route 可以与 contextPath 同名；调用方只应传入 INTERNAL path）
+ * wrapActiveRule('/member', '/') -> '/member'
+ * wrapActiveRule('/', '/home') -> '/home'
  */
 export function wrapActiveRule(activeRule: string | null | undefined, path: string | null | undefined): string {
   // 1. 规范化 activeRule（确保以 / 开头，且结尾没有 /）
   const normalizedRule = `/${(activeRule || '').trim()}`.replace(/\/+/g, '/').replace(/\/$/, '') || '/';
 
   // 2. 规范化子应用内部 path
-  let normalizedPath = `/${(path || '').trim()}`.replace(/\/+/g, '/');
+  const normalizedPath = `/${(path || '').trim()}`.replace(/\/+/g, '/');
 
   // 3. 如果规则是根路径 '/'，直接返回规范化后的路径即可
   if (normalizedRule === '/') {
     return normalizedPath;
   }
 
-  // 4. 核心判定：如果路径已经包含了该前缀，则无需重复拼接，直接返回
-  if (normalizedPath === normalizedRule || normalizedPath.startsWith(`${normalizedRule}/`)) {
+  // 4. 已是该 rule 下的完整浏览器路径（activeRule 后还有段）则不重复拼接。
+  //    不要把 path === rule 当成「已加壳」：内部路由可与 contextPath 同名
+  //    （如 activeRule=/member, internal=/member → 浏览器 /member/member）。
+  if (normalizedPath.startsWith(`${normalizedRule}/`)) {
     return normalizedPath;
   }
 
   // 5. 核心加壳：如果内部路径是 '/'，直接返回前缀；否则拼接前缀与路径
   return normalizedPath === '/' ? normalizedRule : `${normalizedRule}${normalizedPath}`;
+}
+
+/** 宿主壳保留参数：子应用页面的地址带上它，刷新或分享后子应用据此跳回打开它的壳。 */
+export const SHELL_PARAM = 'g2shell';
+
+/**
+ * 设置或去掉路径里的 g2shell，其余 query 与 hash 原样保留（不重新编码）。
+ * setShellParam('/member/list?a=1#x', 'admin') → '/member/list?a=1&g2shell=admin#x'
+ * setShellParam('/member/list?g2shell=admin&a=1', null) → '/member/list?a=1'
+ */
+export function setShellParam(fullPath: string, shell: string | null): string {
+  const hashIndex = fullPath.indexOf('#');
+  const hash = hashIndex >= 0 ? fullPath.slice(hashIndex) : '';
+  const beforeHash = hashIndex >= 0 ? fullPath.slice(0, hashIndex) : fullPath;
+  const queryIndex = beforeHash.indexOf('?');
+  const pathname = queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash;
+  const pairs = (queryIndex >= 0 ? beforeHash.slice(queryIndex + 1) : '')
+    .split('&')
+    .filter((pair) => pair && pair.split('=')[0] !== SHELL_PARAM);
+  if (shell) pairs.push(`${SHELL_PARAM}=${encodeURIComponent(shell)}`);
+  return `${pathname}${pairs.length ? `?${pairs.join('&')}` : ''}${hash}`;
 }

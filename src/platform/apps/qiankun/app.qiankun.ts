@@ -8,7 +8,8 @@ import type { RuntimeInstance, RuntimeAdapter } from '@platform/types';
 import { loadMicroApp, start, type MicroApp } from 'qiankun';
 import { setBootstrapMaxTime, setMountMaxTime } from 'single-spa';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
-import { WindowEventAdapter } from '@/components/micro-app/event-windows-adapter';
+import { getMainPlatform } from '../../main-platform';
+import { applyThemeToSubApps } from '../../theme';
 
 /**
  * Qiankun 运行时适配器
@@ -24,7 +25,24 @@ class QiankunAdapter implements RuntimeAdapter {
    * - 仅在同一 instanceId 重复 mount 时会先卸载旧实例，避免重复挂载
    */
   async mount(instance: RuntimeInstance): Promise<void> {
-    const { app, containerId, props } = instance;
+    const { app, containerId } = instance;
+    // 挂载边界以运行时实例为准，避免重挂载或旧 props 缺少/覆盖身份字段。
+    const publicProps = getMainPlatform().buildPublicProps(
+      {
+        applicationCode: app.applicationCode,
+        viewId: instance.tabKey,
+        instanceId: instance.instanceId,
+        mode: 'integrated',
+        contextPath: app.activeRule || '/',
+        ...(typeof instance.props?.locale === 'string' ? { locale: instance.props.locale } : {}),
+        ...(typeof instance.props?.initialRoute === 'string'
+          ? { initialRoute: instance.props.initialRoute }
+          : {}),
+      },
+      { activeRule: app.activeRule, entryOrigin: app.entry },
+    );
+    const props = { ...instance.props, ...publicProps };
+    instance.props = props;
     // 如果同一 instanceId 之前已有 MicroApp，先卸载并移除，避免重复 mount 导致 #31
     const existingSameInstance = this.microApps.get(instance.instanceId);
     if (existingSameInstance) {
@@ -98,6 +116,10 @@ class QiankunAdapter implements RuntimeAdapter {
         sandbox: {
           experimentalStyleIsolation: true,
         },
+      },
+      {
+        // 包裹层此时已渲染、子应用尚未挂载：先写主题，避免子应用先以亮色闪一下
+        beforeMount: async () => applyThemeToSubApps(document.getElementById(containerId) ?? document),
       },
     );
 
@@ -196,7 +218,6 @@ class QiankunAdapter implements RuntimeAdapter {
  */
 export class QiankunManager extends BaseAppManager {
   protected adapter: RuntimeAdapter = new QiankunAdapter();
-  protected eventAdapter = new WindowEventAdapter();
   /** qiankun 框架是否已初始化 */
   private static qiankunInitialized = false;
 
@@ -218,19 +239,15 @@ export class QiankunManager extends BaseAppManager {
      * bootstrap → mount；首次点菜单多为冷加载（无缓存、连接未热、包体解析），容易超过 4s，
      * 控制台报 minified message #31（bootstrap 或 mount 超时），与具体子应用业务代码无关。
      *
-     * setBootstrapMaxTime(time, dieOnTimeout)
-     * - time: 10000 — 允许 bootstrap 阶段最多 10 秒（含 entry 下载、脚本执行、子应用 bootstrap 钩子）。
-     * - dieOnTimeout: true — 超时仍按 single-spa 规则失败并 reject mountPromise，便于上层感知；
-     *   仅拉长等待，不掩盖 entry 不可用或永久挂起。
+     * setBootstrapMaxTime(time, dieOnTimeout, warningMillis)
+     * - time: 10000 — bootstrap 最多 10 秒；dieOnTimeout true 超时 reject。
+     * - warningMillis: 8000 — 避免默认 1s 就刷与真超时同文案的假 #31 warn。
      *
-     * setMountMaxTime(time, dieOnTimeout)
-     * - time: 10000 — 允许 mount 阶段最多 10 秒（子应用内 render、initToken、拉资源路由、app.mount 等）。
-     * - dieOnTimeout: true — 同上；避免 mount 过慢时过早 #31。
-     *
-     * 注意：调大超时是缓解首访慢，根本仍应保证 entry 可访问、首包够快；过慢应查 endpointUrl 与静态资源部署。
+     * setMountMaxTime 同上（子应用 mount 内 Auth / render 等）。
+     * 根本仍应保证 entry 可访问、首包够快；过慢查 endpointUrl 与静态资源部署。
      */
-    setBootstrapMaxTime(10000, true);
-    setMountMaxTime(10000, true);
+    setBootstrapMaxTime(10000, true, 8000);
+    setMountMaxTime(10000, true, 8000);
 
     start({
       // 允许多个子应用同时处于活动状态（多活），与 Tab 多实例模型保持一致
@@ -258,15 +275,28 @@ export class QiankunManager extends BaseAppManager {
       return;
     }
 
-    // 更新实例的 props
+    // 更新实例的 props（含 inactive：下次 remount 生效）
     instance.props = { ...instance.props, ...props };
 
-    // 调用 qiankun 的 update 方法
+    // single-spa #32：parcel 非 MOUNTED 时禁止 update
     const qiankunAdapter = this.adapter as QiankunAdapter;
     const microApp = qiankunAdapter.getMicroApp(instanceId);
-    if (microApp && microApp.update) {
-      microApp.update(instance.props);
+    if (!microApp?.update) {
+      return;
+    }
+    if (typeof microApp.getStatus === 'function' && microApp.getStatus() !== 'MOUNTED') {
+      return;
+    }
+    try {
+      await microApp.update(instance.props);
       console.log(`[QiankunManager] 已更新实例 props: ${instanceId}`);
+    } catch (error) {
+      // 竞态下 status 可能已变；忽略 #32，避免切语言 Uncaught
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('minified message #32') || message.includes('not mounted')) {
+        return;
+      }
+      throw error;
     }
   }
 }

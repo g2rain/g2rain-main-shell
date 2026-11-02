@@ -1,10 +1,10 @@
 /**
  * API 响应类型定义
  *
- * Result 类型已迁移到 @/components/http/types
+ * Result 类型来自 @g2rain/http
  * 此处保留重新导出以保持向后兼容
  */
-export type { Result } from '@/components/http/types';
+export type { Result } from '@g2rain/http';
 
 /**
  * 分页数据格式

@@ -10,9 +10,9 @@
 [![Vite](https://img.shields.io/badge/Vite-7.3.0-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![Qiankun](https://img.shields.io/badge/micro--frontend-Qiankun-1677FF)](https://qiankun.umijs.org/)
 
-下一代AI软件开发范式，AI原生Agent平台，开源的企业级SaaS底座。
+G2rain（谷雨）是面向企业的开源智能体平台，连接模型、知识与业务工具。`g2rain-main-shell` 是其中的微前端主应用与平台前端运行壳，不代表或替代整个平台、子应用业务、IAM Token 签发或 Gateway 最终鉴权。
 
-微前端主应用与平台前端运行壳，负责子应用挂载、卸载与运行容器编排；维护 Shell 层路由映射、菜单导航与页面跳转；协调登录态、令牌事件、SSO 回调与登出流程；配套 Nginx 与环境配置脚本支撑容器化部署
+本组件负责子应用挂载、卸载与运行容器编排，维护 Shell 层路由、菜单和页面跳转，协调浏览器侧登录态、令牌事件、SSO 回调与登出流程，并提供 Nginx/OpenResty 容器运行配置。
 
 [官网](https://www.g2rain.com) · [Issues](https://github.com/g2rain/g2rain/issues) · [Discussions](https://github.com/g2rain/g2rain/discussions)
 
@@ -136,11 +136,11 @@ flowchart TD
 
 | 步骤 | 命令或位置 | 说明 |
 | --- | --- | --- |
-| 安装依赖 | `npm install` | 根据 package.json 安装前端依赖。 |
+| 安装依赖 | `npm ci` | 按 package-lock.json 安装锁定依赖。 |
 | 本地开发 | `npm run dev` | 启动微前端 Shell，本地联调子应用、路由与登录态流程。 |
 | 构建产物 | `npm run build` | 执行类型检查与前端构建，生成可发布产物。 |
 | 预览产物 | `npm run preview` | 在本地预览构建后的前端产物。 |
-| 容器化 | `docker build .` | 仓库提供 Dockerfile，可按组织镜像规范封装前端运行镜像。 |
+| 容器化 | `docker build --build-arg VITE_BUILD_MODE=production -t ghcr.io/g2rain/g2rain-main-shell:1.0.0 .` | 根 Dockerfile 构建 OpenResty 运行镜像。 |
 
 ## 配置说明
 
@@ -175,8 +175,19 @@ flowchart TD
 | 本地开发 | `npm run dev` | 本地开发服务 | 启动微前端 Shell，便于联调子应用与登录态流程。 |
 | 前端产物 | `npm run build` | `dist` | 执行类型检查与 Vite/TypeScript 构建，生成可发布产物。 |
 | 产物预览 | `npm run preview` | 本地预览服务 | 在本地预览构建后的前端静态产物。 |
-| 容器镜像 | `docker build .` | 前端运行镜像 | 基于 Dockerfile 封装静态前端运行镜像。 |
-| 构建脚本 | `./build.sh` | 脚本定义的构建结果 | 执行仓库提供的构建脚本，承载组织内镜像或发布流程。 |
+| 容器镜像 | `docker build --build-arg VITE_BUILD_MODE=production -t ghcr.io/g2rain/g2rain-main-shell:1.0.0 .` | OpenResty 前端运行镜像 | 复用根 Dockerfile；运行时默认监听 80，镜像声明端口 8080。 |
+
+## GHCR 镜像发布
+
+镜像地址为 `ghcr.io/g2rain/g2rain-main-shell`。稳定版标签 `v1.0.0` 发布 `:1.0.0` 与 `:sha-<完整提交 SHA>` 两个标签；不维护 `latest`。仅推送严格格式 `v<major>.<minor>.<patch>`、且指向 `main` 历史中已包含同名发布说明的 Git tag 才会触发发布。
+
+首次将包设为公开后可匿名拉取：
+
+```bash
+docker pull ghcr.io/g2rain/g2rain-main-shell:1.0.0
+```
+
+本地构建、CI 构建与测试、容器构建、GHCR 推送、匿名拉取、在线演示和实际部署验证是独立事项。完整权限、运行时密钥注入与部署步骤见[部署文档](docs/operations/deployment.md)。
 
 ## 代码质量与测试
 
@@ -260,7 +271,7 @@ flowchart TD
 
 ## 许可证
 
-本项目基于 [Apache 2.0许可证](https://github.com/g2rain/g2rain-common/blob/main/LICENSE) 开源。
+本项目采用根目录的标准 [Apache License 2.0](LICENSE) 开源。
 
 ## 联系我们
 

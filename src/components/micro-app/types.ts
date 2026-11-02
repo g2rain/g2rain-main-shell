@@ -3,7 +3,7 @@
  * 使用泛型和 Discriminated Union 实现类型安全的事件系统
  */
 
-import type { Client } from '@/components/http';
+import type { DpopClient } from '@g2rain/http';
 
 /**
  * 事件类型枚举
@@ -53,7 +53,7 @@ export interface TokenResponseData {
   /** Token 的 kid（密钥 ID） */
   tokenKid: string;
   /** 客户端信息（可选） */
-  client?: Client;
+  client?: DpopClient;
 }
 
 /**

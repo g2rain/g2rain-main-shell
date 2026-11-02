@@ -9,6 +9,8 @@ import { useTabStore } from '@platform/stores';
 import type { MenuItem } from '@platform/types';
 import type { IRouteMap } from './route-map.interface';
 import {
+  isDeepLinkLeavingGateway,
+  isDeepLinkRestorePending,
   isRedirectGatewayPath,
   restoreAfterAuth,
   saveReturnUrl,
@@ -19,10 +21,13 @@ import { useMicroAppStore } from '@platform/stores/app.store';
 const routes: RouteRecordRaw[] = [
   ...authRoutes,
   ...getShellRoutes(),
+  // 子应用网关：只用于匹配 /redirect/{context}/...，不渲染内容；离开网关与开 Tab 由 restoreAfterAuth 处理
   {
     path: '/redirect/:pathMatch(.*)*',
     name: 'SubAppRedirectGateway',
-    component: () => import('@/views/redirect/SubAppRedirectGateway.vue'),
+    component: {
+      render: () => null,
+    },
     meta: { title: '子应用跳转', requiresAuth: false },
   },
   // 静默的兜底路由，只用于匹配，避免 Vue Router 警告
@@ -46,7 +51,30 @@ const createAppRouter = () => {
   });
 };
 
-const router = createAppRouter();
+/** 延迟创建：须先 rewriteMicroDeepLinkToGateway，再 createWebHistory */
+let _router: ReturnType<typeof createAppRouter> | undefined;
+
+function ensureRouter(): ReturnType<typeof createAppRouter> {
+  if (!_router) {
+    _router = createAppRouter();
+  }
+  return _router;
+}
+
+/** 兼容 `import router from ...`：首次属性访问时才 createWebHistory */
+const router = new Proxy({} as ReturnType<typeof createAppRouter>, {
+  get(_target, prop) {
+    const real = ensureRouter();
+    const value = Reflect.get(real, prop as PropertyKey, real);
+    return typeof value === "function" ? (value as (...args: unknown[]) => unknown).bind(real) : value;
+  },
+  set(_target, prop, value) {
+    return Reflect.set(ensureRouter(), prop as PropertyKey, value);
+  },
+  has(_target, prop) {
+    return Reflect.has(ensureRouter(), prop as PropertyKey);
+  },
+});
 
 /**
  * 已注册的路由映射列表
@@ -211,6 +239,7 @@ function sameMeaningfulRoute(to: RouteLocationNormalized, from: RouteLocationNor
 }
 
 export const setupRouter = (app: App<Element>) => {
+  const router = ensureRouter();
   app.use(router);
 
   const ctx = env.VITE_CONTEXT_PATH.replace(/\/$/, '') || '';
@@ -261,6 +290,12 @@ export const setupRouter = (app: App<Element>) => {
         return;
       }
 
+      // 子应用深链恢复离开网关 / 已有子 Tab：勿把激活 Tab 抢成首页
+      if (active?.isSubTab() || isDeepLinkLeavingGateway()) {
+        next();
+        return;
+      }
+
       const menuItem = findMenuItemByRoutePath(menuStore.menuItems, to.path);
       if (menuItem && menuItem.type === 'main' && menuItem.routePath) {
         // 检查 TabTypes 是否已存在
@@ -288,7 +323,13 @@ export const setupRouter = (app: App<Element>) => {
 
       initDynamicRoutes();
 
-      restoreAfterAuth(router);
+      const restored = restoreAfterAuth(router);
+      const tabStore = useTabStore();
+
+      // 深链已恢复 / 网关离开进行中：不要再强制 /home
+      if (restored || isDeepLinkRestorePending() || tabStore.activeTab?.isSubTab()) {
+        return;
+      }
 
       const { path, fullPath } = router.currentRoute.value;
       if (isRedirectGatewayPath(fullPath)) {

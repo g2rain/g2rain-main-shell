@@ -6,18 +6,12 @@
 
 import type { AppManager } from './app-manager.type';
 import type { RuntimeInstance, RuntimeAdapter, AppDefinition } from '@platform/types';
-import type { EventAdapter, MicroAppMessageUnion } from '@/components/micro-app';
-import { WindowEventAdapter } from '@/components/micro-app/event-windows-adapter';
-import type { MicroAppMessageProcessorImpl } from '@/components/micro-app/message-processor';
-import { initMicroAppMessageHandlers } from './message-handlers';
 import { useMicroAppStore } from '@platform/stores/app.store';
 import { useRuntimeStore } from '@platform/stores/runtime.store';
 
 export abstract class BaseAppManager implements AppManager {
   /** 运行时适配器 */
   protected abstract adapter: RuntimeAdapter;
-  /** 事件适配器 */
-  protected abstract eventAdapter: EventAdapter;
   /** 全局 props */
   protected globalProps: Record<string, any> = {};
 
@@ -26,13 +20,6 @@ export abstract class BaseAppManager implements AppManager {
    */
   getAdapter(): RuntimeAdapter {
     return this.adapter;
-  }
-
-  /**
-   * 获取事件适配器
-   */
-  getEventAdapter(): EventAdapter {
-    return this.eventAdapter;
   }
 
   /**
@@ -163,40 +150,5 @@ export abstract class BaseAppManager implements AppManager {
       }
     });
     console.log('[BaseAppManager] 已更新全局 props');
-  }
-
-  /**
-   * 初始化事件监听器
-   * - 由 EventAdapter 完成底层 window 事件绑定
-   * - 从 EventAdapter 获取 MicroAppMessageProcessorImpl
-   * - 调用 initMicroAppMessageHandlers 完成处理器和 EventAdapter 的初始化
-   */
-  initEventListeners(): void {
-    // 先让事件适配器完成底层 window 事件绑定
-    this.eventAdapter.initEventListeners();
-
-    const eventAdapter = this.getEventAdapter() as WindowEventAdapter;
-    const messageProcessor =
-      eventAdapter.getMessageProcessor?.() as MicroAppMessageProcessorImpl | undefined;
-
-    if (messageProcessor) {
-      initMicroAppMessageHandlers(messageProcessor, this.eventAdapter);
-    } else {
-      console.warn('[BaseAppManager] 无法获取 messageProcessor，路由变化监听未初始化');
-    }
-  }
-
-  /**
-   * 清理事件监听器
-   */
-  cleanupEventListeners(): void {
-    this.eventAdapter.cleanupEventListeners();
-  }
-
-  /**
-   * 发送事件到子应用
-   */
-  emitEvent(message: MicroAppMessageUnion): void {
-    this.eventAdapter.emitEvent(message);
   }
 }

@@ -10,9 +10,3 @@ export { QiankunManager } from './qiankun/app.qiankun';
 
 // 认证处理器相关
 export type { AuthHandler, TokenRefreshResult } from './auth-handler.type';
-
-export {
-  TokenInvalidHandler,
-  RouteChangeHandler,
-} from './message-handlers';
-
