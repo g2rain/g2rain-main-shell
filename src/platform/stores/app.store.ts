@@ -69,6 +69,7 @@ export const useMicroAppStore = defineStore('microApp', {
               }
               apps.push({
                 appKey: item.key,
+                applicationCode: item.name,
                 name: item.name, // 使用 menuItem.name 作为 runtime 注册名
                 entry: joinUrlSegments(item.entry, item.activeRule),
                 activeRule: item.activeRule,

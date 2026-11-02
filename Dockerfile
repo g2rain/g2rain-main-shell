@@ -38,6 +38,15 @@ RUN if [ -n "$VITE_BUILD_MODE" ]; then \
 # ------------------------------------------------------------
 FROM openresty/openresty:alpine
 
+ARG IMAGE_VERSION=1.0.0
+ARG VCS_REF=unknown
+LABEL org.opencontainers.image.source="https://github.com/g2rain/g2rain-main-shell" \
+      org.opencontainers.image.url="https://github.com/g2rain/g2rain-main-shell" \
+      org.opencontainers.image.title="g2rain-main-shell" \
+      org.opencontainers.image.version="${IMAGE_VERSION}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.licenses="Apache-2.0"
+
 # 使用阿里云镜像源并安装构建依赖（用于 luarocks / luaossl）
 RUN set -eux; \
     sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories; \
@@ -80,15 +89,11 @@ RUN set -eux; \
 # 拷贝前端产物 + Lua 脚本 + 配置
 # ------------------------------------------------------------
 COPY --from=builder /app/dist /usr/local/openresty/nginx/html
-COPY lua/ /usr/local/openresty/nginx/lua/
+COPY lua/sign.lua lua/sign_api.lua lua/config.lua /usr/local/openresty/nginx/lua/
+RUN mkdir -p /usr/local/openresty/nginx/lua/keys
 COPY nginx/default.conf.template /etc/nginx/conf.d/
 COPY nginx/docker-entrypoint.sh /
-RUN chmod +x /docker-entrypoint.sh || true
-
-# 检查密钥文件（存在性验证）
-RUN if [ ! -f /usr/local/openresty/nginx/lua/keys/private-key.der ] || [ ! -f /usr/local/openresty/nginx/lua/keys/public-key.der ]; then \
-        echo "⚠️ Warning: missing key files under lua/keys (ignored in dev)"; \
-    fi
+RUN sed -i 's/\r$//' /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
 
 # 暴露端口并设置启动命令
 EXPOSE 8080

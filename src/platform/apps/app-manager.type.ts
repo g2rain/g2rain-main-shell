@@ -5,17 +5,15 @@
  */
 
 import type { RuntimeInstance, RuntimeAdapter, AppDefinition } from '@platform/types';
-import type { EventAdapter, MicroAppMessageUnion } from '@/components/micro-app';
 
 /**
  * 微前端管理器接口
  * 基于 RuntimeAdapter，提供更高级的管理能力
+ * 子↔主消息由 Auth Bridge / route-change 专用 handler 处理，不经本接口。
  */
 export interface AppManager {
   /** 获取运行时适配器 */
   getAdapter(): RuntimeAdapter;
-  /** 获取事件适配器 */
-  getEventAdapter(): EventAdapter;
   /** 注册微应用定义 */
   registerAppDefinition(app: AppDefinition): void;
   /** 取消注册微应用定义 */
@@ -34,11 +32,5 @@ export interface AppManager {
   getAllInstances(): RuntimeInstance[];
   /** 设置全局 props（会传递给所有微应用） */
   setGlobalProps(props: Record<string, any>): void;
-  /** 初始化事件监听器 */
-  initEventListeners(): void;
-  /** 清理事件监听器 */
-  cleanupEventListeners(): void;
-  /** 发送事件到子应用 */
-  emitEvent(message: MicroAppMessageUnion): void;
 }
 

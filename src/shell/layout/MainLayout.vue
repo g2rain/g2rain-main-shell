@@ -11,10 +11,9 @@
       <!-- 侧边栏 -->
       <Sidebar />
 
-      <!-- 主内容区 -->
+      <!-- 主内容区：外层不滚，Tab 固定，滚动在 Tab 内容 pane -->
       <div class="app-content">
-        <!-- 多Tab组件 -->
-        <TabBar />
+        <TabBar class="app-tab-host" />
       </div>
     </div>
 
@@ -41,15 +40,22 @@ import Footer from './Footer.vue';
 .app-main {
   display: flex;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
 .app-content {
   flex: 1;
-  overflow-y: auto; /* 允许垂直滚动 */
-  overflow-x: hidden; /* 水平方向隐藏溢出 */
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* 确保 flex 子元素可以缩小 */
+}
+
+.app-tab-host {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
 }
 </style>

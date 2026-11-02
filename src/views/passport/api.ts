@@ -2,7 +2,7 @@
  * passport 相关 API 服务
  */
 
-import { getHttpClient, type Result } from '@/components/http';
+import { getHttpClient, type Result } from '@runtime/http';
 import { getPathWithContextPath } from '@shared/env';
 import { useAccessTokenStore } from '@platform/stores/token.store';
 import type {
@@ -13,9 +13,6 @@ import type {
   PassportIdpBindingQuery,
   PassportPayload,
 } from './type';
-
-// 导入 mock 数据以触发自动注册（副作用导入）
-import './mock';
 
 const DINGTALK_BIND_START_PATH = '/auth/dingtalk/bind/passport/start';
 
@@ -42,7 +39,7 @@ export class PassportApi {
 export class PassportIdpBindingApi {
   static async listByPassport(passportId: number): Promise<PassportIdpBinding[]> {
     const http = getHttpClient('default');
-    const params: PassportIdpBindingQuery = { passportId };
+    const params = { passportId } as Record<string, unknown>;
     const res = await http.get<PassportIdpBinding[]>('/basis/passport_idp_binding/list', params);
     return res.data ?? [];
   }
@@ -55,11 +52,11 @@ export const IdpBindApi = {
     if (!tokenStore.tokenString) {
       return Promise.reject(new Error('NO_LOGIN'));
     }
-    return getHttpClient('auth').post<DingTalkBindStartResponse>(DINGTALK_BIND_START_PATH, body, {
+    return getHttpClient('auth').post<Result<DingTalkBindStartResponse>>(DINGTALK_BIND_START_PATH, body, {
       headers: {
         Authorization: `Bearer ${tokenStore.tokenString}`,
       },
-    }) as Promise<Result<DingTalkBindStartResponse>>;
+    });
   },
 };
 

@@ -1,5 +1,6 @@
 <template>
   <el-tabs
+    class="workspace-tabs"
     v-model="activeTabKeyModel"
     type="card"
     closable
@@ -41,7 +42,9 @@ import { useRuntimeStore } from '@platform/stores/runtime.store';
 import { useLocaleStore } from '@platform/stores/locale.store';
 import MicroAppPage from '@/shell/layout/MicroAppPage.vue';
 import { QiankunManager } from '@/platform/apps';
-import { wrapActiveRule } from '@/shared/url.util';
+import { setShellParam, wrapActiveRule } from '@/shared/url.util';
+import { getContextPath } from '@shared/env';
+import { isRedirectGatewayPath } from '@runtime/navigation/sub-app-redirect';
 import { resolveMenuTitle } from '@platform/i18n';
 
 const router = useRouter();
@@ -97,11 +100,13 @@ async function activateSubTabRuntime(tabKey: string): Promise<void> {
     return;
   }
 
-  // 1) 先从 runtime 中读取 lastActivePath，如果有则同步到浏览器地址栏（须与 ROUTE_CHANGE 的 fullPath 语义一致，避免二次 replaceState 抖动）
+  // 1) 同步浏览器地址栏。若 Vue Router 仍停在 redirect 网关，禁止 replaceState：
+  //    否则微路径会被 Router 立刻写回 /main/redirect/...（用户看到网关地址闪两次）
   const lastActivePath = runtimeStore.getLastActivePath(tab.key);
   const rawPath = lastActivePath ?? tab.initialPath;
-  if (rawPath) {
-    const pathname = wrapActiveRule(tab.app.activeRule, rawPath);
+  if (rawPath && !isRedirectGatewayPath(router.currentRoute.value.fullPath)) {
+    const shell = getContextPath().replace(/^\//, '') || null;
+    const pathname = setShellParam(wrapActiveRule(tab.app.activeRule, rawPath), shell);
     const url = `${window.location.origin}${pathname}`;
     window.history.replaceState({ ...window.history.state || {}, microApp: true }, '', url);
   }
@@ -292,24 +297,33 @@ const handleTabRemove = async (key: string) => {
 </script>
 
 <style scoped>
-:deep(.el-tabs) {
+.workspace-tabs {
   display: flex;
   flex-direction: column;
-  height: 100%;
-}
-
-:deep(.el-tabs__content) {
   flex: 1;
-  overflow: visible; /* 让内容溢出，由父容器 .app-content 处理滚动 */
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* 确保 flex 子元素可以缩小 */
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
-:deep(.el-tab-pane) {
-  min-height: 100%; /* 最小高度为父容器高度，但允许内容超出 */
-  overflow: visible; /* 让内容溢出，由父容器处理滚动 */
-  display: flex;
-  flex-direction: column;
+.workspace-tabs > :deep(.el-tabs__header) {
+  flex-shrink: 0;
+}
+
+/* height:0 + flex:1：把内容区锁在剩余高度内，避免被内容撑开后整页无滚动 */
+.workspace-tabs > :deep(.el-tabs__content) {
+  flex: 1 1 auto;
+  height: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 业务页在 pane 内滚动；Tab 头不跟着动 */
+.workspace-tabs > :deep(.el-tabs__content > .el-tab-pane) {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 </style>

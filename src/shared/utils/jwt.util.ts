@@ -1,6 +1,6 @@
 import { exportJWK, generateKeyPair, JWK, importSPKI } from 'jose';
 import { Generator } from '@shared/utils/generator';
-import type { Client } from '@/components/http';
+import type { DpopClient } from '@g2rain/http';
 
 // 生成密钥对 - 支持降级方案
 export async function generateKey() {
@@ -9,10 +9,7 @@ export async function generateKey() {
       extractable: true,
     });
 
-    // 导出公钥为字符串
     const publicKeyJwk = await cryptoKeyToJwk(publicKey);
-
-    // 导出私钥为字符串
     const privateKeyJwk = await cryptoKeyToJwk(privateKey);
 
     return {
@@ -21,7 +18,6 @@ export async function generateKey() {
     };
   } catch (error) {
     console.error('Web Crypto API 密钥生成失败，使用降级方案:', error);
-    // 降级到预生成密钥
     throw error;
   }
 }
@@ -35,10 +31,8 @@ export async function publicKeyStringToJwk(publicKey: string): Promise<JWK> {
   return await exportJWK(key);
 }
 
-// 生成密钥对并导出为多种格式
-export async function generateClient(): Promise<Client> {
+export async function generateClient(): Promise<DpopClient> {
   try {
-    // 1. 生成密钥对
     const { publicKey, privateKey } = await generateKey();
 
     return {

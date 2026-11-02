@@ -1,0 +1,147 @@
+/**
+ * 壳侧兼容桥：把历史 Shell 变量映射到 @g2rain/theme 的 --g2-*，
+ * 避免布局/页面在 ThemeController 写入 data-g2-theme 后失样式。
+ */
+
+:root,
+:root[data-g2-theme='light'] {
+  --color-primary: var(--g2-color-primary);
+  --color-primary-light: var(--g2-color-primary);
+  --color-primary-dark: var(--g2-color-primary);
+  --color-primary-light-3: var(--g2-color-primary);
+
+  --bg-color: var(--g2-bg-container);
+  --bg-color-page: var(--g2-bg-page);
+  --bg-color-overlay: var(--g2-mask-color);
+
+  --text-color-primary: var(--g2-text-primary);
+  --text-color-regular: var(--g2-text-regular);
+  --text-color-secondary: var(--g2-text-secondary);
+  --text-color-placeholder: var(--g2-text-placeholder);
+
+  --border-color-base: var(--g2-border-color);
+  --border-color-light: var(--g2-border-color-light);
+  --border-color-lighter: var(--g2-border-color-light);
+  --border-color-extra-light: var(--g2-fill-light);
+
+  --shadow-base: var(--g2-shadow-base);
+  --shadow-light: var(--g2-shadow-sm);
+  --shadow-dark: var(--g2-shadow-base);
+
+  --color-success: var(--g2-color-success);
+  --color-warning: var(--g2-color-warning);
+  --color-danger: var(--g2-color-danger);
+  --color-info: var(--g2-color-info);
+
+  --header-bg: var(--g2-bg-container);
+  --header-border: var(--g2-border-color-light);
+  --header-text: var(--g2-text-primary);
+  --header-logo: var(--g2-color-primary);
+
+  --footer-bg: var(--g2-bg-container);
+  --footer-border: var(--g2-border-color-light);
+  --footer-text: var(--g2-text-regular);
+  --footer-text-secondary: var(--g2-text-secondary);
+  --footer-link: var(--g2-color-primary);
+  --footer-link-hover: var(--g2-color-primary);
+
+  --sidebar-bg: var(--g2-bg-container);
+  --sidebar-border: var(--g2-border-color-light);
+  --sidebar-menu-active: var(--g2-color-primary);
+
+  --card-bg: var(--g2-bg-container);
+  --card-border: var(--g2-border-color-light);
+  --card-shadow: var(--g2-shadow-sm);
+
+  --loading-spinner-border: var(--g2-border-color-light);
+  --loading-spinner-active: var(--g2-color-primary);
+
+  --sso-container-bg: var(--g2-bg-container);
+  --sso-error-border: var(--g2-color-danger);
+  --sso-success-border: var(--g2-color-success);
+  --sso-button-primary: var(--g2-color-primary);
+  --sso-button-secondary: var(--g2-color-info);
+
+  --dropdown-bg: var(--g2-bg-container);
+  --dropdown-border: var(--g2-border-color);
+  --dropdown-text: var(--g2-text-primary);
+  --dropdown-text-hover: var(--g2-text-primary);
+  --dropdown-bg-hover: var(--g2-bg-page);
+  --dropdown-shadow: var(--g2-shadow-base);
+
+  --el-card-bg-color: var(--card-bg);
+  --el-card-border-color: var(--card-border);
+  --el-fill-color-blank: var(--bg-color);
+  --el-fill-color: var(--bg-color-page);
+}
+
+:root[data-g2-theme='dark'] {
+  --color-primary: var(--g2-color-primary);
+  --color-primary-light: var(--g2-color-primary);
+  --color-primary-dark: var(--g2-color-primary);
+  --color-primary-light-3: var(--g2-color-primary);
+
+  --bg-color: var(--g2-bg-container);
+  --bg-color-page: var(--g2-bg-page);
+  --bg-color-overlay: var(--g2-mask-color);
+
+  --text-color-primary: var(--g2-text-primary);
+  --text-color-regular: var(--g2-text-regular);
+  --text-color-secondary: var(--g2-text-secondary);
+  --text-color-placeholder: var(--g2-text-placeholder);
+
+  --border-color-base: var(--g2-border-color);
+  --border-color-light: var(--g2-border-color-light);
+  --border-color-lighter: var(--g2-border-color-light);
+  --border-color-extra-light: var(--g2-fill-light);
+
+  --shadow-base: var(--g2-shadow-base);
+  --shadow-light: var(--g2-shadow-sm);
+  --shadow-dark: var(--g2-shadow-base);
+
+  --color-success: var(--g2-color-success);
+  --color-warning: var(--g2-color-warning);
+  --color-danger: var(--g2-color-danger);
+  --color-info: var(--g2-color-info);
+
+  --header-bg: var(--g2-bg-container);
+  --header-border: var(--g2-border-color-light);
+  --header-text: var(--g2-text-primary);
+  --header-logo: var(--g2-color-primary);
+
+  --footer-bg: var(--g2-bg-container);
+  --footer-border: var(--g2-border-color-light);
+  --footer-text: var(--g2-text-regular);
+  --footer-text-secondary: var(--g2-text-secondary);
+  --footer-link: var(--g2-color-primary);
+  --footer-link-hover: var(--g2-color-primary);
+
+  --sidebar-bg: var(--g2-bg-container);
+  --sidebar-border: var(--g2-border-color-light);
+  --sidebar-menu-active: var(--g2-color-primary);
+
+  --card-bg: var(--g2-bg-container);
+  --card-border: var(--g2-border-color-light);
+  --card-shadow: var(--g2-shadow-sm);
+
+  --loading-spinner-border: var(--g2-border-color-light);
+  --loading-spinner-active: var(--g2-color-primary);
+
+  --sso-container-bg: var(--g2-bg-container);
+  --sso-error-border: var(--g2-color-danger);
+  --sso-success-border: var(--g2-color-success);
+  --sso-button-primary: var(--g2-color-primary);
+  --sso-button-secondary: var(--g2-color-info);
+
+  --dropdown-bg: var(--g2-bg-container);
+  --dropdown-border: var(--g2-border-color);
+  --dropdown-text: var(--g2-text-primary);
+  --dropdown-text-hover: var(--g2-text-primary);
+  --dropdown-bg-hover: var(--g2-bg-page);
+  --dropdown-shadow: var(--g2-shadow-base);
+
+  --el-card-bg-color: var(--card-bg);
+  --el-card-border-color: var(--card-border);
+  --el-fill-color-blank: var(--bg-color);
+  --el-fill-color: var(--bg-color-page);
+}

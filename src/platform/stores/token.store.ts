@@ -2,7 +2,19 @@ import { defineStore } from 'pinia';
 import { decodeJwt, jwtVerify } from 'jose';
 import { publicKeyStringToJwk } from '@shared/utils/jwt.util';
 import type { Token, ApplicationScope } from '@platform/types';
-import type { Client } from '@/components/http';
+import type { DpopClient } from '@g2rain/http';
+
+/** Token 中的展示字段 */
+export interface TokenProfile {
+  /** 当前用户 ID（员工会话） */
+  userId?: string;
+  /** USER / PASSPORT / MEMBER / ANONYMOUS */
+  sessionType?: string;
+  /** 姓名 */
+  name?: string;
+  /** 机构名称 */
+  organName?: string;
+}
 
 /** Token 中的展示字段 */
 export interface TokenProfile {
@@ -18,7 +30,7 @@ export interface TokenProfile {
 
 export const useAccessTokenStore = defineStore('token', {
   state: () => ({
-    client: null as Client | null,
+    client: null as DpopClient | null,
     token: null as Token | null,
     tokenString: null as string | null,
     logged: false,

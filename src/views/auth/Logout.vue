@@ -20,7 +20,7 @@
             {{ $t('MS_AU_IAM_LINK', '谷雨开源SaaS平台 IAM系统') }}
           </a>
           {{ $t('MS_AU_LOGOUT_DESC_SUFFIX', '，系统将在') }} {{ countdown }}
-          {{ $t('MS_AU_LOGOUT_COUNTDOWN', '秒后自动跳转。') }}
+          {{ $t('G2_AU_LOGOUT_COUNTDOWN', '秒后自动跳转。') }}
         </p>
         <p class="logout-tip">
           {{ $t('MS_AU_LOGOUT_TIP', '如需继续使用，请重新登录。') }}

@@ -71,9 +71,7 @@ export default defineConfig(({ mode }) => {
     ],
     // esbuild 选项应该在顶层配置，而不是在 build 内
     esbuild: {
-      // 移除 console 和 debugger
-      // drop: ['console', 'debugger']
-      drop: []
+      pure: mode === 'production' ? ['console.log', 'console.info', 'console.debug'] : [],
     },
     build: {
       // 使用 esbuild（默认，更快且不需要额外依赖）

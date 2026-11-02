@@ -10,7 +10,7 @@
     <div class="header-right">
       <el-select
         v-model="selectedLocale"
-        :placeholder="$t('MS_HDR_LANG_PH', '选择语言')"
+        :placeholder="$t('G2_PH_LANG', '选择语言')"
         filterable
         class="locale-select"
         :disabled="!localeStore.initialized || localeStore.options.length === 0"
@@ -28,7 +28,6 @@
       <el-dropdown trigger="click" @command="handleThemeChange">
         <el-button
           :icon="Setting"
-          circle
           class="theme-switcher"
           :title="themeButtonTitle"
         />
@@ -40,10 +39,10 @@
               :command="theme.mode"
               :class="{ 'is-active': currentMode === theme.mode }"
             >
+              {{ themeLabel(theme.mode) }}
               <el-icon v-if="currentMode === theme.mode" class="check-icon">
                 <Check />
               </el-icon>
-              {{ themeLabel(theme.mode) }}
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -52,13 +51,11 @@
       <!-- 用户信息 -->
       <el-dropdown
         trigger="click"
-        max-height="420px"
         popper-class="user-menu-popper"
         @command="handleUserCommand"
         @visible-change="onUserMenuVisible"
       >
         <div class="user-info">
-          <el-avatar icon="User" />
           <span class="username">{{ displayName }}</span>
           <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
         </div>
@@ -68,27 +65,29 @@
               <div class="user-menu-name">{{ displayName }}</div>
               <div v-if="profile.organName" class="user-menu-organ">{{ profile.organName }}</div>
             </div>
-            <!-- 切换身份：仅员工会话且有多个身份时出现 -->
-            <template v-if="switchable">
+            <!-- 切换身份：员工会话展示，列表超出约 5 条时单独滚动 -->
+            <div v-if="isUserSession" class="user-menu-switch">
               <div class="user-menu-title">{{ $t('MS_HDR_SWITCH_IDENTITY', '切换身份') }}</div>
-              <el-dropdown-item
-                v-for="item in identities"
-                :key="String(item.userId)"
-                :command="`${SWITCH_PREFIX}${item.userId}`"
-                :disabled="switching"
-                :class="{ 'is-active': String(item.userId) === profile.userId }"
-              >
-                <span class="identity-text">
-                  <span
-                    class="identity-organ"
-                    :title="item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构')"
-                  >{{ item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构') }}</span>
-                  <span v-if="item.userName" class="identity-user">{{ item.userName }}</span>
-                </span>
-                <el-icon v-if="String(item.userId) === profile.userId" class="check-icon"><Check /></el-icon>
-              </el-dropdown-item>
-            </template>
-            <el-dropdown-item command="logout" divided>
+              <div class="user-menu-identities">
+                <el-dropdown-item
+                  v-for="item in identities"
+                  :key="String(item.userId)"
+                  :command="`${SWITCH_PREFIX}${item.userId}`"
+                  :disabled="switching"
+                  :class="{ 'is-active': String(item.userId) === profile.userId }"
+                >
+                  <span class="identity-text">
+                    <span
+                      class="identity-organ"
+                      :title="item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构')"
+                    >{{ item.organName || $t('MS_HDR_ORGAN_UNNAMED', '未命名机构') }}</span>
+                    <span v-if="item.userName" class="identity-user">{{ item.userName }}</span>
+                  </span>
+                  <el-icon v-if="String(item.userId) === profile.userId" class="check-icon"><Check /></el-icon>
+                </el-dropdown-item>
+              </div>
+            </div>
+            <el-dropdown-item command="logout">
               <el-icon><SwitchButton /></el-icon>
               {{ $t('MS_HDR_LOGOUT', '退出登录') }}
             </el-dropdown-item>
@@ -132,7 +131,6 @@ const availableThemes = computed(() => themeStore.availableThemes);
 const THEME_I18N: Record<ThemeMode, [string, string]> = {
   light: ['MS_THEME_LIGHT', '亮色主题'],
   dark: ['MS_THEME_DARK', '暗色主题'],
-  g2rain: ['MS_THEME_BRAND', 'G2rain 品牌主题'],
 };
 
 function themeLabel(mode: ThemeMode): string {
@@ -155,7 +153,7 @@ const handleThemeChange = async (mode: ThemeMode) => {
 
 const tokenStore = useAccessTokenStore();
 const profile = computed(() => tokenStore.profile);
-const displayName = computed(() => profile.value.name || t('MS_HDR_ADMIN', '管理员'));
+const displayName = computed(() => profile.value.name || t('G2_FIELD_ADMIN', '管理员'));
 
 /** 切换身份命令前缀：`switch:<userId>` */
 const SWITCH_PREFIX = 'switch:';
@@ -166,7 +164,6 @@ const switching = ref(false);
 
 /** 账号会话（尚未选定身份）走账号开通流程，不展示切换 */
 const isUserSession = computed(() => profile.value.sessionType === 'USER');
-const switchable = computed(() => isUserSession.value && identities.value.length > 1);
 
 const onUserMenuVisible = async (visible: boolean) => {
   if (!visible || !isUserSession.value) return;
@@ -186,7 +183,7 @@ const switchIdentity = async (userId: string) => {
   const organ = target?.organName || t('MS_HDR_ORGAN_UNNAMED', '未命名机构');
   try {
     await ElMessageBox.confirm(
-      t('MS_HDR_SWITCH_CONFIRM', '切换后将关闭所有已打开的页面，确定切换到「{organ}」吗？').replace('{organ}', organ),
+      t('MS_HDR_SWITCH_CONFIRM', { organ }, '切换后将关闭所有已打开的页面，确定切换到「{organ}」吗？'),
       t('MS_HDR_SWITCH_IDENTITY', '切换身份'),
       {
         type: 'warning',
@@ -252,7 +249,7 @@ const handleUserCommand = (command: string) => {
 .header-right {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
 .locale-select {
@@ -268,9 +265,12 @@ const handleUserCommand = (command: string) => {
 }
 
 .theme-switcher {
+  height: 32px;
   border: 1px solid var(--border-color-base);
+  border-radius: var(--border-radius-md);
   background-color: transparent;
   color: var(--header-text);
+  padding: 0 8px;
   transition: all var(--transition-duration-fast) var(--transition-timing-function);
 }
 
@@ -284,13 +284,19 @@ const handleUserCommand = (command: string) => {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  box-sizing: border-box;
+  height: 32px;
   cursor: pointer;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: 0 10px;
+  border: 1px solid var(--border-color-base);
   border-radius: var(--border-radius-md);
-  transition: background-color var(--transition-duration-fast) var(--transition-timing-function);
+  background-color: transparent;
+  transition: background-color var(--transition-duration-fast) var(--transition-timing-function),
+    border-color var(--transition-duration-fast) var(--transition-timing-function);
 }
 
 .user-info:hover {
+  border-color: var(--color-primary);
   background-color: var(--bg-color-page);
 }
 
@@ -334,6 +340,8 @@ const handleUserCommand = (command: string) => {
 }
 
 .check-icon {
+  margin-left: auto;
+  flex-shrink: 0;
   color: var(--color-primary);
   font-size: var(--font-size-sm);
 }
@@ -364,6 +372,16 @@ const handleUserCommand = (command: string) => {
   line-height: 1.5;
   color: var(--text-color-secondary);
   word-break: break-all;
+}
+
+/* 身份列表区块：自带下边框与"退出登录"分隔；列表约 5 条高度后滚动，退出登录始终可见 */
+.user-menu-popper .user-menu-switch {
+  border-bottom: 1px solid var(--dropdown-border);
+}
+
+.user-menu-popper .user-menu-identities {
+  max-height: 260px;
+  overflow-y: auto;
 }
 
 .user-menu-popper .user-menu-title {

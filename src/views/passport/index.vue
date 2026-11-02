@@ -23,7 +23,7 @@
           {{ userInfo?.email || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('G2_FIELD_ADMIN', '管理员')">
-          {{ userInfo?.admin ? $t('G2_OPT_YES', '是') : $t('G2_OPT_NO', '否') }}
+          {{ userInfo?.admin ? $t('G2_LBL_YES', '是') : $t('G2_LBL_NO', '否') }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('G2_FIELD_CREATE_TIME', '创建时间')">
           {{ userInfo?.createTime || '-' }}
@@ -49,7 +49,7 @@
           {{ passportInfo?.realName || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('G2_FIELD_SEX', '性别')">
-          {{ formatSex(passportInfo?.sex) }}
+          <DictText :value="passportInfo?.sex" usage-code="SEX" :api-method="DictItemApi.select" />
         </el-descriptions-item>
         <el-descriptions-item :label="$t('G2_FIELD_BIRTHDAY', '生日')">
           {{ passportInfo?.birthday || '-' }}
@@ -64,7 +64,7 @@
           {{ passportInfo?.email || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('G2_FIELD_STATUS', '状态')">
-          {{ passportInfo?.status || '-' }}
+          <DictText :value="passportInfo?.status" usage-code="SUBJECT_STATUS" :api-method="DictItemApi.select" />
         </el-descriptions-item>
         <el-descriptions-item :label="$t('G2_FIELD_CREATE_TIME', '创建时间')">
           {{ passportInfo?.createTime || '-' }}
@@ -95,12 +95,14 @@
       >
         <el-table-column prop="idpType" :label="$t('MS_PP_IDP_TYPE', '身份源')" width="120">
           <template #default="{ row }">
-            <el-tag effect="light" type="info">{{ formatIdpType(row?.idpType) }}</el-tag>
+            <el-tag effect="light" type="info">
+              <DictText :value="row?.idpType" usage-code="PASSPORT_IDP_TYPE" :api-method="DictItemApi.select" />
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="bindMode" :label="$t('MS_PP_BIND_MODE', '接入形态')" width="130">
+        <el-table-column prop="bindMode" :label="$t('G2_FIELD_BIND_MODE', '接入形态')" width="130">
           <template #default="{ row }">
-            {{ formatBindMode(row?.bindMode) }}
+            <DictText :value="row?.bindMode" usage-code="IDP_BIND_MODE" :api-method="DictItemApi.select" />
           </template>
         </el-table-column>
         <el-table-column
@@ -123,7 +125,7 @@
         />
         <el-table-column
           prop="idpApplicationCode"
-          :label="$t('MS_PP_APP_CODE', '应用标识')"
+          :label="$t('G2_FIELD_APP_ID', '应用标识')"
           min-width="140"
           show-overflow-tooltip
         />
@@ -183,10 +185,10 @@
     >
       <el-descriptions v-if="idpBindingDetail" :column="1" border>
         <el-descriptions-item :label="$t('MS_PP_IDP_TYPE', '身份源')">
-          {{ formatIdpType(idpBindingDetail.idpType) }}
+          <DictText :value="idpBindingDetail.idpType" usage-code="PASSPORT_IDP_TYPE" :api-method="DictItemApi.select" />
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('MS_PP_BIND_MODE', '接入形态')">
-          {{ formatBindMode(idpBindingDetail.bindMode) }}
+        <el-descriptions-item :label="$t('G2_FIELD_BIND_MODE', '接入形态')">
+          <DictText :value="idpBindingDetail.bindMode" usage-code="IDP_BIND_MODE" :api-method="DictItemApi.select" />
         </el-descriptions-item>
         <el-descriptions-item :label="$t('MS_PP_CORP_ID', '企业 ID')">
           {{ idpBindingDetail.corpId || '-' }}
@@ -197,7 +199,7 @@
         <el-descriptions-item :label="$t('MS_PP_IDP_USER', '用户 ID')">
           {{ idpBindingDetail.idpUserId || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('MS_PP_APP_CODE', '应用标识')">
+        <el-descriptions-item :label="$t('G2_FIELD_APP_ID', '应用标识')">
           {{ idpBindingDetail.idpApplicationCode || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('MS_PP_BIND_TIME', '绑定时间')">
@@ -221,14 +223,6 @@
           :rules="editPassportRules"
           label-width="100px"
         >
-          <el-form-item :label="$t('G2_FIELD_USERNAME', '用户名')" prop="username">
-            <el-input
-              v-model="editPassportForm.username"
-              :placeholder="$t('G2_PH_USERNAME', '请输入用户名')"
-              maxlength="64"
-              show-word-limit
-            />
-          </el-form-item>
           <el-form-item :label="$t('G2_FIELD_REAL_NAME', '真实姓名')" prop="realName">
             <el-input
               v-model="editPassportForm.realName"
@@ -238,14 +232,13 @@
             />
           </el-form-item>
           <el-form-item :label="$t('G2_FIELD_SEX', '性别')" prop="sex">
-            <el-select
+            <DictSelect
               v-model="editPassportForm.sex"
+              usage-code="SEX"
+              :api-method="DictItemApi.select"
               :placeholder="$t('G2_PH_SEX', '请选择性别')"
               style="width: 100%"
-            >
-              <el-option :label="$t('G2_OPT_SEX_MALE', '男性')" value="MALE" />
-              <el-option :label="$t('G2_OPT_SEX_FEMALE', '女性')" value="FEMALE" />
-            </el-select>
+            />
           </el-form-item>
           <el-form-item :label="$t('G2_FIELD_BIRTHDAY', '生日')" prop="birthday">
             <el-date-picker
@@ -349,7 +342,9 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage } from 'element-plus';
 import { t } from '@platform/i18n';
+import { DictSelect, DictText } from '@g2rain/ui/platform';
 import { env } from '@shared/env';
+import { DictItemApi } from '../dict/api';
 import { PassportApi, PassportIdpBindingApi } from './api';
 import { useDingTalkPassportBind } from './dingTalk';
 import { getAuthorityUser } from '@/runtime/api/user.api';
@@ -384,37 +379,6 @@ const idpBindingList = ref<PassportIdpBinding[]>([]);
 const idpBindingDetailVisible = ref(false);
 const idpBindingDetail = ref<PassportIdpBinding | null>(null);
 
-const IDP_TYPE_KEYS: Record<string, [string, string]> = {
-  DINGTALK: ['MS_PP_IDP_DINGTALK', '钉钉'],
-  FEISHU: ['MS_PP_IDP_FEISHU', '飞书'],
-  WECHAT_WORK: ['MS_PP_IDP_WECHAT', '企业微信'],
-};
-
-const BIND_MODE_KEYS: Record<string, [string, string]> = {
-  INTERNAL: ['MS_PP_MODE_INTERNAL', '企业内部应用'],
-  THIRD_PARTY: ['MS_PP_MODE_THIRD', '第三方企业应用'],
-};
-
-function formatIdpType(value?: string) {
-  if (!value) return '-';
-  const entry = IDP_TYPE_KEYS[value];
-  if (entry) return t(entry[0], entry[1]);
-  return value;
-}
-
-function formatBindMode(value?: string) {
-  if (!value) return '-';
-  const entry = BIND_MODE_KEYS[value];
-  if (entry) return t(entry[0], entry[1]);
-  return value;
-}
-
-function formatSex(value?: string) {
-  if (value === 'MALE') return t('G2_OPT_SEX_MALE', '男性');
-  if (value === 'FEMALE') return t('G2_OPT_SEX_FEMALE', '女性');
-  return value || '-';
-}
-
 function openIdpBindingDetail(row: PassportIdpBinding) {
   idpBindingDetail.value = row;
   idpBindingDetailVisible.value = true;
@@ -429,9 +393,7 @@ async function loadIdpBindings() {
   idpBindingLoading.value = true;
   try {
     idpBindingList.value = await PassportIdpBindingApi.listByPassport(Number(passportId));
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : t('MS_PP_IDP_LOAD_FAIL', '加载三方绑定信息失败');
-    ElMessage.error(msg);
+  } catch {
     idpBindingList.value = [];
   } finally {
     idpBindingLoading.value = false;
@@ -447,7 +409,6 @@ const passportInfo = ref<PassportVo | null>(null);
 const editPassportDialogVisible = ref(false);
 const editPassportFormRef = ref<FormInstance | null>(null);
 const editPassportForm = reactive({
-  username: '',
   realName: '',
   sex: '',
   birthday: '',
@@ -457,24 +418,8 @@ const editPassportForm = reactive({
 });
 
 const editPassportRules = computed<FormRules>(() => ({
-  username: [
-    { required: true, message: t('G2_VLD_REQ_USERNAME', '请输入用户名'), trigger: 'blur' },
-    { max: 64, message: t('G2_VLD_USERNAME_LEN', '用户名长度不能超过64个字符'), trigger: 'blur' },
-  ],
   realName: [
-    { max: 128, message: t('G2_VLD_REALNAME_LEN', '真实姓名长度不能超过128个字符'), trigger: 'blur' },
-  ],
-  sex: [
-    {
-      validator: (_rule, value: string, callback) => {
-        if (value && value !== 'MALE' && value !== 'FEMALE') {
-          callback(new Error(t('G2_VLD_SEX', '性别只能是MALE（男性）或FEMALE（女性）')));
-        } else {
-          callback();
-        }
-      },
-      trigger: 'change',
-    },
+    { required: true, max: 128, message: t('G2_VLD_REALNAME_LEN', '真实姓名长度不能超过128个字符'), trigger: 'blur' },
   ],
   birthday: [
     { max: 16, message: t('G2_VLD_BIRTHDAY_LEN', '生日长度不能超过16个字符'), trigger: 'blur' },
@@ -556,9 +501,8 @@ const loadUserInfo = async () => {
     userInfo.value = authorityUser;
     passportInfo.value = authorityUser.passport;
     await loadIdpBindings();
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : t('MS_PP_LOAD_FAIL', '加载Passport信息失败');
-    ElMessage.error(msg);
+  } catch {
+    // 请求失败已由 http 层统一提示
   } finally {
     loading.value = false;
   }
@@ -572,7 +516,6 @@ const handleEditPassport = () => {
   }
 
   // 填充表单数据
-  editPassportForm.username = passportInfo.value.username || '';
   editPassportForm.realName = passportInfo.value.realName || '';
   editPassportForm.sex = passportInfo.value.sex || '';
   editPassportForm.birthday = passportInfo.value.birthday || '';
@@ -605,9 +548,6 @@ const submitEditPassport = async () => {
     editPassportDialogVisible.value = false;
     // 重新加载用户信息
     await loadUserInfo();
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : t('MS_PP_UPDATE_FAIL', '更新Passport信息失败');
-    ElMessage.error(msg);
   } finally {
     submitting.value = false;
   }
@@ -647,9 +587,6 @@ const submitChangePassword = async () => {
     changePasswordDialogVisible.value = false;
     // 清空表单
     handleChangePasswordClose();
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : t('MS_PP_PWD_FAIL', '修改密码失败');
-    ElMessage.error(msg);
   } finally {
     submitting.value = false;
   }
@@ -663,15 +600,16 @@ onMounted(() => {
 <style scoped>
 .passport-page {
   padding: 20px;
-  background-color: #f5f7fa;
+  background-color: var(--g2-bg-page);
   min-height: 100%;
   box-sizing: border-box;
+  color: var(--g2-text-primary);
 }
 
 .passport-page__header {
   margin-bottom: 20px;
   padding: 16px 20px;
-  background-color: #fff;
+  background-color: var(--g2-bg-container);
   border-radius: 4px;
 }
 
@@ -680,11 +618,12 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 600;
   line-height: 1.4;
+  color: var(--g2-text-primary);
 }
 
 .passport-page__info-card {
   margin-bottom: 20px;
-  background-color: #fff;
+  background-color: var(--g2-bg-container);
 }
 
 .card-header {
@@ -711,7 +650,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8fafc;
+  background: var(--g2-bg-page);
   border-radius: 8px;
 }
 
@@ -719,6 +658,6 @@ onMounted(() => {
   margin: 12px 0 0;
   text-align: center;
   font-size: 14px;
-  color: #64748b;
+  color: var(--g2-text-secondary);
 }
 </style>

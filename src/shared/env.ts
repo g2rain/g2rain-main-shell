@@ -28,14 +28,6 @@ function getEnvVar(key: string, defaultValue = ''): string {
   return defaultValue;
 }
 
-function getEnvBoolean(key: string, defaultValue = false): boolean {
-  const value = getEnvVar(key, '');
-  if (value === '') {
-    return defaultValue;
-  }
-  return value.toLowerCase() === 'true';
-}
-
 export type SharedEnv = {
   VITE_APPLICATION_CODE: string;
   VITE_CONTEXT_PATH: string;
@@ -43,7 +35,6 @@ export type SharedEnv = {
   VITE_SSO_BASE_URL: string;
   VITE_AUTH_END_POINT: string;
   VITE_REDIRECT_URI: string;
-  VITE_MOCK_ENABLED: boolean;
   VITE_DINGTALK_BIND_MODE: string;
   /** 国际化文案包 tags（逗号分隔，与 i18n_message.tag 一致） */
   VITE_I18N_TAGS: string;
@@ -62,7 +53,6 @@ export const env: SharedEnv = new Proxy({} as SharedEnv, {
     if (prop === 'VITE_SSO_BASE_URL') return getEnvVar('VITE_SSO_BASE_URL', '');
     if (prop === 'VITE_AUTH_END_POINT') return getEnvVar('VITE_AUTH_END_POINT', '/auth/authorize');
     if (prop === 'VITE_REDIRECT_URI') return getEnvVar('VITE_REDIRECT_URI', '');
-    if (prop === 'VITE_MOCK_ENABLED') return getEnvBoolean('VITE_MOCK_ENABLED', false);
     if (prop === 'VITE_DINGTALK_BIND_MODE') return getEnvVar('VITE_DINGTALK_BIND_MODE', 'INTERNAL');
     if (prop === 'VITE_I18N_TAGS') {
       return getEnvVar(
@@ -101,5 +91,36 @@ export function getPathWithContextPath(subPath: string): string {
 export function getRouterHistoryBase(): string {
   const base = getEnvVar('VITE_CONTEXT_PATH', '/');
   return `/${base}/`.replace(/\/+/g, '/');
+}
+
+/** Context Path without trailing slash (except root `/`). */
+export function getContextPath(): string {
+  const raw = getEnvVar('VITE_CONTEXT_PATH', '/');
+  return raw.endsWith('/') ? raw.slice(0, -1) || '/' : raw;
+}
+
+export function getApplicationCode(): string {
+  return getEnvVar('VITE_APPLICATION_CODE', 'g2rain-main-shell').trim() || 'g2rain-main-shell';
+}
+
+export function getSsoBaseUrl(): string {
+  return getEnvVar('VITE_SSO_BASE_URL', '').replace(/\/$/, '');
+}
+
+export function getAuthEndPoint(): string {
+  return getEnvVar('VITE_AUTH_END_POINT', '/auth/authorize');
+}
+
+export function getTokenEndPoint(): string {
+  return getEnvVar('VITE_TOKEN_END_POINT', '/auth/token');
+}
+
+export function getRedirectUriPath(): string {
+  const raw = getEnvVar('VITE_REDIRECT_URI', '/sso_callback');
+  return raw.startsWith('/') ? raw : `/${raw}`;
+}
+
+export function isAuthPublicPath(pathname: string): boolean {
+  return pathname.endsWith('/sso_callback') || pathname.endsWith('/logout');
 }
 
