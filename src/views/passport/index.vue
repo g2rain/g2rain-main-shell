@@ -223,6 +223,9 @@
           :rules="editPassportRules"
           label-width="100px"
         >
+          <el-form-item :label="$t('G2_FIELD_USERNAME', '用户名')" prop="username">
+            <el-input v-model="editPassportForm.username" disabled />
+          </el-form-item>
           <el-form-item :label="$t('G2_FIELD_REAL_NAME', '真实姓名')" prop="realName">
             <el-input
               v-model="editPassportForm.realName"
