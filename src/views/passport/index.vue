@@ -223,6 +223,9 @@
           :rules="editPassportRules"
           label-width="100px"
         >
+          <el-form-item :label="$t('G2_FIELD_USERNAME', '用户名')" prop="username">
+            <el-input v-model="editPassportForm.username" disabled />
+          </el-form-item>
           <el-form-item :label="$t('G2_FIELD_REAL_NAME', '真实姓名')" prop="realName">
             <el-input
               v-model="editPassportForm.realName"
@@ -409,6 +412,7 @@ const passportInfo = ref<PassportVo | null>(null);
 const editPassportDialogVisible = ref(false);
 const editPassportFormRef = ref<FormInstance | null>(null);
 const editPassportForm = reactive({
+  username: '',
   realName: '',
   sex: '',
   birthday: '',
@@ -516,6 +520,7 @@ const handleEditPassport = () => {
   }
 
   // 填充表单数据
+  editPassportForm.username = passportInfo.value.username || '';
   editPassportForm.realName = passportInfo.value.realName || '';
   editPassportForm.sex = passportInfo.value.sex || '';
   editPassportForm.birthday = passportInfo.value.birthday || '';
