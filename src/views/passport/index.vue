@@ -412,6 +412,7 @@ const passportInfo = ref<PassportVo | null>(null);
 const editPassportDialogVisible = ref(false);
 const editPassportFormRef = ref<FormInstance | null>(null);
 const editPassportForm = reactive({
+  username: '',
   realName: '',
   sex: '',
   birthday: '',
@@ -519,6 +520,7 @@ const handleEditPassport = () => {
   }
 
   // 填充表单数据
+  editPassportForm.username = passportInfo.value.username || '';
   editPassportForm.realName = passportInfo.value.realName || '';
   editPassportForm.sex = passportInfo.value.sex || '';
   editPassportForm.birthday = passportInfo.value.birthday || '';
